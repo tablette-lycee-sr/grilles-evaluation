@@ -5,7 +5,7 @@ capacite;Organisation;Introduction et conclusion;Introduction;problematique;Prop
 capacite;Organisation;Introduction et conclusion;Introduction;annonce-plan;Annoncer le plan;true;Pas d'annonce de plan / annonce très confuse.;Annonce sommaire / plutôt approximative du plan.;Annonce efficace et qui oriente le devoir.;;2;4;;
 capacite;Organisation;Introduction et conclusion;Conclusion;synthese;Formuler une synthèse;true;Pas de conclusion.;Phrase conclusive simple / anecdotique / confuse.;Véritable réponse à la problématique.;;2;5;;
 capacite;Organisation;Introduction et conclusion;Conclusion;ouverture;Proposer une ouverture;true;Pas d'ouverture.;Présence d'une ouverture mais plutôt artificielle.;Réelle mise en perspective du sujet.;;1;6;;
-capacite;Documents;Présentation des documents;_;mettre-en-relation-documents;Mettre en relation les documents;true;Documents non confrontés;Mise en relation correcte des documents;Complémentarité des documents bien relevée;D;1;7;;
+capacite;Documents;Présentation des documents;mettre-en-relation-documents;Mettre en relation les documents;true;Documents non confrontés;Mise en relation correcte des documents;Complémentarité des documents bien relevée;D;1;7;;
 parametre;;;;;;;;;;;;;seuil.NA_max_exclusif;0.5
 parametre;;;;;;;;;;;;;seuil.ECA_max_exclusif;1.5
 parametre;;;;;;;;;;;;;seuil.A_max_exclusif;2.5
