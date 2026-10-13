@@ -155,7 +155,12 @@ let levels = Object.fromEntries(grid.niveaux.map(l=>[l.id,l]));
 const statusEl = document.getElementById("status");
 const contentEl = document.getElementById("content");
 const partNavEl = document.getElementById("partNav");
-function setStatus(message, kind=""){statusEl.textContent=message;statusEl.className=message?"status-toast":"sr-only";statusEl.dataset.kind=kind}
+let statusTimer;
+function setStatus(message, kind=""){
+  window.clearTimeout(statusTimer);
+  statusEl.textContent=message;statusEl.className=message?"status-toast":"sr-only";statusEl.dataset.kind=kind;
+  if(message)statusTimer=window.setTimeout(()=>{statusEl.textContent="";statusEl.className="sr-only";statusEl.dataset.kind=""},kind==="error"?10000:5000);
+}
 function allNodes(nodes,result=[]){for(const n of nodes||[]){result.push(n);allNodes(n.enfants,result)}return result}
 function isLeaf(n){return !n.enfants||n.enfants.length===0}
 function descendantsLeaves(n){if(isLeaf(n))return[n];return(n.enfants||[]).flatMap(descendantsLeaves)}
