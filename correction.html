@@ -422,7 +422,7 @@ function gridFromCsv(text,fileName){
   const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};
   for(const row of capacityRows){
     const partTitle=row.partie,categoryTitle=row.categorie,subcategoryTitle=row.sous_categorie,capacityId=row.id,title=row.titre;
-    if(!partTitle||!categoryTitle||!subcategoryTitle||!capacityId||!title)throw new Error("chaque capacité doit renseigner partie, catégorie, sous-catégorie, id et titre.");
+    if(!partTitle||!categoryTitle||!capacityId||!title)throw new Error("chaque capacité doit renseigner partie, catégorie, id et titre.");
     if(capacityId.startsWith("__csv_node_")||capacityIds.has(capacityId))throw new Error(`identifiant de capacité invalide ou répété : « ${capacityId} ».`);
     const evaluable=row.evaluable.toLowerCase();
     if(!["true","1","oui","vrai"].includes(evaluable))throw new Error(`la capacité « ${title} » doit être évaluable.`);
@@ -434,10 +434,14 @@ function gridFromCsv(text,fileName){
     const categoryKey=JSON.stringify([partTitle,categoryTitle]);
     let category=categories.get(categoryKey);
     if(!category){category=nextGroup(categoryTitle);categories.set(categoryKey,category);elements.push(category);part.categories.push({nodeId:category.id,title:categoryTitle})}
-    const subcategoryKey=JSON.stringify([partTitle,categoryTitle,subcategoryTitle]);
-    let subcategory=subcategories.get(subcategoryKey);
-    if(!subcategory){subcategory=nextGroup(subcategoryTitle);subcategories.set(subcategoryKey,subcategory);category.enfants.push(subcategory)}
-    subcategory.enfants.push({id:capacityId,titre:title,evaluable:true,commentaires:{NA:row.commentaire_NA,ECA:row.commentaire_ECA,A:row.commentaire_A,D:row.commentaire_D}});
+    let parent=category;
+    if(subcategoryTitle){
+      const subcategoryKey=JSON.stringify([partTitle,categoryTitle,subcategoryTitle]);
+      let subcategory=subcategories.get(subcategoryKey);
+      if(!subcategory){subcategory=nextGroup(subcategoryTitle);subcategories.set(subcategoryKey,subcategory);category.enfants.push(subcategory)}
+      parent=subcategory;
+    }
+    parent.enfants.push({id:capacityId,titre:title,evaluable:true,commentaires:{NA:row.commentaire_NA,ECA:row.commentaire_ECA,A:row.commentaire_A,D:row.commentaire_D}});
     config.ponderations[capacityId]=weight;
   }
   const requiredParameters=["seuil.NA_max_exclusif","seuil.ECA_max_exclusif","seuil.A_max_exclusif","bonus.plafond_total","bonus.pas_saisie"];
