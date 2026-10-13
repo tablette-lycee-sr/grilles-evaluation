@@ -165,6 +165,7 @@ function allNodes(nodes,result=[]){for(const n of nodes||[]){result.push(n);allN
 function isLeaf(n){return !n.enfants||n.enfants.length===0}
 function descendantsLeaves(n){if(isLeaf(n))return[n];return(n.enfants||[]).flatMap(descendantsLeaves)}
 function getWeight(node){const w=config.ponderations?.[node.id];return Number.isFinite(Number(w))&&Number(w)>0?Number(w):1}
+function getCategoryCoefficient(node){const coefficient=config.coefficientsCategories?.[node.id];return Number.isFinite(Number(coefficient))&&Number(coefficient)>0?Number(coefficient):1}
 function getLeafScore(node){const id=leafChoices[node.id];return id&&levels[id]?{score:levels[id].valeur,weight:getWeight(node),node}:null}
 function calculate(node){
   const leaves=descendantsLeaves(node),scored=leaves.map(getLeafScore).filter(Boolean),total=leaves.length,count=scored.length;
@@ -177,6 +178,11 @@ function calculate(node){
   return{level,mean,count,total,partial:count<total};
 }
 function effectiveLevel(node){if(isLeaf(node))return leafChoices[node.id]||null;if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];return calculate(node).level}
+function getCategoryPercentage(node){
+  if(Object.hasOwn(manualChoices,node.id)&&levels[manualChoices[node.id]])return Number(levels[manualChoices[node.id]].valeur)*50;
+  const mean=calculate(node).mean;
+  return mean===null?null:mean*50;
+}
 function chosenOrigin(node){if(isLeaf(node))return leafChoices[node.id]?"manual":"none";if(Object.hasOwn(manualChoices,node.id))return"manual";return calculate(node).level?"auto":"none"}
 function totalBonus(){return Object.values(bonusChoices).reduce((s,v)=>s+(Number(v)||0),0)}
 function bonusCap(){return Math.max(0,Number(config.bonus?.plafond_total??3))}
@@ -319,7 +325,9 @@ function renderCategory(category,node=null){
     }
     headingRow.appendChild(controls);
     const metrics=document.createElement("div");metrics.className="category-metrics";
-    const mean=document.createElement("span");mean.className="pill";mean.textContent=`Moyenne : ${calculation.mean===null?"—":calculation.mean.toFixed(2).replace(".",",")}`;metrics.appendChild(mean);
+    const percentage=getCategoryPercentage(node);
+    const mean=document.createElement("span");mean.className="pill";mean.textContent=`Capacités pondérées : ${percentage===null?"—":`${percentage.toFixed(1).replace(".",",")} %`}`;metrics.appendChild(mean);
+    const coefficient=document.createElement("span");coefficient.className="pill";coefficient.textContent=`Coeff. catégorie : ${getCategoryCoefficient(node)}`;metrics.appendChild(coefficient);
     const comment=document.createElement("div");comment.className="category-comment empty";
     const commentLevel=effective||calculation.level;
     if(commentLevel&&node.commentaires?.[commentLevel]){comment.classList.remove("empty");comment.textContent=node.commentaires[commentLevel]}
@@ -351,11 +359,13 @@ function render(){
     }
     contentEl.appendChild(partSection);
   }
-  const leaves=allNodes(roots).filter(isLeaf);
-  const scored=leaves.map(getLeafScore).filter(Boolean);
+  const categoryScores=roots.map(category=>{
+    const percentage=getCategoryPercentage(category);
+    return percentage===null?null:{percentage,coefficient:getCategoryCoefficient(category)};
+  }).filter(Boolean);
   const bonus=totalBonus();
   let baseScore=null;
-  if(scored.length){const weighted=scored.reduce((s,x)=>s+x.score*x.weight,0); const weights=scored.reduce((s,x)=>s+x.weight,0); baseScore=20*(weighted/(2*weights));}
+  if(categoryScores.length){const weightedPercent=categoryScores.reduce((sum,category)=>sum+category.percentage*category.coefficient,0);const coefficientTotal=categoryScores.reduce((sum,category)=>sum+category.coefficient,0);baseScore=20*(weightedPercent/(100*coefficientTotal));}
   const finalScore=baseScore===null?null:Math.min(20,baseScore+bonus);
   const fmt=n=>n.toFixed(2).replace(".",",");
   document.getElementById("finalScore").textContent=finalScore===null?"—/20":`${fmt(finalScore)}/20`;
@@ -396,7 +406,7 @@ function parseCsv(text){
   if(rows.length<2)throw new Error("le fichier ne contient aucune donnée.");
   const headers=rows.shift().map(value=>value.trim());
   if(new Set(headers).size!==headers.length)throw new Error("les noms de colonnes doivent être uniques.");
-  const required=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","commentaire_D","ponderation","ordre","parametre","valeur"];
+  const required=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","commentaire_D","ponderation","ordre","parametre","valeur","coefficient_categorie"];
   const missing=required.filter(header=>!headers.includes(header));
   if(missing.length)throw new Error(`colonnes manquantes : ${missing.join(", ")}.`);
   return rows.map((values,index)=>{
@@ -424,7 +434,7 @@ function gridFromCsv(text,fileName){
   });
   let nextGroupId=0;const nextGroup=title=>({id:`__csv_node_${++nextGroupId}`,titre:title,evaluable:false,enfants:[]});
   const elements=[],parts=new Map(),categories=new Map(),subcategories=new Map(),capacityIds=new Set();
-  const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};
+  const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};config.coefficientsCategories={};
   for(const row of capacityRows){
     const partTitle=row.partie,categoryTitle=row.categorie,subcategoryTitle=row.sous_categorie==="_"?"":row.sous_categorie,capacityId=row.id,title=row.titre;
     if(!partTitle||!categoryTitle||!capacityId||!title)throw new Error("chaque capacité doit renseigner partie, catégorie, id et titre.");
@@ -439,6 +449,13 @@ function gridFromCsv(text,fileName){
     const categoryKey=JSON.stringify([partTitle,categoryTitle]);
     let category=categories.get(categoryKey);
     if(!category){category=nextGroup(categoryTitle);categories.set(categoryKey,category);elements.push(category);part.categories.push({nodeId:category.id,title:categoryTitle})}
+    if(row.coefficient_categorie){
+      const coefficient=csvNumber(row.coefficient_categorie,`Le coefficient de la catégorie « ${categoryTitle} »`);
+      if(coefficient<=0)throw new Error(`le coefficient de la catégorie « ${categoryTitle} » doit être supérieur à zéro.`);
+      const previous=config.coefficientsCategories[category.id];
+      if(previous!==undefined&&previous!==coefficient)throw new Error(`le coefficient de la catégorie « ${categoryTitle} » doit être identique sur toutes ses lignes renseignées.`);
+      config.coefficientsCategories[category.id]=coefficient;
+    }
     let parent=category;
     if(subcategoryTitle){
       const subcategoryKey=JSON.stringify([partTitle,categoryTitle,subcategoryTitle]);
@@ -449,6 +466,7 @@ function gridFromCsv(text,fileName){
     parent.enfants.push({id:capacityId,titre:title,evaluable:true,commentaires:{NA:row.commentaire_NA,ECA:row.commentaire_ECA,A:row.commentaire_A,D:row.commentaire_D}});
     config.ponderations[capacityId]=weight;
   }
+  for(const category of categories.values())if(!Object.hasOwn(config.coefficientsCategories,category.id))throw new Error(`la catégorie « ${category.titre} » doit indiquer un coefficient_categorie.`);
   const requiredParameters=["seuil.NA_max_exclusif","seuil.ECA_max_exclusif","seuil.A_max_exclusif","bonus.plafond_total","bonus.pas_saisie"];
   const seenParameters=new Set();
   for(const row of parameterRows){
