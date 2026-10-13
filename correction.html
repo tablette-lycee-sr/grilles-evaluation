@@ -421,7 +421,7 @@ function gridFromCsv(text,fileName){
   const elements=[],parts=new Map(),categories=new Map(),subcategories=new Map(),capacityIds=new Set();
   const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};
   for(const row of capacityRows){
-    const partTitle=row.partie,categoryTitle=row.categorie,subcategoryTitle=row.sous_categorie,capacityId=row.id,title=row.titre;
+    const partTitle=row.partie,categoryTitle=row.categorie,subcategoryTitle=row.sous_categorie==="_"?"":row.sous_categorie,capacityId=row.id,title=row.titre;
     if(!partTitle||!categoryTitle||!capacityId||!title)throw new Error("chaque capacité doit renseigner partie, catégorie, id et titre.");
     if(capacityId.startsWith("__csv_node_")||capacityIds.has(capacityId))throw new Error(`identifiant de capacité invalide ou répété : « ${capacityId} ».`);
     const evaluable=row.evaluable.toLowerCase();
