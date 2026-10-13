@@ -1,0 +1,12 @@
+type,id,key,value
+ponderation,accroche,weight,1
+ponderation,definition-termes,weight,2
+ponderation,problematique,weight,3
+ponderation,annonce-plan,weight,2
+ponderation,synthese,weight,2
+ponderation,ouverture,weight,1
+seuil,,NA_max_exclusif,0.5
+seuil,,ECA_max_exclusif,1.5
+seuil,,A_max_exclusif,2.5
+bonus,,plafond_total,3
+bonus,,pas_saisie,0.25
