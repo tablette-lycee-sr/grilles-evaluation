@@ -6,6 +6,8 @@ capacite;Organisation;Introduction et conclusion;Introduction;ID_annonce-plan;An
 capacite;Organisation;Introduction et conclusion;Conclusion;ID_synthese;Formuler une synthèse;true;Pas de conclusion.;Phrase conclusive simple / anecdotique / confuse.;Véritable réponse à la problématique.;;2;5;;
 capacite;Organisation;Introduction et conclusion;Conclusion;ID_ouverture;Proposer une ouverture;true;Pas d'ouverture.;Présence d'une ouverture mais plutôt artificielle.;Réelle mise en perspective du sujet.;;1;6;;
 capacite;Documents;Présentation des documents;_;ID_relation;Mettre en relation les documents;true;Documents non confrontés;Mise en relation correcte des documents;Complémentarité des documents bien relevée;D;1;7;;
+capacite;Forme;Expression écrite;_;ID_Syntaxe;Maîtriser la syntaxe et l'orthographe;true;Trop de fautes et/ou syntaxe particulièrement confuse;Des erreurs de grammaire et d'orthographe;Maîtrise satisfaisante du Français;Aucune faute;1;8;;
+capacite;Forme;Expression écrite;_;ID_Style;S'exprimer dans un style adapté;true;Style inapproprié / familier;Style convenable;Style soutenu et académique;Vocabulaire riche;1;9;;
 parametre;;;;;;;;;;;;;seuil.NA_max_exclusif;0.5
 parametre;;;;;;;;;;;;;seuil.ECA_max_exclusif;1.5
 parametre;;;;;;;;;;;;;seuil.A_max_exclusif;2.5
