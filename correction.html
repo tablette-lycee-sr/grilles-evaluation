@@ -1,431 +1,368 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <title>Grille de correction — Étude critique (import CSV exemple)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    :root { --muted:#666; --accent:#2b7; --card:#fff; --bg:#f6f6f8; }
-    body { font-family: system-ui, Arial, sans-serif; margin: 16px; background:var(--bg); color:#111; }
-    header { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
-    .panel { background:var(--card); padding:12px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-    .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    label.file { display:inline-flex; align-items:center; gap:8px; cursor:pointer; padding:6px 8px; border:1px dashed #ccc; border-radius:6px; background:#fff; }
-    input[type="file"] { display:none; }
-    #grille { margin-top:12px; min-height:140px; }
-    .element { margin-left: 0.5rem; padding:8px; border-left:3px solid #eee; margin-bottom:8px; background:linear-gradient(transparent, rgba(0,0,0,0.01)); border-radius:6px; }
-    .element > .title { font-weight:600; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-    .controls-line { margin-top:6px; }
-    .controls-line label { margin-right:0.8rem; font-weight:400; }
-    .score { font-weight:700; margin-top:10px; }
-    .meta { font-size:0.9rem; color:var(--muted); margin-top:6px; }
-    button { padding:8px 10px; border-radius:6px; border:1px solid #bbb; background:#fff; cursor:pointer; }
-    button.primary { background:var(--accent); color:#fff; border-color:rgba(0,0,0,0.08); }
-    .small { font-size:0.9rem; padding:6px 8px; }
-    footer { margin-top:14px; font-size:0.9rem; color:var(--muted); }
-    select { padding:6px; border-radius:6px; border:1px solid #ccc; background:#fff; }
-    .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    @media print {
-      body { background: white; }
-      header, .controls { display:none; }
-      .element { page-break-inside: avoid; border-left: none; padding: 0; margin: 0 0 6px 0; }
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moteur de correction — prototype</title>
+<style>
+:root{color-scheme:dark;--bg:#242629;--panel:#2d3034;--muted:#44474c;--text:#f3f4f5;--sub:#bfc3c8;--line:#50545a;--red:#e45b60;--yellow:#e8c64a;--green:#49bd7b;--blue:#55a7ee}
+*{box-sizing:border-box}html{background:var(--bg);scrollbar-gutter:stable}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{width:min(1080px,100%);margin-left:max(0px,calc((100vw - 1080px)/2));padding:calc(max(16.67vh,110px) + 20px) 16px 16px 96px}
+.part-nav{position:fixed;z-index:10;top:max(16.67vh,110px);bottom:0;left:max(0px,calc((100vw - 1080px)/2));width:64px;display:flex;flex-direction:column;background:#292c30;border-right:1px solid var(--line);overflow-y:auto}
+.part-tab{position:relative;display:block;flex:1 0 25%;min-height:100px;width:100%;padding:0;border:0;border-bottom:1px solid #55595f;border-radius:0;background:#3a3d42;color:#fff;font-size:1rem;font-weight:650;line-height:.98;overflow:hidden}
+.part-tab:hover{background:#4a4e54}.part-tab[aria-current="location"]{background:#fff;color:#17191c}
+.part-tab.complete::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--blue)}
+.settings-option{display:flex;align-items:center;gap:10px;padding:8px 0;color:var(--text)}.settings-option input{width:18px;height:18px;accent-color:var(--blue)}
+.part-tab-label{position:absolute;left:50%;top:57%;display:block;width:max(60px,calc(20.83vh - 24px));text-align:center;white-space:normal;transform:translate(-50%,-50%) rotate(-90deg)}
+.part-tab-count{position:absolute;top:6px;left:0;width:100%;font-size:.68rem;font-weight:550;line-height:1;color:inherit}
+.part-section{scroll-margin-top:max(16.67vh,110px);margin:0 0 28px}
+.part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.category-placeholder{padding:12px 14px;border-top:1px solid #3c3f44}
+header{position:fixed;z-index:20;inset:0 0 auto;height:max(16.67vh,110px);display:grid;grid-template-columns:5fr 3fr;align-items:center;gap:12px;padding:10px 18px;background:rgba(36,38,41,.98);border-bottom:1px solid var(--line)}
+.header-left{grid-column:1;min-width:0}.header-left h1{font-size:1.25rem;line-height:1.15;margin:0 0 10px}h2{font-size:1.05rem;margin:0 0 6px}
+.student-name{width:min(100%,360px);height:34px;padding:6px 10px;border:1px solid #62666d;border-radius:6px;background:#1b1d20;color:#fff;font:inherit;font-size:.9rem}
+.header-score{display:block;min-width:0;margin-top:6px;font-size:1.3rem;font-weight:800;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.header-actions{grid-column:2;display:grid;grid-template-columns:repeat(5,44px);justify-content:start;align-content:center;gap:8px;margin:0}
+button,.filelabel{font:inherit;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#3a3d42;color:var(--text);cursor:pointer}
+button:focus-visible,.filelabel:focus-within{outline:2px solid white;outline-offset:2px}button.secondary{background:transparent}
+.icon-button,.icon-file{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #5a5e64;border-radius:7px;background:#34373b;color:#fff}
+.icon-button:hover,.icon-file:hover{background:#4a4e54}.icon-button svg,.icon-file svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+input[type=file]{display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.header-score output{display:block}
+dialog{width:min(420px,calc(100vw - 32px));border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section{margin:18px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden}.section-head{background:var(--panel);padding:12px 14px}
+.node{padding:12px;border-top:1px solid #3c3f44}.node.group{background:rgba(255,255,255,.015)}
+.node.depth-1{margin-left:10px}.node.depth-2{margin-left:18px}.node.depth-3{margin-left:26px}
+.node-title{font-weight:650;margin:0}.criterion-row{display:grid;grid-template-columns:minmax(200px,1.2fr) minmax(0,2.8fr);gap:12px;align-items:start}.criterion-row.category-summary{grid-template-columns:minmax(0,1fr)}.capacity-name{display:flex;flex-direction:column;gap:4px;min-width:0}.capacity-name .weight{font-size:.72rem;color:var(--sub);font-weight:600}.capacity-choices{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:6px}.levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%}
+.level-btn{height:48px;min-height:48px;border:2px solid transparent;background:var(--muted);color:#f5f5f5;padding:7px 3px;font-weight:650;font-size:.72rem;line-height:1.2;min-width:0;white-space:normal;word-break:break-word}.choice-btn{border:1px solid var(--line);background:#2b2f33;color:var(--text);padding:8px 8px;text-align:left;line-height:1.35;min-height:48px;font:inherit;font-size:.7rem;font-weight:400;border-radius:8px;cursor:pointer;white-space:normal;word-break:break-word;display:flex;align-items:center}.choice-btn.active{background:var(--level-color);border-color:var(--level-color);color:#1b1d20}.level-btn .abbr{display:block;font-size:1rem}.level-btn .full{display:block;font-size:.68rem;font-weight:450;opacity:.9}
+.level-btn.suggested{border-color:var(--level-color);background:var(--muted)}
+.level-btn.manual{background:var(--level-color);border-color:var(--level-color);color:#202124}
+.level-btn.final-selected{font-weight:650}
+.level-btn.d-bonus{background:var(--blue);border-color:var(--blue);color:#111}.level-btn.d-bonus.active{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.meta{display:flex;flex-wrap:nowrap;gap:8px;margin-top:8px;align-items:center;height:30px;overflow:hidden}
+.pill{font-size:.75rem;border:1px solid var(--line);border-radius:999px;padding:3px 8px;color:var(--sub)}
+.pill.partial{border-color:var(--yellow);color:var(--yellow)}.pill.manualtag{border-color:#aaa;color:#ddd}
+.comment{height:4.5rem;box-sizing:border-box;overflow:auto;margin:9px 0 0;padding:9px 10px;border-left:2px solid #666;background:#292c30;color:#d9dce0;font-size:.9rem}.comment.empty{visibility:hidden}
+.children{margin-top:8px}.children .node{border-radius:8px;margin-top:8px;border:1px solid #3c3f44}
+.bonus-row{display:flex;gap:8px;align-items:stretch;margin-top:9px;flex-wrap:wrap}
+.bonus-toggle{border:2px solid transparent;background:#44474c;color:#f5f5f5;min-width:90px}
+.bonus-toggle.active{background:var(--blue);border-color:var(--blue);color:#111}
+.bonus-controls{display:flex;align-items:center;gap:8px;flex:1;min-width:180px}
+.bonus-controls label{font-size:.82rem;color:var(--sub)}
+.bonus-controls input{width:86px;background:#1b1d20;color:#fff;border:1px solid #62666d;border-radius:7px;padding:8px;font:inherit}
+.bonus-help{font-size:.78rem;color:var(--sub);align-self:center}
+@media(min-width:700px){.capacity-choices{grid-template-columns:repeat(4,minmax(0,1fr))}.app{padding:calc(max(16.67vh,110px) + 20px) 20px 20px 100px}.node{padding:14px}.level-btn{min-height:48px;height:48px}.choice-btn{font-size:.68rem;min-height:52px}}
+@media(max-width:900px) and (min-width:700px){.header-actions{grid-template-columns:repeat(5,38px);gap:5px}.icon-button{width:38px;height:38px}}
+@media(max-width:699px){.app{padding:calc(max(16.67vh,110px) + 14px) 10px 16px 80px}.part-nav{width:56px}.part-tab{min-height:80px;font-size:.9rem}.part-tab-label{width:max(56px,calc(20.83vh - 28px))}header{grid-template-columns:minmax(0,5fr) minmax(104px,3fr);gap:5px;padding:8px}.header-left h1{font-size:1rem;margin-bottom:6px}.student-name{height:30px;padding:4px 6px;font-size:.78rem}.header-score{font-size:1.1rem}.header-actions{grid-template-columns:repeat(3,34px);gap:4px}.icon-button,.icon-file{width:34px;height:34px;border-radius:6px}.icon-button svg,.icon-file svg{width:18px;height:18px}.criterion-row{grid-template-columns:minmax(0,1fr)}.level-btn{height:56px;min-height:56px}}
+.section-head.category-head{padding:6px 10px}.category-heading-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px}.category-heading-row h2{min-width:0;margin:0;font-size:1.18rem}.category-levels{display:flex;gap:6px;flex:none}.category-levels .level-btn{width:52px;height:36px;min-height:36px;padding:2px}.category-levels .full{display:none}.category-metrics{display:none;align-items:center;gap:8px;height:26px;margin-top:3px;overflow:hidden}.app.show-metrics .category-metrics{display:flex}.category-comment{height:2.5rem;overflow:auto;margin:2px 0 0;color:var(--sub);font-size:.85rem;line-height:1.3}.category-comment.empty{visibility:hidden}
+.part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.node.group{background:transparent}.node.depth-1{margin-left:4px}.node.depth-2{margin-left:8px}.node.depth-3{margin-left:12px}
+.criterion-row{grid-template-columns:minmax(115px,.72fr) minmax(0,3.28fr);gap:8px}.capacity-name{gap:2px;font-size:.84rem;line-height:1.12}.capacity-name .weight{display:none}.app.show-metrics .capacity-name .weight{display:block}.node.depth-1>.criterion-row .node-title{color:var(--panel);font-size:.96rem}
+.capacity-choices{gap:4px}.children{margin-top:2px}.children .node{border:0;border-radius:0;margin-top:2px;padding:5px 0;background:transparent}.section>.node.depth-0{padding:0;border-top:0;background:transparent}
+.choice-btn.active{background:#44474c;background:color-mix(in srgb,var(--level-color) 44%,#44474c);border-color:color-mix(in srgb,var(--level-color) 62%,#686b70);color:#fff}
+@media(max-width:699px){.category-heading-row{align-items:flex-start;gap:4px}.category-levels{gap:3px}.category-levels .level-btn{width:36px;height:34px;min-height:34px;padding:2px 1px;font-size:.65rem}.category-comment{height:2.5rem}}
+.part-heading{font-size:1.8rem;font-weight:800;line-height:1.15;color:#858a90}
+.node.depth-1>.criterion-row .node-title{color:#858a90;font-size:1.02rem}
+.section-head.category-head{border-bottom:0}
+.section>.node.depth-0{padding-right:10px;padding-left:10px}
+.header-fields{display:flex;gap:8px;width:min(100%,720px)}.header-fields .student-name{flex:1 1 0;width:0;min-width:0}.header-score{color:#969ba1;font-size:1.05rem;font-weight:600}
+@media(max-width:699px){.header-fields{gap:5px}.header-fields .student-name{padding:4px 5px;font-size:.72rem}.header-score{font-size:1.05rem}}
+@media print{
+  :root{color-scheme:light}
+  body{background:#fff!important;color:#111!important;font-size:10pt}
+  .app{width:auto;margin:0;padding:0}
+  .part-nav{display:none!important}
+  .part-section{break-after:page}
+  header{position:static;height:auto;display:grid;background:#fff;color:#111;border-bottom:1px solid #888;padding:0 0 8px}
+  h1{font-size:16pt}
+  .no-print,.header-actions,.pill,.bonus-toggle,.bonus-controls,.bonus-help{display:none!important}
+  .section{border:1px solid #888;overflow:visible;break-inside:avoid}
+  .section-head{background:#fff;color:#111;border-bottom:1px solid #aaa}
+  .node,.node.group,.children .node{background:#fff!important;border-color:#ccc!important;color:#111;margin-left:0;padding:8px;break-inside:avoid}
+  .node-title{color:#111}.levels{gap:5px}
+  .level-btn,.level-btn.suggested,.level-btn.manual,.level-btn.final-selected{background:#fff!important;border:1px solid transparent!important;box-shadow:none!important;color:#bbb!important;min-height:0;padding:3px 1px}
+  .level-btn.final-selected{color:#111!important;font-weight:800!important}
+  .level-btn .full{color:inherit}
+  .comment{background:#fff;border-left:1px solid #ccc;color:#333;padding:4px 6px}
+  .bonus-print-reason{display:block!important;margin:6px 0 0;padding:4px 6px;border-left:1px solid #888;color:#222;font-size:9pt}
+  footer{display:none}
+}
+.bonus-print-reason{display:none}
+</style>
 </head>
 <body>
-  <header class="panel">
-    <div>
-      <h1 style="margin:0;font-size:1.15rem;">Grille de correction — Étude critique</h1>
-      <div class="meta">Page vierge au démarrage. Chargez une grille (CSV ou JSON) et des paramètres (CSV ou JSON). CSV grille : colonnes part,category,subcategory,id,title,evaluable,comment_NA,comment_ECA,comment_A,comment_D,weight,order. CSV params : type,id,key,value</div>
+<div class="app">
+<nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
+<header aria-label="En-tête">
+  <div class="header-left">
+    <h1 id="pageTitle">Étude critique de document(s)</h1>
+    <div class="header-fields">
+      <input id="studentName" class="student-name" type="text" placeholder="Nom de l’élève" aria-label="Nom de l’élève">
+      <input id="finalGrade" class="student-name final-grade" type="text" placeholder="Note finale" aria-label="Note finale">
     </div>
-
-    <div style="margin-left:auto;" class="controls">
-      <label class="file panel small" title="Charger un fichier CSV ou JSON de grille depuis votre machine">
-        Charger grille (CSV/JSON local)
-        <input id="file-grille" type="file" accept=".csv,application/json,text/json">
-      </label>
-
-      <label class="file panel small" title="Charger un fichier CSV ou JSON de paramètres depuis votre machine">
-        Charger paramètres (CSV/JSON local)
-        <input id="file-params" type="file" accept=".csv,application/json,text/json">
-      </label>
-
-      <div class="panel small row" style="align-items:center;">
-        <label for="sample-grille-select">Exemples grille</label>
-        <select id="sample-grille-select">
-          <option value="">— aucun —</option>
-          <option value="https://raw.githubusercontent.com/tablette-lycee-sr/grilles-evaluation/main/grille_example.csv">grille_example.csv (exemple)</option>
-        </select>
-        <button id="load-sample-grille" class="small">Charger sélection</button>
-      </div>
-
-      <div class="panel small row" style="align-items:center;">
-        <label for="sample-params-select">Exemples paramètres</label>
-        <select id="sample-params-select">
-          <option value="">— aucun —</option>
-          <option value="https://raw.githubusercontent.com/tablette-lycee-sr/grilles-evaluation/main/params_example.csv">params_example.csv (exemple)</option>
-        </select>
-        <button id="load-sample-params" class="small">Charger sélection</button>
-      </div>
-
-      <button id="export-json" class="primary small">Exporter la correction (JSON)</button>
-      <button id="print" class="small">Imprimer / PDF</button>
-    </div>
-  </header>
-
-  <main>
-    <div id="config" class="panel">Page vierge — aucune grille chargée.</div>
-    <div id="grille" class="panel" style="margin-top:12px;"></div>
-    <div id="score" class="score panel" style="margin-top:12px;">Score : —</div>
-    <div class="panel" style="margin-top:12px;">
-      <strong>Téléchargement des exemples CSV :</strong>
-      <div><a href="https://raw.githubusercontent.com/tablette-lycee-sr/grilles-evaluation/main/grille_example.csv" download>grille_example.csv</a></div>
-      <div><a href="https://raw.githubusercontent.com/tablette-lycee-sr/grilles-evaluation/main/params_example.csv" download>params_example.csv</a></div>
-    </div>
-  </main>
-
-  <footer class="panel">
-    Version prototype — import d'exemples CSV disponibles sur le dépôt.
-  </footer>
-
+    <div class="header-score" aria-label="Proposition de note finale avec bonus"><output id="finalScore">—/20</output></div>
+  </div>
+  <div class="header-actions no-print" aria-label="Actions">
+    <button id="gridLoadBtn" class="icon-button" type="button" title="Charger la grille JSON" aria-label="Charger la grille JSON"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></button>
+    <button id="configLoadBtn" class="icon-button" type="button" title="Charger les paramètres JSON" aria-label="Charger les paramètres JSON"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 13.5 1.2.9-1.2 2.1-1.4-.5a7.7 7.7 0 0 1-1.6.9l-.2 1.5h-2.4l-.3-1.5a7.7 7.7 0 0 1-1.6-.9l-1.4.5-1.2-2.1 1.2-.9a7 7 0 0 1 0-1.9l-1.2-.9 1.2-2.1 1.4.5a7.7 7.7 0 0 1 1.6-.9l.3-1.5h2.4l.2 1.5a7.7 7.7 0 0 1 1.6.9l1.4-.5 1.2 2.1-1.2.9a7 7 0 0 1 0 1.9Z"/></svg></button>
+    <button id="printBtn" class="icon-button" type="button" title="Imprimer / PDF" aria-label="Imprimer / PDF"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/></svg></button>
+    <button id="resetBtn" class="icon-button" type="button" title="Réinitialiser les choix" aria-label="Réinitialiser les choix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1-6.2 10.2"/></svg></button>
+    <button id="settingsBtn" class="icon-button" type="button" title="Configuration" aria-label="Configuration"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 13.5 1.2.9-1.2 2.1-1.4-.5a7.7 7.7 0 0 1-1.6.9l-.2 1.5h-2.4l-.3-1.5a7.7 7.7 0 0 1-1.6-.9l-1.4.5-1.2-2.1 1.2-.9a7 7 0 0 1 0-1.9l-1.2-.9 1.2-2.1 1.4.5a7.7 7.7 0 0 1 1.6-.9l.3-1.5h2.4l.2 1.5a7.7 7.7 0 0 1 1.6.9l1.4-.5 1.2 2.1-1.2.9a7 7 0 0 1 0 1.9Z"/></svg></button>
+  </div>
+</header>
+<input id="gridInput" type="file" accept=".json,application/json" aria-label="Charger la grille JSON">
+<input id="configInput" type="file" accept=".json,application/json" aria-label="Charger les paramètres JSON">
+<div id="status" class="sr-only" role="status" aria-live="polite"></div>
+<dialog id="settingsDialog"><div class="dialog-heading"><h2>Configuration</h2><button id="closeSettings" class="icon-button" type="button" aria-label="Fermer la configuration">×</button></div><label class="settings-option"><input id="showMetrics" type="checkbox">Métriques de calcul</label></dialog>
+<main id="content"></main>
+</div>
 <script>
-(function(){
-  const fileGrilleInput = document.getElementById('file-grille');
-  const fileParamsInput = document.getElementById('file-params');
-  const exportBtn = document.getElementById('export-json');
-  const printBtn = document.getElementById('print');
-  const configEl = document.getElementById('config');
-  const grilleContainer = document.getElementById('grille');
-  const scoreEl = document.getElementById('score');
-
-  const sampleGrilleSelect = document.getElementById('sample-grille-select');
-  const sampleParamsSelect = document.getElementById('sample-params-select');
-  const loadSampleGrilleBtn = document.getElementById('load-sample-grille');
-  const loadSampleParamsBtn = document.getElementById('load-sample-params');
-
-  let grille = null;
-  let params = null;
-  let evaluations = {};
-  let niveauToValeur = {};
-  let ponderations = {};
-
-  function slugify(s){
-    return (s||'').toString().trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g,'');
-  }
-
-  function postLoadInit(){
-    if (!grille) {
-      configEl.innerText = 'Aucune grille chargée.';
-      grilleContainer.innerHTML = '';
-      scoreEl.innerText = 'Score : —';
+const DEFAULT_GRID = {"version": 1, "id": "etude-critique-introduction-conclusion-v1", "titre": "Étude critique — Introduction et conclusion", "niveaux": [{"id": "NA", "libelle": "Non acquis", "valeur": 0, "couleur": "#e45b60"}, {"id": "ECA", "libelle": "En cours d'acquisition", "valeur": 1, "couleur": "#e8c64a"}, {"id": "A", "libelle": "Acquis", "valeur": 2, "couleur": "#49bd7b"}], "elements": [{"id": "introduction-conclusion", "titre": "Introduction et conclusion", "evaluable": true, "commentaires": {"NA": "Début et fin du devoir absents, très limités et/ou maladroits.", "ECA": "Commentaire à préciser à partir de la grille définitive.", "A": "Première et dernière impression très positive : le sujet est compris.", "D": "Commentaire à confirmer à partir de la grille source."}, "enfants": [{"id": "introduction", "titre": "Introduction", "evaluable": true, "commentaires": {}, "enfants": [{"id": "accroche", "titre": "Commencer par une accroche", "evaluable": true, "commentaires": {"NA": "Pas d'accroche.", "ECA": "Accroche présente mais imprécise / déconnectée.", "A": "Accroche efficace et intéressante.", "D": "Accroche et contextualisation s'appuyant sur une culture personnelle."}}, {"id": "definition-termes", "titre": "Définir les termes du sujet", "evaluable": true, "commentaires": {"NA": "Pas de contexte / définitions erronées.", "ECA": "Contextualisation donnant globalement le sens du sujet.", "A": "Bonne maîtrise des notions et enjeux disciplinaires.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "problematique", "titre": "Proposer une problématique", "evaluable": true, "commentaires": {"NA": "Problématique absente ou maladroite, restrictive / menant à un hors-sujet.", "ECA": "Simple reprise du sujet, reformulation sans pertinence mais convenable.", "A": "Questionnement montrant que l'intérêt et la portée du sujet sont bien compris.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "annonce-plan", "titre": "Annoncer le plan", "evaluable": true, "commentaires": {"NA": "Pas d'annonce de plan / annonce très confuse.", "ECA": "Annonce sommaire / plutôt approximative du plan.", "A": "Annonce efficace et qui oriente le devoir.", "D": "Commentaire à confirmer à partir de la grille source."}}]}, {"id": "conclusion", "titre": "Conclusion", "evaluable": true, "commentaires": {}, "enfants": [{"id": "synthese", "titre": "Formuler une synthèse", "evaluable": true, "commentaires": {"NA": "Pas de conclusion.", "ECA": "Phrase conclusive simple / anecdotique / confuse.", "A": "Véritable réponse à la problématique.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "ouverture", "titre": "Proposer une ouverture", "evaluable": true, "commentaires": {"NA": "Pas d'ouverture.", "ECA": "Présence d'une ouverture mais plutôt artificielle.", "A": "Réelle mise en perspective du sujet.", "D": "Commentaire à confirmer à partir de la grille source."}}]}]}], "description": "NA, ECA et A sont des niveaux de maîtrise exclusifs. D est une bonification indépendante : le texte D décrit le motif de valorisation."};
+const DEFAULT_CONFIG = {"version": 1, "grille": "etude-critique-introduction-conclusion-v1", "description": "Paramètres de départ à ajuster après essais pédagogiques. D est une bonification indépendante, plafonnée au total indiqué.", "ponderations": {"accroche": 1, "definition-termes": 2, "problematique": 3, "annonce-plan": 2, "synthese": 2, "ouverture": 1}, "seuils": {"NA_max_exclusif": 0.5, "ECA_max_exclusif": 1.5, "A_max_exclusif": 2.5}, "bonus": {"plafond_total": 3, "pas_saisie": 0.25}};
+const PART_LAYOUT = [
+  {id:"organisation-du-devoir",title:"Organisation du devoir",categories:[{nodeId:"introduction-conclusion",title:"Introduction et conclusion"}]},
+  {id:"documents",title:"Documents",categories:[
+    {title:"Nature et source des documents",description:"Catégorie fictive à remplacer par les critères définitifs de la grille."},
+    {title:"Sélection des informations",description:"Capacités fictives à préciser pour le prototype."}
+  ]},
+  {id:"analyse",title:"Analyse",categories:[
+    {title:"Compréhension des enjeux",description:"Catégorie fictive à remplacer par les critères définitifs de la grille."},
+    {title:"Construction du raisonnement",description:"Capacités fictives à préciser pour le prototype."}
+  ]},
+  {id:"forme",title:"Forme",categories:[
+    {title:"Expression écrite",description:"Catégorie fictive à remplacer par les critères définitifs de la grille."},
+    {title:"Présentation du devoir",description:"Capacités fictives à préciser pour le prototype."}
+  ]}
+];
+let grid = structuredClone(DEFAULT_GRID);
+let config = structuredClone(DEFAULT_CONFIG);
+let manualChoices = {};
+let leafChoices = {};
+let bonusChoices = {};
+let levels = Object.fromEntries(grid.niveaux.map(l=>[l.id,l]));
+const statusEl = document.getElementById("status");
+const contentEl = document.getElementById("content");
+const partNavEl = document.getElementById("partNav");
+function setStatus(message, kind=""){statusEl.textContent=message;statusEl.className="sr-only";statusEl.dataset.kind=kind}
+function allNodes(nodes,result=[]){for(const n of nodes||[]){result.push(n);allNodes(n.enfants,result)}return result}
+function isLeaf(n){return !n.enfants||n.enfants.length===0}
+function descendantsLeaves(n){if(isLeaf(n))return[n];return(n.enfants||[]).flatMap(descendantsLeaves)}
+function getWeight(node){const w=config.ponderations?.[node.id];return Number.isFinite(Number(w))&&Number(w)>0?Number(w):1}
+function getLeafScore(node){const id=leafChoices[node.id];return id&&levels[id]?{score:levels[id].valeur,weight:getWeight(node),node}:null}
+function calculate(node){
+  const leaves=descendantsLeaves(node),scored=leaves.map(getLeafScore).filter(Boolean),total=leaves.length,count=scored.length;
+  if(!count)return{level:null,mean:null,count,total,partial:total>0};
+  const weightedTotal=scored.reduce((s,x)=>s+x.score*x.weight,0),weightTotal=scored.reduce((s,x)=>s+x.weight,0),mean=weightedTotal/weightTotal,t=config.seuils||{};
+  let level="A";
+  if(mean<Number(t.NA_max_exclusif??0.5))level="NA";
+  else if(mean<Number(t.ECA_max_exclusif??1.5))level="ECA";
+  else level="A";
+  return{level,mean,count,total,partial:count<total};
+}
+function effectiveLevel(node){if(isLeaf(node))return leafChoices[node.id]||null;if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];return calculate(node).level}
+function chosenOrigin(node){if(isLeaf(node))return leafChoices[node.id]?"manual":"none";if(Object.hasOwn(manualChoices,node.id))return"manual";return calculate(node).level?"auto":"none"}
+function totalBonus(){return Object.values(bonusChoices).reduce((s,v)=>s+(Number(v)||0),0)}
+function bonusCap(){return Math.max(0,Number(config.bonus?.plafond_total??3))}
+function setBonus(node,value){
+  const cap=bonusCap(),other=totalBonus()-(Number(bonusChoices[node.id])||0);
+  let n=Math.max(0,Number(value)||0);n=Math.min(n,Math.max(0,cap-other));
+  bonusChoices[node.id]=Math.round(n*100)/100;
+  if(bonusChoices[node.id]===0)delete bonusChoices[node.id];
+}
+function makeChoiceButton(node, level, selected, commentText, isBonus=false){
+  const b=document.createElement("button");b.type="button";b.className="choice-btn";b.style.setProperty("--level-color",level.couleur);
+  if(selected)b.classList.add("active");
+  b.textContent=commentText || level.libelle;
+  b.setAttribute("aria-pressed",String(Boolean(selected)));
+  b.addEventListener("click",()=>{
+    if(isBonus){
+      if(bonusChoices[node.id])delete bonusChoices[node.id];
+      else setBonus(node,Math.min(0.5,Math.max(0,bonusCap()-totalBonus())));
+      render();
       return;
     }
-    configEl.innerText = `${grille.titre || 'Grille'} — version ${grille.version || '?'}`;
-    niveauToValeur = {};
-    (grille.niveaux || []).forEach(n => niveauToValeur[n.id] = n.valeur);
-    ponderations = params && params.ponderations ? params.ponderations : {};
-    evaluations = {};
-    renderGrille();
-    computeAndShowScore();
-  }
-
-  function renderGrille(){
-    grilleContainer.innerHTML = '';
-    (grille.elements || []).forEach(root => grilleContainer.appendChild(renderNode(root)));
-  }
-
-  function renderNode(node){
-    const el = document.createElement('div');
-    el.className = 'element';
-    const titleDiv = document.createElement('div');
-    titleDiv.className = 'title';
-    titleDiv.innerHTML = `<span>${node.titre || node.id}</span><span style="font-size:0.9rem;color:var(--muted)">${node.evaluable ? '' : 'section'}</span>`;
-    el.appendChild(titleDiv);
-
-    if (node.evaluable) {
-      const controlsLine = document.createElement('div');
-      controlsLine.className = 'controls-line';
-      (grille.niveaux || []).forEach(n => {
-        const rid = `r-${node.id}-${n.id}`;
-        const lab = document.createElement('label');
-        lab.innerHTML = `<input type="radio" name="eval-${node.id}" id="${rid}" value="${n.id}"> ${n.id}`;
-        lab.style.marginRight = '0.6rem';
-        controlsLine.appendChild(lab);
-        lab.querySelector('input').addEventListener('change', (ev) => {
-          evaluations[node.id] = evaluations[node.id] || {};
-          evaluations[node.id].niveauId = ev.target.value;
-          computeAndShowScore();
-        });
-      });
-
-      const dLabel = document.createElement('label');
-      dLabel.style.marginLeft = '0.8rem';
-      dLabel.innerHTML = `<input type="checkbox" id="d-${node.id}"> D`;
-      dLabel.querySelector('input').addEventListener('change', (ev) => {
-        evaluations[node.id] = evaluations[node.id] || {};
-        evaluations[node.id].D = ev.target.checked;
-        computeAndShowScore();
-      });
-      controlsLine.appendChild(dLabel);
-      el.appendChild(controlsLine);
-
-      if (node.commentaires) {
-        const comm = document.createElement('div');
-        comm.className = 'meta';
-        const parts = [];
-        for (const [k,v] of Object.entries(node.commentaires)) parts.push(`${k}: ${v}`);
-        comm.innerText = parts.join(' | ');
-        el.appendChild(comm);
-      }
+    if(leafChoices[node.id]===level.id)delete leafChoices[node.id];
+    else leafChoices[node.id]=level.id;
+    render();
+  });
+  return b;
+}
+function makeLevelButton(node,level,effective,origin,suggested,isBonus=false){
+  const b=document.createElement("button");b.type="button";b.className="level-btn";b.style.setProperty("--level-color",level.couleur);
+  if(isBonus){b.classList.add("d-bonus");if(bonusChoices[node.id])b.classList.add("active")}
+  if(suggested===level.id)b.classList.add("suggested");
+  if(origin==="manual"&&effective===level.id)b.classList.add("manual");
+  if(effective===level.id)b.classList.add("final-selected");
+  b.setAttribute("aria-pressed",String(effective===level.id));
+  b.innerHTML=`<span class="abbr">${level.id}</span><span class="full">${level.id === "D" ? "Bonus" : level.libelle}</span>`;
+  b.addEventListener("click",()=>{
+    if(isBonus){
+      if(bonusChoices[node.id])delete bonusChoices[node.id];
+      else setBonus(node,Math.min(0.5,Math.max(0,bonusCap()-totalBonus())));
+      render();
+      return;
     }
+    if(isLeaf(node)){leafChoices[node.id]=leafChoices[node.id]===level.id?null:level.id}
+    else if(Object.hasOwn(manualChoices,node.id)&&manualChoices[node.id]===level.id){delete manualChoices[node.id]}
+    else{manualChoices[node.id]=level.id}
+    render()
+  });return b
+}
+function renderNode(node,depth=0,hideTitle=false){
+  const wrap=document.createElement("section");wrap.className=`node ${isLeaf(node)?"leaf":"group"} depth-${Math.min(depth,3)}`;
+  const eff=effectiveLevel(node),origin=chosenOrigin(node),calc=isLeaf(node)?null:calculate(node);
+  const nameBlock=document.createElement("div");nameBlock.className="capacity-name";
+  const nameText=document.createElement("div");nameText.className="node-title";nameText.textContent=node.titre;
+  const weightText=document.createElement("div");weightText.className="weight";weightText.textContent=`poids:${getWeight(node)}`;
+  nameBlock.appendChild(nameText);nameBlock.appendChild(weightText);
+  const criterionRow=document.createElement("div");criterionRow.className="criterion-row";
+  if(hideTitle)criterionRow.classList.add("category-summary");
+  if(!hideTitle)criterionRow.appendChild(nameBlock);
 
-    if (Array.isArray(node.enfants) && node.enfants.length) {
-      node.enfants.forEach(child => el.appendChild(renderNode(child)));
-    }
-    return el;
+  if(!isLeaf(node) && depth > 0){
+    wrap.appendChild(criterionRow);
+    const children=document.createElement("div");children.className="children";
+    for(const child of node.enfants)children.appendChild(renderNode(child,depth+1));
+    wrap.appendChild(children);
+    return wrap;
   }
 
-  function collectEvaluables(node){
-    let list = [];
-    if (node.evaluable) list.push(node);
-    if (Array.isArray(node.enfants)) node.enfants.forEach(c => list.push(...collectEvaluables(c)));
-    return list;
+  if(!isLeaf(node) && depth === 0){
+    const children=document.createElement("div");children.className="children";
+    for(const child of node.enfants)children.appendChild(renderNode(child,depth+1));
+    wrap.appendChild(children);
+    return wrap;
   }
 
-  function computeAndShowScore(){
-    if (!grille) { scoreEl.innerText = 'Score : —'; return; }
-    let allEvaluables = [];
-    (grille.elements || []).forEach(root => allEvaluables.push(...collectEvaluables(root)));
-    let totalPoids = 0;
-    let scorePondere = 0;
-    const pasSaisieValeur = (params && params.bonus && params.bonus.pas_saisie != null) ? Number(params.bonus.pas_saisie) : 0;
-    allEvaluables.forEach(node => {
-      const id = node.id;
-      const poids = (ponderations[id] != null) ? Number(ponderations[id]) : (node.meta && node.meta.weight != null ? Number(node.meta.weight) : 1);
-      totalPoids += poids;
-      const saisie = evaluations[id];
-      let niveauVal;
-      if (!saisie || saisie.niveauId == null) {
-        niveauVal = pasSaisieValeur;
-      } else {
-        niveauVal = niveauToValeur[saisie.niveauId] ?? 0;
-      }
-      scorePondere += niveauVal * poids;
+  const selectionWrap=document.createElement("div");selectionWrap.className="capacity-choices";
+  const choices=[...grid.niveaux,{id:"D",libelle:"Bonus",couleur:"#55a7ee"}];
+  for(const l of choices){
+    const isBonus = l.id === "D";
+    const commentText = isBonus ? (node.commentaires?.D || "Commentaire à confirmer à partir de la grille source.") : (node.commentaires?.[l.id] || l.libelle);
+    const selected = isBonus ? Boolean(bonusChoices[node.id]) : eff === l.id;
+    selectionWrap.appendChild(makeChoiceButton(node,l,selected,commentText,isBonus));
+  }
+  criterionRow.appendChild(selectionWrap);
+  wrap.appendChild(criterionRow);
+  return wrap;
+}
+function initializePartNav(){
+  for(const part of PART_LAYOUT){
+    const button=document.createElement("button");button.type="button";button.className="part-tab";
+    button.setAttribute("aria-controls",`part-${part.id}`);button.setAttribute("aria-label",part.title);
+    const count=document.createElement("span");count.className="part-tab-count";count.textContent="0/0";button.appendChild(count);
+    const label=document.createElement("span");label.className="part-tab-label";label.textContent=part.title;button.appendChild(label);
+    button.addEventListener("click",()=>{
+      const section=document.getElementById(`part-${part.id}`);
+      if(section){const headerHeight=document.querySelector("header").getBoundingClientRect().height;window.scrollTo({top:window.scrollY+section.getBoundingClientRect().top-headerHeight,behavior:"instant"})}
+      setActivePart(part.id);
     });
-
-    const maxNiveauVal = Object.values(niveauToValeur).length ? Math.max(...Object.values(niveauToValeur)) : 2;
-    const maxPossible = maxNiveauVal * totalPoids;
-
-    let bonusTotal = 0;
-    const plafond = params && params.bonus && params.bonus.plafond_total ? Number(params.bonus.plafond_total) : 0;
-    Object.entries(evaluations).forEach(([id, ev]) => {
-      if (ev && ev.D) bonusTotal += 0.25;
-    });
-    if (plafond) bonusTotal = Math.min(bonusTotal, plafond);
-
-    const finalScore = scorePondere + bonusTotal;
-    scoreEl.innerText = `Score : ${finalScore.toFixed(2)} / ${maxPossible.toFixed(2)} (bonus ${bonusTotal.toFixed(2)})`;
+    partNavEl.appendChild(button);
   }
-
-  function csvRowsToGrille(rows){
-    const parts = {};
-    for (const r of rows){
-      if (!r || Object.values(r).every(v => (v===null || String(v).trim()===''))) continue;
-      const part = (r.part||'Partie non définie').trim();
-      const category = (r.category||'Catégorie').trim();
-      const subcategory = (r.subcategory||'Sous-catégorie').trim();
-      let id = (r.id||'').trim();
-      const title = (r.title || id || '').trim();
-      const evaluable = String((r.evaluable || 'true')).trim().toLowerCase() !== 'false';
-      const comments = {};
-      if (r.comment_NA) comments['NA'] = r.comment_NA;
-      if (r.comment_ECA) comments['ECA'] = r.comment_ECA;
-      if (r.comment_A) comments['A'] = r.comment_A;
-      if (r.comment_D) comments['D'] = r.comment_D;
-      const weight = r.weight !== undefined ? r.weight : '';
-      const order = r.order !== undefined ? r.order : '';
-
-      if (!id) id = slugify(title) || ('item-' + Math.random().toString(36).slice(2,8));
-      parts[part] = parts[part] || {};
-      parts[part][category] = parts[part][category] || {};
-      parts[part][category][subcategory] = parts[part][category][subcategory] || [];
-      const node = { id, titre: title || id, evaluable, commentaires: comments };
-      const meta = {};
-      if (weight !== '') {
-        const w = Number(weight);
-        meta.weight = isNaN(w) ? weight : w;
-      }
-      if (order !== '') {
-        const o = Number(order);
-        meta.order = isNaN(o) ? order : o;
-      }
-      if (Object.keys(meta).length) node.meta = meta;
-      parts[part][category][subcategory].push(node);
-    }
-
-    const elements = [];
-    for (const [partName, cats] of Object.entries(parts)){
-      const partNode = { id: slugify(partName), titre: partName, evaluable:false, enfants: [] };
-      for (const [catName, subs] of Object.entries(cats)){
-        const catNode = { id: slugify(partName+'-'+catName), titre: catName, evaluable:false, enfants: [] };
-        for (const [subName, caps] of Object.entries(subs)){
-          const subNode = { id: slugify(partName+'-'+catName+'-'+subName), titre: subName, evaluable:false, enfants: [] };
-          caps.forEach(c => subNode.enfants.push(c));
-          catNode.enfants.push(subNode);
-        }
-        partNode.enfants.push(catNode);
-      }
-      elements.push(partNode);
-    }
-
-    const niveaux = [
-      {"id":"NA","libelle":"Non acquis","valeur":0,"couleur":"#e45b60"},
-      {"id":"ECA","libelle":"En cours d'acquisition","valeur":1,"couleur":"#e8c64a"},
-      {"id":"A","libelle":"Acquis","valeur":2,"couleur":"#49bd7b"}
-    ];
-
-    return {
-      version: 1,
-      id: 'grille-from-csv-' + Date.now(),
-      titre: 'Grille importée depuis CSV',
-      niveaux,
-      elements,
-      description: 'Générée depuis CSV'
-    };
+}
+function setActivePart(id){
+  for(const button of partNavEl.querySelectorAll(".part-tab")){
+    if(button.getAttribute("aria-controls")===`part-${id}`)button.setAttribute("aria-current","location");
+    else button.removeAttribute("aria-current");
   }
-
-  function csvRowsToParams(rows){
-    const out = { version: 1, ponderations: {}, seuils: {}, bonus: {} };
-    for (const r of rows){
-      if (!r || Object.values(r).every(v => (v===null || String(v).trim()===''))) continue;
-      const typ = (r.type||'').trim();
-      const pid = (r.id||'').trim();
-      const key = (r.key||'').trim();
-      const rawVal = (r.value||'').trim();
-      let val = rawVal;
-      if (val !== '') {
-        if (!isNaN(val) && val.indexOf('.') === -1) val = parseInt(val, 10);
-        else if (!isNaN(val)) val = parseFloat(val);
-      }
-      if (typ === 'ponderation' && pid) {
-        out.ponderations[pid] = val;
-      } else if (typ === 'seuil' && key) {
-        out.seuils[key] = val;
-      } else if (typ === 'bonus' && key) {
-        out.bonus[key] = val;
-      } else {
-        if (typ && key) {
-          out[typ] = out[typ] || {};
-          out[typ][key] = val;
-        }
-      }
-    }
-    return out;
+}
+function updateActivePart(){
+  const marker=window.innerHeight*.32;let active=PART_LAYOUT[0].id;
+  for(const part of PART_LAYOUT){
+    const section=document.getElementById(`part-${part.id}`);
+    if(section&&section.getBoundingClientRect().top<=marker)active=part.id;
   }
-
-  function handleLocalFile(file, targetType){
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target.result;
-      const isJson = file.name.toLowerCase().endsWith('.json') || (/^\s*[\{\[]/.test(text));
-      if (isJson) {
-        try {
-          const obj = JSON.parse(text);
-          if (targetType === 'grille') grille = obj;
-          else params = obj;
-          postLoadInit();
-        } catch (err) {
-          alert('Erreur parsing JSON: ' + err.message);
-        }
-      } else {
-        Papa.parse(text, {
-          header: true,
-          skipEmptyLines: true,
-          complete: function(results){
-            if (targetType === 'grille') grille = csvRowsToGrille(results.data);
-            else params = csvRowsToParams(results.data);
-            postLoadInit();
-          }
-        });
-      }
-    };
-    reader.readAsText(file, 'utf-8');
+  setActivePart(active);
+}
+function updatePartCounts(roots){
+  const mappedIds=new Set(PART_LAYOUT.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
+  for(const part of PART_LAYOUT){
+    const nodes=part.categories.map(category=>roots.find(root=>root.id===category.nodeId)).filter(Boolean);
+    if(part.id===PART_LAYOUT[0].id)nodes.push(...roots.filter(root=>!mappedIds.has(root.id)));
+    const leaves=nodes.flatMap(descendantsLeaves),filled=leaves.filter(node=>leafChoices[node.id]).length;
+    const button=partNavEl.querySelector(`[aria-controls="part-${part.id}"]`);
+    button.querySelector(".part-tab-count").textContent=`${filled}/${leaves.length}`;
+    button.classList.toggle("complete",leaves.length>0&&filled===leaves.length);
+    button.setAttribute("aria-label",`${part.title}, ${filled} capacité(s) renseignée(s) sur ${leaves.length}`);
   }
-
-  fileGrilleInput.addEventListener('change', (ev) => {
-    const f = ev.target.files && ev.target.files[0];
-    if (!f) return;
-    handleLocalFile(f, 'grille');
-  });
-  fileParamsInput.addEventListener('change', (ev) => {
-    const f = ev.target.files && ev.target.files[0];
-    if (!f) return;
-    handleLocalFile(f, 'params');
-  });
-
-  function fetchText(url){
-    return fetch(url).then(r => {
-      if (!r.ok) throw new Error('Erreur HTTP ' + r.status + ' lors du fetch de ' + url);
-      return r.text();
-    });
+}
+function renderCategory(category,node=null){
+  const section=document.createElement("section");section.className="section";
+  const head=document.createElement("div");head.className="section-head category-head";
+  const headingRow=document.createElement("div");headingRow.className="category-heading-row";
+  const heading=document.createElement("h2");heading.textContent=node?.titre||category.title||"Catégorie";headingRow.appendChild(heading);
+  if(node&&!isLeaf(node)){
+    const calculation=calculate(node),effective=effectiveLevel(node),origin=chosenOrigin(node);
+    const controls=document.createElement("div");controls.className="category-levels";
+    for(const level of grid.niveaux){
+      const button=makeLevelButton(node,level,effective,origin,calculation.level);
+      button.classList.add("category-level-btn");button.setAttribute("aria-label",`${level.id} ${level.libelle}`);
+      button.querySelector(".full")?.remove();controls.appendChild(button);
+    }
+    headingRow.appendChild(controls);
+    const metrics=document.createElement("div");metrics.className="category-metrics";
+    const mean=document.createElement("span");mean.className="pill";mean.textContent=`Moyenne : ${calculation.mean===null?"—":calculation.mean.toFixed(2).replace(".",",")}`;metrics.appendChild(mean);
+    const comment=document.createElement("div");comment.className="category-comment empty";
+    const commentLevel=effective||calculation.level;
+    if(commentLevel&&node.commentaires?.[commentLevel]){comment.classList.remove("empty");comment.textContent=node.commentaires[commentLevel]}
+    head.appendChild(headingRow);head.appendChild(metrics);head.appendChild(comment);
+  }else{
+    head.appendChild(headingRow);
+    if(!node){const description=document.createElement("p");description.className="small";description.textContent=category.description;head.appendChild(description)}
   }
-
-  loadSampleGrilleBtn.addEventListener('click', async () => {
-    const url = sampleGrilleSelect.value;
-    if (!url) { alert('Sélectionnez un exemple de grille.'); return; }
-    try {
-      const text = await fetchText(url);
-      Papa.parse(text, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results){
-          grille = csvRowsToGrille(results.data);
-          postLoadInit();
-        }
-      });
-    } catch (e) {
-      alert('Échec du chargement de l’exemple: ' + e.message);
+  section.appendChild(head);
+  if(node)section.appendChild(renderNode(node,0,!isLeaf(node)));
+  else{const placeholder=document.createElement("div");placeholder.className="category-placeholder small";placeholder.textContent=category.description;section.appendChild(placeholder)}
+  return section;
+}
+function render(){
+  contentEl.innerHTML="";
+  const roots=grid.elements||[];
+  const mappedIds=new Set(PART_LAYOUT.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
+  for(const part of PART_LAYOUT){
+    const partSection=document.createElement("section");partSection.className="part-section";partSection.id=`part-${part.id}`;
+    const heading=document.createElement("h2");heading.className="part-heading";heading.textContent=part.title;partSection.appendChild(heading);
+    for(const category of part.categories){
+      const node=category.nodeId?roots.find(root=>root.id===category.nodeId):null;
+      const missing=category.nodeId&&!node?{...category,description:"Cette catégorie n'est pas présente dans la grille actuellement chargée."}:category;
+      partSection.appendChild(renderCategory(missing,node));
     }
-  });
-
-  loadSampleParamsBtn.addEventListener('click', async () => {
-    const url = sampleParamsSelect.value;
-    if (!url) { alert('Sélectionnez un exemple de paramètres.'); return; }
-    try {
-      const text = await fetchText(url);
-      Papa.parse(text, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results){
-          params = csvRowsToParams(results.data);
-          postLoadInit();
-        }
-      });
-    } catch (e) {
-      alert('Échec du chargement de l’exemple: ' + e.message);
+    if(part.id===PART_LAYOUT[0].id){
+      for(const node of roots.filter(root=>!mappedIds.has(root.id)))
+        partSection.appendChild(renderCategory({title:node.titre},node));
     }
-  });
-
-  exportBtn.addEventListener('click', () => {
-    const payload = {
-      meta: { grilleId: grille && grille.id ? grille.id : null, paramsVersion: params && params.version ? params.version : null, generatedAt: new Date().toISOString() },
-      evaluations,
-      computed: scoreEl.innerText
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'correction-export.json'; a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  printBtn.addEventListener('click', () => window.print());
-
-  postLoadInit();
-})();
+    contentEl.appendChild(partSection);
+  }
+  const leaves=allNodes(roots).filter(isLeaf);
+  const scored=leaves.map(getLeafScore).filter(Boolean);
+  const bonus=totalBonus();
+  let baseScore=null;
+  if(scored.length){const weighted=scored.reduce((s,x)=>s+x.score*x.weight,0); const weights=scored.reduce((s,x)=>s+x.weight,0); baseScore=20*(weighted/(2*weights));}
+  const finalScore=baseScore===null?null:Math.min(20,baseScore+bonus);
+  const fmt=n=>n.toFixed(2).replace(".",",");
+  document.getElementById("finalScore").textContent=finalScore===null?"—/20":`${fmt(finalScore)}/20`;
+  updatePartCounts(roots);
+  updateActivePart();
+}
+function readJsonFile(file,callback){const reader=new FileReader();reader.onload=()=>{try{callback(JSON.parse(reader.result))}catch(e){setStatus("Impossible de lire ce JSON : "+e.message,"error")}};reader.onerror=()=>setStatus("La lecture du fichier a échoué.","error");reader.readAsText(file)}
+document.getElementById("gridInput").addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;readJsonFile(f,data=>{if(!data.elements||!data.niveaux){setStatus("Ce fichier ne ressemble pas à une définition de grille valide.","error");return}grid=data;levels=Object.fromEntries(grid.niveaux.map(l=>[l.id,l]));manualChoices={};leafChoices={};bonusChoices={};render();setStatus("Grille JSON chargée. Les choix précédents ont été réinitialisés.")})});
+document.getElementById("configInput").addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;readJsonFile(f,data=>{if(!data.ponderations||!data.seuils){setStatus("Paramétrage invalide : pondérations ou seuils absents.","error");return}config=data;const cap=bonusCap();let left=cap;for(const id of Object.keys(bonusChoices)){const v=Math.min(bonusChoices[id],left);bonusChoices[id]=v;left-=v;if(v<=0)delete bonusChoices[id]}render();setStatus("Paramétrage JSON chargé. Pondérations, seuils et plafond de bonus actualisés.")})});
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
+document.getElementById("resetBtn").addEventListener("click",()=>{manualChoices={};leafChoices={};bonusChoices={};render();setStatus("Tous les choix et bonus ont été réinitialisés.")});
+document.getElementById("gridLoadBtn").addEventListener("click",()=>document.getElementById("gridInput").click());
+document.getElementById("configLoadBtn").addEventListener("click",()=>document.getElementById("configInput").click());
+document.getElementById("settingsBtn").addEventListener("click",()=>document.getElementById("settingsDialog").showModal());
+document.getElementById("closeSettings").addEventListener("click",()=>document.getElementById("settingsDialog").close());
+document.getElementById("showMetrics").addEventListener("change",event=>document.querySelector(".app").classList.toggle("show-metrics",event.target.checked));
+window.addEventListener("beforeprint",()=>{
+  document.querySelectorAll(".level-btn").forEach(b=>{b.classList.remove("manual","suggested","final-selected")});
+  document.querySelectorAll(".node").forEach(nodeEl=>{const buttons=[...nodeEl.querySelectorAll(":scope > .levels .level-btn")];const selected=buttons.find(b=>b.getAttribute("aria-pressed")==="true");if(selected)selected.classList.add("final-selected")});
+});
+window.addEventListener("afterprint",render);
+initializePartNav();
+window.addEventListener("scroll",updateActivePart,{passive:true});
+render();
 </script>
-</body>
-</html>
+</body></html>
