@@ -1,0 +1,12 @@
+type;partie;categorie;sous_categorie;id;titre;evaluable;commentaire_NA;commentaire_ECA;commentaire_A;commentaire_D;ponderation;ordre;parametre;valeur
+capacite;Organisation;Introduction et conclusion;Introduction;accroche;Commencer par une accroche;true;Pas d'accroche.;Accroche présente mais imprécise / déconnectée.;Accroche efficace et intéressante.;Accroche et contextualisation s'appuyant sur une culture personnelle;1;1;;
+capacite;Organisation;Introduction et conclusion;Introduction;definition-termes;Définir les termes du sujet;true;Pas de contexte / définitions erronées.;Contextualisation donnant globalement le sens du sujet.;Bonne maîtrise des notions et enjeux disciplinaires.;;2;2;;
+capacite;Organisation;Introduction et conclusion;Introduction;problematique;Proposer une problématique;true;Problématique absente ou maladroite, restrictive / menant à un hors-sujet.;Simple reprise du sujet, reformulation sans pertinence mais convenable.;Questionnement montrant que l'intérêt et la portée du sujet sont bien compris.;;3;3;;
+capacite;Organisation;Introduction et conclusion;Introduction;annonce-plan;Annoncer le plan;true;Pas d'annonce de plan / annonce très confuse.;Annonce sommaire / plutôt approximative du plan.;Annonce efficace et qui oriente le devoir.;;2;4;;
+capacite;Organisation;Introduction et conclusion;Conclusion;synthese;Formuler une synthèse;true;Pas de conclusion.;Phrase conclusive simple / anecdotique / confuse.;Véritable réponse à la problématique.;;2;5;;
+capacite;Organisation;Introduction et conclusion;Conclusion;ouverture;Proposer une ouverture;true;Pas d'ouverture.;Présence d'une ouverture mais plutôt artificielle.;Réelle mise en perspective du sujet.;;1;6;;
+parametre;"";"";"";"";"";"";"";"";"";"";"";"";seuil.NA_max_exclusif;0.5
+parametre;"";"";"";"";"";"";"";"";"";"";"";"";seuil.ECA_max_exclusif;1.5
+parametre;"";"";"";"";"";"";"";"";"";"";"";"";seuil.A_max_exclusif;2.5
+parametre;"";"";"";"";"";"";"";"";"";"";"";"";bonus.plafond_total;3
+parametre;"";"";"";"";"";"";"";"";"";"";"";"";bonus.pas_saisie;0.25
