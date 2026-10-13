@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "grille": "etude-critique-introduction-conclusion-v1",
+  "description": "Paramètres de départ à ajuster après essais pédagogiques. D est une bonification indépendante, plafonnée au total indiqué.",
+  "ponderations": {
+    "accroche": 1,
+    "definition-termes": 2,
+    "problematique": 3,
+    "annonce-plan": 2,
+    "synthese": 2,
+    "ouverture": 1
+  },
+  "seuils": {
+    "NA_max_exclusif": 0.5,
+    "ECA_max_exclusif": 1.5,
+    "A_max_exclusif": 2.5
+  },
+  "bonus": {
+    "plafond_total": 3,
+    "pas_saisie": 0.25
+  }
+}

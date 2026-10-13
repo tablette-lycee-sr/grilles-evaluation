@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "id": "etude-critique-introduction-conclusion-v1",
+  "titre": "Étude critique — Introduction et conclusion",
+  "niveaux": [
+    {
+      "id": "NA",
+      "libelle": "Non acquis",
+      "valeur": 0,
+      "couleur": "#e45b60"
+    },
+    {
+      "id": "ECA",
+      "libelle": "En cours d'acquisition",
+      "valeur": 1,
+      "couleur": "#e8c64a"
+    },
+    {
+      "id": "A",
+      "libelle": "Acquis",
+      "valeur": 2,
+      "couleur": "#49bd7b"
+    }
+  ],
+  "elements": [
+    {
+      "id": "introduction-conclusion",
+      "titre": "Introduction et conclusion",
+      "evaluable": true,
+      "commentaires": {
+        "NA": "Début et fin du devoir absents, très limités et/ou maladroits.",
+        "ECA": "Commentaire à préciser à partir de la grille définitive.",
+        "A": "Première et dernière impression très positive : le sujet est compris.",
+        "D": "Commentaire à confirmer à partir de la grille source."
+      },
+      "enfants": [
+        {
+          "id": "introduction",
+          "titre": "Introduction",
+          "evaluable": true,
+          "commentaires": {},
+          "enfants": [
+            {
+              "id": "accroche",
+              "titre": "Commencer par une accroche",
+              "evaluable": true,
+              "commentaires": {
+                "NA": "Pas d'accroche.",
+                "ECA": "Accroche présente mais imprécise / déconnectée.",
+                "A": "Accroche efficace et intéressante.",
+                "D": "Accroche et contextualisation s'appuyant sur une culture personnelle."
+              }
+            },
+            {
+              "id": "definition-termes",
+              "titre": "Définir les termes du sujet",
+              "evaluable": true,
+              "commentaires": {
+                "NA": "Pas de contexte / définitions erronées.",
+                "ECA": "Contextualisation donnant globalement le sens du sujet.",
+                "A": "Bonne maîtrise des notions et enjeux disciplinaires.",
+                "D": "Commentaire à confirmer à partir de la grille source."
+              }
+            },
+            {
+              "id": "problematique",
+              "titre": "Proposer une problématique",
+              "evaluable": true,
+              "commentaires": {
+                "NA": "Problématique absente ou maladroite, restrictive / menant à un hors-sujet.",
+                "ECA": "Simple reprise du sujet, reformulation sans pertinence mais convenable.",
+                "A": "Questionnement montrant que l'intérêt et la portée du sujet sont bien compris.",
+                "D": "Commentaire à confirmer à partir de la grille source."
+              }
+            },
+            {
+              "id": "annonce-plan",
+              "titre": "Annoncer le plan",
+              "evaluable": true,
+              "commentaires": {
+                "NA": "Pas d'annonce de plan / annonce très confuse.",
+                "ECA": "Annonce sommaire / plutôt approximative du plan.",
+                "A": "Annonce efficace et qui oriente le devoir.",
+                "D": "Commentaire à confirmer à partir de la grille source."
+              }
+            }
+          ]
+        },
+        {
+          "id": "conclusion",
+          "titre": "Conclusion",
+          "evaluable": true,
+          "commentaires": {},
+          "enfants": [
+            {
+              "id": "synthese",
+              "titre": "Formuler une synthèse",
+              "evaluable": true,
+              "commentaires": {
+                "NA": "Pas de conclusion.",
+                "ECA": "Phrase conclusive simple / anecdotique / confuse.",
+                "A": "Véritable réponse à la problématique.",
+                "D": "Commentaire à confirmer à partir de la grille source."
+              }
+            },
+            {
+              "id": "ouverture",
+              "titre": "Proposer une ouverture",
+              "evaluable": true,
+              "commentaires": {
+                "NA": "Pas d'ouverture.",
+                "ECA": "Présence d'une ouverture mais plutôt artificielle.",
+                "A": "Réelle mise en perspective du sujet.",
+                "D": "Commentaire à confirmer à partir de la grille source."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "description": "NA, ECA et A sont des niveaux de maîtrise exclusifs. D est une bonification indépendante : le texte D décrit le motif de valorisation."
+}
