@@ -349,7 +349,7 @@ function renderCategory(category,node=null){
       mean.textContent=`Capacités pondérées : ${value===null?"—":`${value.toFixed(1).replace(".",",")} %`}`;
     };
     let pointerStart=null;
-    const touchDragThreshold=8;
+    const touchDragThreshold=4;
     slider.addEventListener("pointerdown",event=>{
       const bounds=slider.getBoundingClientRect(),value=Number(slider.value);
       const thumbX=bounds.left+7+(bounds.width-14)*value/100;
