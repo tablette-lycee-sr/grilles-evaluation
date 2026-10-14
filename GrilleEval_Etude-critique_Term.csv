@@ -14,4 +14,4 @@ parametre;;;;;;;;;;;;;seuil.A_max_exclusif;2.5;
 parametre;;;;;;;;;;;;;bonus.plafond_total;3;
 parametre;;;;;;;;;;;;;bonus.pas_saisie;0.25;
 parametre;;;;;;;;;;;;;typeDevoir;Étude critique de documents;
-parametre;;;;;;;;;;;;;niveauDevoir;Niveau Bac;
+parametre;;;;;;;;;;;;;niveauDevoir;Niveau Term;
