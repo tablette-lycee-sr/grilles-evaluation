@@ -353,27 +353,30 @@ function renderCategory(category,node=null){
     slider.addEventListener("pointerdown",event=>{
       const bounds=slider.getBoundingClientRect(),value=Number(slider.value);
       const thumbX=bounds.left+7+(bounds.width-14)*value/100;
-      pointerStart={x:event.clientX,y:event.clientY,value,pointerType:event.pointerType,manual:Object.hasOwn(manualCategoryPercent,node.id),onThumb:Math.abs(event.clientX-thumbX)<=9,dragged:false};
+      pointerStart={x:event.clientX,y:event.clientY,value,pointerType:event.pointerType,manual:Object.hasOwn(manualCategoryPercent,node.id),manualValue:manualCategoryPercent[node.id],onThumb:Math.abs(event.clientX-thumbX)<=9};
     });
-    slider.addEventListener("pointermove",event=>{
-      if(pointerStart&&pointerStart.pointerType!=="mouse"&&Math.hypot(event.clientX-pointerStart.x,event.clientY-pointerStart.y)>touchDragThreshold)pointerStart.dragged=true;
-    });
-    slider.addEventListener("input",()=>{
-      if(pointerStart&&pointerStart.pointerType!=="mouse"&&!pointerStart.dragged){slider.value=String(pointerStart.value);return}
-      manualCategoryPercent[node.id]=Number(slider.value);updateSliderDisplay();updateFinalScore();
-    });
+    slider.addEventListener("input",()=>{manualCategoryPercent[node.id]=Number(slider.value);updateSliderDisplay();updateFinalScore()});
     slider.addEventListener("pointerup",event=>{
       const start=pointerStart;pointerStart=null;
       const distance=start?Math.hypot(event.clientX-start.x,event.clientY-start.y):Infinity;
       if(start&&start.pointerType!=="mouse"&&distance<=touchDragThreshold){
         slider.value=String(start.value);
-        if(start.manual&&start.onThumb)delete manualCategoryPercent[node.id];
+        if(start.manual&&!start.onThumb)manualCategoryPercent[node.id]=start.manualValue;
+        else delete manualCategoryPercent[node.id];
         updateSliderDisplay();updateFinalScore();
       }else if(start?.manual&&start.onThumb&&distance<=3&&Number(slider.value)===start.value){
         delete manualCategoryPercent[node.id];updateSliderDisplay();updateFinalScore();
       }
     });
-    slider.addEventListener("pointercancel",()=>{pointerStart=null});
+    slider.addEventListener("pointercancel",event=>{
+      const start=pointerStart;pointerStart=null;
+      if(start&&start.pointerType!=="mouse"&&Math.hypot(event.clientX-start.x,event.clientY-start.y)<=touchDragThreshold){
+        slider.value=String(start.value);
+        if(start.manual&&!start.onThumb)manualCategoryPercent[node.id]=start.manualValue;
+        else delete manualCategoryPercent[node.id];
+        updateSliderDisplay();updateFinalScore();
+      }
+    });
     slider.addEventListener("keydown",event=>{
       if(event.key==="Escape"&&Object.hasOwn(manualCategoryPercent,node.id)){
         event.preventDefault();delete manualCategoryPercent[node.id];updateSliderDisplay();updateFinalScore();
