@@ -179,7 +179,6 @@ function calculate(node){
 }
 function effectiveLevel(node){if(isLeaf(node))return leafChoices[node.id]||null;if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];return calculate(node).level}
 function getCategoryPercentage(node){
-  if(Object.hasOwn(manualChoices,node.id)&&levels[manualChoices[node.id]])return Number(levels[manualChoices[node.id]].valeur)*50;
   const mean=calculate(node).mean;
   return mean===null?null:mean*50;
 }
