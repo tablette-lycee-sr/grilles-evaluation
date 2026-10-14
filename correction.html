@@ -470,7 +470,7 @@ function parseCsv(text){
   if(rows.length<2)throw new Error("le fichier ne contient aucune donnée.");
   const headers=rows.shift().map(value=>value.trim());
   if(new Set(headers).size!==headers.length)throw new Error("les noms de colonnes doivent être uniques.");
-  const required=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","commentaire_D","ponderation","ordre","parametre","valeur","coefficient_categorie"];
+  const required=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","commentaire_D","ponderation","parametre","valeur","coefficient_categorie"];
   const missing=required.filter(header=>!headers.includes(header));
   if(missing.length)throw new Error(`colonnes manquantes : ${missing.join(", ")}.`);
   return rows.map((values,index)=>{
@@ -491,11 +491,6 @@ function gridFromCsv(text,fileName){
     else throw new Error(`type de ligne inconnu : « ${record.type} ».`);
   }
   if(!capacityRows.length)throw new Error("aucune ligne de capacité n'a été trouvée.");
-  capacityRows.sort((left,right)=>{
-    const leftOrder=left.ordre?csvNumber(left.ordre,"L'ordre"):Number.POSITIVE_INFINITY;
-    const rightOrder=right.ordre?csvNumber(right.ordre,"L'ordre"):Number.POSITIVE_INFINITY;
-    return leftOrder-rightOrder;
-  });
   let nextGroupId=0;const nextGroup=title=>({id:`__csv_node_${++nextGroupId}`,titre:title,evaluable:false,enfants:[]});
   const elements=[],parts=new Map(),categories=new Map(),subcategories=new Map(),capacityIds=new Set();
   const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};config.coefficientsCategories={};
