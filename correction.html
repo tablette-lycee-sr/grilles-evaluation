@@ -5,24 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Moteur de correction — prototype</title>
 <style>
-:root{color-scheme:dark;--bg:#242629;--panel:#2d3034;--muted:#44474c;--text:#f3f4f5;--sub:#bfc3c8;--line:#50545a;--red:#e45b60;--yellow:#e8c64a;--green:#49bd7b;--blue:#55a7ee}
+:root{color-scheme:dark;--bg:#242629;--panel:#2d3034;--muted:#44474c;--text:#f3f4f5;--sub:#bfc3c8;--line:#50545a;--red:#e45b60;--yellow:#e8c64a;--green:#49bd7b;--blue:#55a7ee;--accent:#aeb7c0;--accent-ink:#17191c;--header-height:max(16.67vh,128px)}
 *{box-sizing:border-box}html{background:var(--bg);scrollbar-gutter:stable}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
-.app{width:min(1080px,100%);margin-left:max(0px,calc((100vw - 1080px)/2));padding:calc(max(16.67vh,110px) + 20px) 16px 16px 96px}
-.part-nav{position:fixed;z-index:10;top:max(16.67vh,110px);bottom:0;left:max(0px,calc((100vw - 1080px)/2));width:64px;display:flex;flex-direction:column;background:#292c30;border-right:1px solid var(--line);overflow-y:auto}
-.part-tab{position:relative;display:block;flex:1 0 25%;min-height:100px;width:100%;padding:0;border:0;border-bottom:1px solid #55595f;border-radius:0;background:#3a3d42;color:#fff;font-size:1rem;font-weight:650;line-height:.98;overflow:hidden}
+.app{width:min(1080px,100%);margin-left:max(0px,calc((100vw - 1080px)/2));padding:calc(var(--header-height) + 20px) 16px 16px 96px}
+.app:not(.grid-loaded) .part-nav,.app:not(.grid-loaded) #content{display:none}
+.initial-state{position:fixed;inset:var(--header-height) 0 0;display:grid;place-items:center;padding:20px;color:var(--sub);text-align:center;font-size:1rem}
+.app.grid-loaded .initial-state{display:none}
+.part-nav{position:fixed;z-index:10;top:var(--header-height);bottom:0;left:max(0px,calc((100vw - 1080px)/2));width:64px;display:flex;flex-direction:column;background:#292c30;border-right:1px solid var(--line);overflow-y:auto}
+.part-tab{position:relative;display:block;flex:1 0 25%;min-height:100px;width:100%;padding:0;border:0;border-bottom:1px solid #55595f;border-radius:0;background:#3a3d42;color:#fff;font-size:.88rem;font-weight:650;line-height:1.05;overflow:hidden}
 .part-tab:hover{background:#4a4e54}.part-tab[aria-current="location"]{background:#fff;color:#17191c}
-.part-tab.complete::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--blue)}
+.part-tab.complete::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent)}
 .settings-option{display:flex;align-items:center;gap:10px;padding:8px 0;color:var(--text)}.settings-option input{width:18px;height:18px;accent-color:var(--blue)}
-.part-tab-label{position:absolute;left:50%;top:57%;display:block;width:max(60px,calc(20.83vh - 24px));text-align:center;white-space:normal;transform:translate(-50%,-50%) rotate(-90deg)}
-.part-tab-count{position:absolute;top:6px;left:0;width:100%;font-size:.68rem;font-weight:550;line-height:1;color:inherit}
-.part-section{scroll-margin-top:max(16.67vh,110px);margin:0 0 28px}
-.part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.part-tab-label{position:absolute;left:50%;top:59%;display:block;width:max(56px,calc(20.83vh - 20px));padding:0 2px;text-align:center;white-space:normal;overflow-wrap:anywhere;hyphens:auto;line-height:1.05;transform:translate(-50%,-50%) rotate(-90deg)}
+.part-tab-count{position:absolute;z-index:1;top:6px;left:50%;width:auto;min-width:34px;padding:4px 6px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-size:.66rem;font-weight:700;line-height:1;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.part-section{scroll-margin-top:var(--header-height);margin:0 0 28px}
+.part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding:0;border:0}
 .category-placeholder{padding:12px 14px;border-top:1px solid #3c3f44}
-header{position:fixed;z-index:20;inset:0 0 auto;height:max(16.67vh,110px);display:grid;grid-template-columns:5fr 3fr;align-items:center;gap:12px;padding:10px 18px;background:rgba(36,38,41,.98);border-bottom:1px solid var(--line)}
-.header-left{grid-column:1;min-width:0}.header-left h1{font-size:1.25rem;line-height:1.15;margin:0 0 10px}h2{font-size:1.05rem;margin:0 0 6px}
+header{position:fixed;z-index:20;inset:0 0 auto;height:var(--header-height);display:grid;grid-template-columns:5fr 3fr;align-items:center;gap:12px;padding:10px 18px;background:rgba(36,38,41,.98);border-bottom:1px solid var(--line)}
+.header-left{grid-column:1;min-width:0}.header-left h1{font-size:1.25rem;line-height:1.15;margin:0 0 6px}h2{font-size:1.05rem;margin:0 0 6px}
 .student-name{width:min(100%,360px);height:34px;padding:6px 10px;border:1px solid #62666d;border-radius:6px;background:#1b1d20;color:#fff;font:inherit;font-size:.9rem}
-.header-score{display:block;min-width:0;margin-top:6px;font-size:1.3rem;font-weight:800;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.header-score{display:block;min-width:0;margin:0;color:#969ba1;font-size:1.05rem;font-weight:600;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
 .header-actions{grid-column:2;display:grid;grid-template-columns:repeat(4,44px);justify-content:start;align-content:center;gap:8px;margin:0}
 button,.filelabel{font:inherit;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#3a3d42;color:var(--text);cursor:pointer}
 button:focus-visible,.filelabel:focus-within{outline:2px solid white;outline-offset:2px}button.secondary{background:transparent}
@@ -36,7 +39,7 @@ button:focus-visible,.filelabel:focus-within{outline:2px solid white;outline-off
 .import-catalog{display:grid}.import-catalog-button{width:100%;padding:9px 10px;border:0;border-radius:4px;background:transparent;text-align:left;white-space:normal}.import-catalog-button:hover{background:#4a4e54}
 .import-separator{height:1px;margin:4px 6px;background:var(--line)}
 input[type=file]{position:fixed;left:-10000px;width:1px;height:1px;opacity:0}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.status-toast{position:fixed;z-index:30;top:calc(max(16.67vh,110px) + 8px);left:50%;transform:translateX(-50%);max-width:calc(100vw - 24px);padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.35);font-size:.85rem}
+.status-toast{position:fixed;z-index:30;top:calc(var(--header-height) + 8px);left:50%;transform:translateX(-50%);max-width:calc(100vw - 24px);padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.35);font-size:.85rem}
 .status-toast[data-kind="error"]{border-color:var(--red)}
 .header-score output{display:block}
 dialog{width:min(420px,calc(100vw - 32px));border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);padding:18px}
@@ -62,9 +65,9 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 .bonus-controls label{font-size:.82rem;color:var(--sub)}
 .bonus-controls input{width:86px;background:#1b1d20;color:#fff;border:1px solid #62666d;border-radius:7px;padding:8px;font:inherit}
 .bonus-help{font-size:.78rem;color:var(--sub);align-self:center}
-@media(min-width:700px){.capacity-choices{grid-template-columns:repeat(4,minmax(0,1fr))}.app{padding:calc(max(16.67vh,110px) + 20px) 20px 20px 100px}.node{padding:14px}.level-btn{min-height:48px;height:48px}.choice-btn{font-size:.68rem;min-height:52px}}
+@media(min-width:700px){.capacity-choices{grid-template-columns:repeat(4,minmax(0,1fr))}.app{padding:calc(var(--header-height) + 20px) 20px 20px 100px}.node{padding:14px}.level-btn{min-height:48px;height:48px}.choice-btn{font-size:.68rem;min-height:52px}}
 @media(max-width:900px) and (min-width:700px){.header-actions{grid-template-columns:repeat(4,38px);gap:5px}.icon-button,.icon-file{width:38px;height:38px}}
-@media(max-width:699px){.app{padding:calc(max(16.67vh,110px) + 14px) 10px 16px 80px}.part-nav{width:56px}.part-tab{min-height:80px;font-size:.9rem}.part-tab-label{width:max(56px,calc(20.83vh - 28px))}header{grid-template-columns:minmax(0,5fr) minmax(104px,3fr);gap:5px;padding:8px}.header-left h1{font-size:1rem;margin-bottom:6px}.student-name{height:30px;padding:4px 6px;font-size:.78rem}.header-score{font-size:1.1rem}.header-actions{grid-template-columns:repeat(3,34px);gap:4px}.icon-button,.icon-file{width:34px;height:34px;border-radius:6px}.icon-button svg,.icon-file svg{width:18px;height:18px}.criterion-row{grid-template-columns:minmax(0,1fr)}.level-btn{height:56px;min-height:56px}}
+@media(max-width:699px){.app{padding:calc(var(--header-height) + 14px) 10px 16px 80px}.part-nav{width:56px}.part-tab{min-height:80px;font-size:.78rem}.part-tab-label{top:59%;width:max(48px,calc(20vh - 12px));padding:0 2px;font-size:.74rem;line-height:1.04}.part-tab-count{top:5px;min-width:32px;padding:3px 5px;font-size:.6rem}header{grid-template-columns:minmax(0,5fr) minmax(104px,3fr);gap:5px;padding:8px}.header-left h1{font-size:1rem;margin-bottom:6px}.student-name{height:30px;padding:4px 6px;font-size:.78rem}.header-score{font-size:.95rem}.header-actions{grid-template-columns:repeat(3,34px);gap:4px}.icon-button,.icon-file{width:34px;height:34px;border-radius:6px}.icon-button svg,.icon-file svg{width:18px;height:18px}.criterion-row{grid-template-columns:minmax(0,1fr)}.level-btn{height:56px;min-height:56px}}
 .section-head.category-head{padding:6px 10px}.category-heading-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px}.category-heading-row h2{min-width:0;margin:0;font-size:1.18rem}.category-controls{display:flex;flex:none;flex-direction:column}.category-levels{display:flex;gap:6px;flex:none}.category-levels .level-btn{width:52px;height:21px;min-height:21px;padding:0 2px;font-size:.8rem;line-height:1}.category-levels .full{display:none}.category-score-slider{display:block;width:100%;height:10px;margin:5px 0 0;padding:0;appearance:none;background:transparent;cursor:pointer;touch-action:pan-y}.category-score-slider::-webkit-slider-runnable-track{height:5px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-moz-range-track{height:5px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-webkit-slider-thumb{width:14px;height:14px;margin-top:-4.5px;appearance:none;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider::-moz-range-thumb{width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider.manual::-webkit-slider-thumb{background:#fff}.category-score-slider.manual::-moz-range-thumb{background:#fff}.category-metrics{display:none;align-items:center;gap:8px;height:26px;margin-top:3px;overflow:hidden}.app.show-metrics .category-metrics{display:flex}.category-comment{height:2.5rem;overflow:auto;margin:2px 0 0;color:var(--sub);font-size:.85rem;line-height:1.3}.category-comment.empty{visibility:hidden}
 .part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .node.group{background:transparent}.node.depth-1{margin-left:4px}.node.depth-2{margin-left:8px}.node.depth-3{margin-left:12px}
@@ -72,12 +75,12 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 .capacity-choices{gap:4px}.children{margin-top:2px}.children .node{border:0;border-radius:0;margin-top:2px;padding:5px 0;background:transparent}.section>.node.depth-0{padding:0;border-top:0;background:transparent}
 .choice-btn.active{background:#44474c;background:color-mix(in srgb,var(--level-color) 44%,#44474c);border-color:color-mix(in srgb,var(--level-color) 62%,#686b70);color:#fff}
 @media(max-width:699px){.category-heading-row{align-items:flex-start;gap:4px}.category-levels{gap:3px}.category-levels .level-btn{width:36px;height:19px;min-height:19px;padding:0;font-size:.65rem;line-height:1}.category-comment{height:2.5rem}}
-.part-heading{font-size:1.8rem;font-weight:800;line-height:1.15;color:#858a90}
+.part-heading{font-size:1.8rem;font-weight:800;line-height:1.15;color:#858a90;border:0;padding:0}
 .node.depth-1>.criterion-row .node-title{color:#858a90;font-size:1.02rem}
 .section-head.category-head{border-bottom:0}
 .section>.node.depth-0{padding-right:10px;padding-left:10px}
-.header-fields{display:flex;gap:8px;width:min(100%,720px)}.header-fields .student-name{flex:1 1 0;width:0;min-width:0}.header-score{color:#969ba1;font-size:1.05rem;font-weight:600}
-@media(max-width:699px){.header-fields{gap:5px}.header-fields .student-name{padding:4px 5px;font-size:.72rem}.header-score{font-size:1.05rem}}
+.header-fields{display:grid;grid-template-columns:minmax(0,360px);gap:4px;width:min(100%,720px)}.grade-line{display:flex;align-items:center;gap:8px;min-width:0}.grade-line .final-grade{flex:0 1 180px;width:min(50%,180px);min-width:0}.header-score{flex:none}
+@media(max-width:699px){.header-fields{gap:3px}.header-fields .student-name{padding:4px 5px;font-size:.72rem}.grade-line{gap:6px}.grade-line .final-grade{flex-basis:50%;width:50%;min-width:0}.header-score{font-size:.95rem}}
 @media print{
   :root{color-scheme:light}
   body{background:#fff!important;color:#111!important;font-size:10pt}
@@ -106,18 +109,17 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
 <header aria-label="En-tête">
   <div class="header-left">
-    <h1 id="pageTitle">Étude critique de document(s)</h1>
+    <h1 id="pageTitle" aria-label="Titre de la grille"></h1>
     <div class="header-fields">
       <input id="studentName" class="student-name" type="text" placeholder="Nom de l’élève" aria-label="Nom de l’élève">
-      <input id="finalGrade" class="student-name final-grade" type="text" placeholder="Note finale" aria-label="Note finale">
+      <div class="grade-line"><input id="finalGrade" class="student-name final-grade" type="text" placeholder="Note finale" aria-label="Note finale"><div class="header-score" aria-label="Proposition de note finale avec bonus"><output id="finalScore">—/20</output></div></div>
     </div>
-    <div class="header-score" aria-label="Proposition de note finale avec bonus"><output id="finalScore">—/20</output></div>
   </div>
   <div class="header-actions no-print" aria-label="Actions">
     <details class="import-menu" id="importMenu"><summary class="icon-button" title="Importer une grille" aria-label="Importer une grille"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></summary><div class="import-options"><p class="import-heading">Grilles du dépôt</p><div class="import-catalog" id="gridCatalog">Chargement du catalogue…</div><div class="import-separator"></div><label class="import-option" for="gridCsvInput">CSV depuis l’ordinateur…</label><label class="import-option" for="gridInput">Grille JSON…</label><label class="import-option" for="configInput">Paramètres JSON…</label></div></details>
-    <button id="printBtn" class="icon-button" type="button" title="Imprimer / PDF" aria-label="Imprimer / PDF"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/></svg></button>
     <button id="resetBtn" class="icon-button" type="button" title="Réinitialiser les choix" aria-label="Réinitialiser les choix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1-6.2 10.2"/></svg></button>
-    <button id="settingsBtn" class="icon-button" type="button" title="Configuration" aria-label="Configuration"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 13.5 1.2.9-1.2 2.1-1.4-.5a7.7 7.7 0 0 1-1.6.9l-.2 1.5h-2.4l-.3-1.5a7.7 7.7 0 0 1-1.6-.9l-1.4.5-1.2-2.1 1.2-.9a7 7 0 0 1 0-1.9l-1.2-.9 1.2-2.1 1.4.5a7.7 7.7 0 0 1 1.6-.9l.3-1.5h2.4l.2 1.5a7.7 7.7 0 0 1 1.6.9l1.4-.5 1.2 2.1-1.2.9a7 7 0 0 1 0 1.9Z"/></svg></button>
+    <button id="printBtn" class="icon-button" type="button" title="Imprimer / PDF" aria-label="Imprimer / PDF"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H4a2 2 0 0 0-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/></svg></button>
+    <button id="settingsBtn" class="icon-button" type="button" title="Configuration" aria-label="Configuration"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-1.99 1.8l-.17 1.43c-.34.14-.66.32-.97.52l-1.35-.49a2 2 0 0 0-2.44.91l-.22.38a2 2 0 0 0 .44 2.56l1.1.93a7 7 0 0 0 0 1.12l-1.1.93a2 2 0 0 0-.44 2.56l.22.38a2 2 0 0 0 2.44.91l1.35-.49c.31.2.63.38.97.52l.17 1.43a2 2 0 0 0 1.99 1.8h.44a2 2 0 0 0 1.99-1.8l.17-1.43c.34-.14.66-.32.97-.52l1.35.49a2 2 0 0 0 2.44-.91l.22-.38a2 2 0 0 0-.44-2.56l-1.1-.93a7 7 0 0 0 0-1.12l1.1-.93a2 2 0 0 0 .44-2.56l-.22-.38a2 2 0 0 0-2.44-.91l-1.35.49a7 7 0 0 0-.97-.52l-.17-1.43a2 2 0 0 0-1.99-1.8z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
 </header>
 <input id="gridInput" type="file" accept=".json,application/json" aria-label="Charger la grille JSON">
@@ -125,6 +127,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <input id="gridCsvInput" type="file" accept=".csv,text/csv" aria-label="Charger une grille CSV complète">
 <div id="status" class="sr-only" role="status" aria-live="polite"></div>
 <dialog id="settingsDialog"><div class="dialog-heading"><h2>Configuration</h2><button id="closeSettings" class="icon-button" type="button" aria-label="Fermer la configuration">×</button></div><label class="settings-option"><input id="showMetrics" type="checkbox">Métriques de calcul</label></dialog>
+<div id="initialState" class="initial-state">Choisissez une grille de correction...</div>
 <main id="content"></main>
 </div>
 <script>
@@ -527,28 +530,35 @@ function gridFromCsv(text,fileName){
     config.ponderations[capacityId]=weight;
   }
   for(const category of categories.values())if(!Object.hasOwn(config.coefficientsCategories,category.id))throw new Error(`la catégorie « ${category.titre} » doit indiquer un coefficient_categorie.`);
-  const requiredParameters=["seuil.NA_max_exclusif","seuil.ECA_max_exclusif","seuil.A_max_exclusif","bonus.plafond_total","bonus.pas_saisie"];
+  const requiredParameters=["seuil.NA_max_exclusif","seuil.ECA_max_exclusif","seuil.A_max_exclusif","bonus.plafond_total","bonus.pas_saisie","typeDevoir","niveauDevoir"];
+  const metadata={typeDevoir:"",niveauDevoir:""};
   const seenParameters=new Set();
   for(const row of parameterRows){
     const key=row.parametre;
     if(!requiredParameters.includes(key)||seenParameters.has(key))throw new Error(`paramètre inconnu ou répété : « ${key} ».`);
-    const value=csvNumber(row.valeur,`Le paramètre « ${key} »`);const [section,name]=key.split(".");
-    if(section==="seuil")config.seuils[name]=value;
-    else config.bonus[name]=value;
+    if(key==="typeDevoir"||key==="niveauDevoir"){
+      if(!row.valeur)throw new Error(`le paramètre « ${key} » ne peut pas être vide.`);
+      metadata[key]=row.valeur;
+    }else{
+      const value=csvNumber(row.valeur,`Le paramètre « ${key} »`);const [section,name]=key.split(".");
+      if(section==="seuil")config.seuils[name]=value;
+      else config.bonus[name]=value;
+    }
     seenParameters.add(key);
   }
   const missingParameters=requiredParameters.filter(key=>!seenParameters.has(key));
   if(missingParameters.length)throw new Error(`paramètres manquants : ${missingParameters.join(", ")}.`);
   const id=`csv-${fileName.replace(/\.csv$/i,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}`;
-  const grid={...structuredClone(DEFAULT_GRID),id,titre:fileName.replace(/\.csv$/i,"").replace(/[_-]+/g," "),elements};
+  const grid={...structuredClone(DEFAULT_GRID),id,titre:`${metadata.typeDevoir} — ${metadata.niveauDevoir}`,typeDevoir:metadata.typeDevoir,niveauDevoir:metadata.niveauDevoir,elements};
   config.grille=id;
   return{grid,config,partLayout:[...parts.values()]};
 }
 function readJsonFile(file,callback){const reader=new FileReader();reader.onload=()=>{try{callback(JSON.parse(reader.result))}catch(error){setStatus("Impossible de lire ce JSON : "+error.message,"error")}};reader.onerror=()=>setStatus("La lecture du fichier a échoué.","error");reader.readAsText(file)}
 function resetChoices(){manualChoices={};manualCategoryPercent={};leafChoices={};bonusChoices={}}
+function activateLoadedGrid(title){document.getElementById("pageTitle").textContent=title;document.querySelector(".app").classList.add("grid-loaded");initializePartNav()}
 function applyCsvText(text,fileName){
   const loaded=gridFromCsv(text,fileName);grid=loaded.grid;config=loaded.config;partLayout=loaded.partLayout;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
-  initializePartNav();resetChoices();render();setStatus(`Grille CSV « ${fileName} » chargée. Les choix précédents ont été réinitialisés.`);
+  activateLoadedGrid(grid.titre);resetChoices();render();setStatus(`Grille CSV « ${fileName} » chargée. Les choix précédents ont été réinitialisés.`);
 }
 async function loadRepositoryGrid(entry,button){
   button.disabled=true;setStatus(`Chargement de la grille « ${entry.titre} »…`);
@@ -584,7 +594,7 @@ function readCsvFile(file){
   reader.onerror=()=>setStatus("La lecture du fichier CSV a échoué.","error");reader.readAsText(file,"UTF-8");
 }
 document.getElementById("gridCsvInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(file)readCsvFile(file)});
-document.getElementById("gridInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(!file)return;readJsonFile(file,data=>{if(!data.elements||!data.niveaux){setStatus("Ce fichier ne ressemble pas à une définition de grille valide.","error");return}grid=data;partLayout=PART_LAYOUT;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));initializePartNav();resetChoices();render();setStatus("Grille JSON chargée. Les choix précédents ont été réinitialisés.")})});
+document.getElementById("gridInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(!file)return;readJsonFile(file,data=>{if(!data.elements||!data.niveaux){setStatus("Ce fichier ne ressemble pas à une définition de grille valide.","error");return}grid=data;partLayout=PART_LAYOUT;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));activateLoadedGrid(grid.titre||"Grille de correction");resetChoices();render();setStatus("Grille JSON chargée. Les choix précédents ont été réinitialisés.")})});
 document.getElementById("configInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(!file)return;readJsonFile(file,data=>{if(!data.ponderations||!data.seuils){setStatus("Paramétrage invalide : pondérations ou seuils absents.","error");return}config=data;const cap=bonusCap();let left=cap;for(const id of Object.keys(bonusChoices)){const value=Math.min(bonusChoices[id],left);bonusChoices[id]=value;left-=value;if(value<=0)delete bonusChoices[id]}render();setStatus("Paramétrage JSON chargé. Pondérations, seuils et plafond de bonus actualisés.")})});
 document.getElementById("printBtn").addEventListener("click",()=>window.print());
 document.getElementById("resetBtn").addEventListener("click",()=>{resetChoices();render();setStatus("Tous les choix et bonus ont été réinitialisés.")});
@@ -596,9 +606,7 @@ window.addEventListener("beforeprint",()=>{
   document.querySelectorAll(".node").forEach(nodeEl=>{const buttons=[...nodeEl.querySelectorAll(":scope > .levels .level-btn")];const selected=buttons.find(b=>b.getAttribute("aria-pressed")==="true");if(selected)selected.classList.add("final-selected")});
 });
 window.addEventListener("afterprint",render);
-initializePartNav();
 window.addEventListener("scroll",updateActivePart,{passive:true});
-render();
 loadGridCatalog();
 </script>
 </body></html>
