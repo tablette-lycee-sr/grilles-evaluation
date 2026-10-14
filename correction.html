@@ -561,7 +561,7 @@ async function loadRepositoryGrid(entry,button){
   try{
     const url=new URL(entry.fichier,document.baseURI);
     if(url.origin!==location.origin)throw new Error("le fichier doit être hébergé sur le même site.");
-    const response=await fetch(url);
+    const response=await fetch(url,{cache:"no-store"});
     if(!response.ok)throw new Error(`réponse HTTP ${response.status}.`);
     applyCsvText(await response.text(),entry.fichier);
   }catch(error){setStatus(`Impossible de charger « ${entry.titre} » : ${error.message}`,"error")}
