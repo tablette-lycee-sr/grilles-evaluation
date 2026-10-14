@@ -5,9 +5,14 @@ capacite;Organisation;Introduction et conclusion;Introduction;ID_problematique;P
 capacite;Organisation;Introduction et conclusion;Introduction;ID_annonce-plan;Annoncer le plan;true;Pas d'annonce de plan / annonce très confuse.;Annonce sommaire / plutôt approximative du plan.;Annonce efficace et qui oriente le devoir.;;2;;;
 capacite;Organisation;Introduction et conclusion;Conclusion;ID_synthese;Formuler une synthèse;true;Pas de conclusion.;Phrase conclusive simple / anecdotique / confuse.;Véritable réponse à la problématique.;;2;;;
 capacite;Organisation;Introduction et conclusion;Conclusion;ID_ouverture;Proposer une ouverture;true;Pas d'ouverture.;Présence d'une ouverture mais plutôt artificielle.;Réelle mise en perspective du sujet.;;1;;;
-capacite;Documents;Présentation des documents;_;ID_relation;Mettre en relation les documents;true;Documents non confrontés;Mise en relation correcte des documents;Complémentarité des documents bien relevée;D;1;;;1
-capacite;Forme;Expression écrite;_;ID_Syntaxe;Maîtriser la syntaxe et l'orthographe;true;Trop de fautes et/ou syntaxe particulièrement confuse;Des erreurs de grammaire et d'orthographe;Maîtrise satisfaisante du Français;Aucune faute;1;;;1
-capacite;Forme;Expression écrite;_;ID_Style;S'exprimer dans un style adapté;true;Style inapproprié / familier;Style convenable;Style soutenu et académique;Vocabulaire riche;1;;;
+capacite;Organisation;Plan;_;ID_parties;Découper le devoir en parties;true;Absence de structure, pas de distinction de parties;Devoir globalement structuré, divisé en parties;Devoir structuré en parties équilibrées et cohérentes;;;;;
+capacite;Organisation;Plan;_;ID_plan;Choisir un plan pertinent;true;Manque de logique / Des passages hors sujet;Plan globalement adapté malgré des maladresses;Plan très adapté pour répondre au sujet;;;;;
+capacite;Documents;Présentation des documents;_;ID_interet;Montrer l’intérêt des documents;true;Identification absente ou limitée des documents;Identification plutôt sommaire des documents;Identification pertinente avec des éléments de critiques;;;;;
+capacite;Documents;Présentation des documents;_;ID_relation;Mettre en relation les documents;true;Documents non confrontés;Mise en relation correcte des documents;Complémentarité des documents bien relevée;D;1;;;
+capacite;Documents;Exploitation des documents;_;ID_citation;Citer les documents;true;Pas de citations (ou presque);Plusieurs éléments relevés dans le(s) document(s);Nombreux éléments pertinents prélevés;;;;;
+capacite;Documents;Exploitation des documents;_;ID_methode-citation;Suivre la méthode pour citer;true;Méthode à revoir;Méthode appliquée de manière irrégulière;Citations relevées avec méthode et bien intégrés;;;;;
+capacite;Forme;Expression écrite;_;ID_syntaxe;Maîtriser la syntaxe et l'orthographe;true;Trop de fautes et/ou syntaxe particulièrement confuse;Des erreurs de grammaire et d'orthographe;Maîtrise satisfaisante du Français;Aucune faute;1;;;1
+capacite;Forme;Expression écrite;_;ID_style;S'exprimer dans un style adapté;true;Style inapproprié / familier;Style convenable;Style soutenu et académique;Vocabulaire riche;1;;;
 parametre;;;;;;;;;;;;seuil.NA_max_exclusif;0.5;
 parametre;;;;;;;;;;;;seuil.ECA_max_exclusif;1.5;
 parametre;;;;;;;;;;;;seuil.A_max_exclusif;2.5;
