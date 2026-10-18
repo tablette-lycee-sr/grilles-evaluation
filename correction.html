@@ -97,7 +97,8 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-part{margin:0 0 1.2mm}
   .print-part-title{margin:0 0 .5mm;padding:1mm 2mm;border:0;border-radius:1.5mm;background:#555;color:#fff;font-size:8.5pt;line-height:1.1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-category{margin:0 0 .8mm 4mm;padding:1mm 1.5mm;border:1px solid #555;border-radius:1.5mm;overflow:hidden;break-inside:avoid}
-  .print-category-heading{display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:0 0 .4mm;padding:.8mm 0;background:#e5e5e5;font-size:7.5pt;line-height:1.1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-category-heading{position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:0 0 .4mm;padding:.8mm 0;background:transparent;font-size:7.5pt;line-height:1.1;break-after:avoid}
+  .print-category-heading:before{position:absolute;z-index:-1;inset:-1mm -1.5mm 0;border-radius:1mm 1mm 0 0;background:#e5e5e5;content:"";-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-level-track{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:24mm;flex:none}
   .print-level-cell{display:grid;place-items:center;min-width:0}
   .print-category-levels{gap:0}
@@ -107,8 +108,8 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-subcategory-title{margin:0 0 .2mm;color:#666;font-size:7pt;line-height:1.1;break-after:avoid}
   .print-capacity-row{margin-bottom:.25mm;break-inside:avoid}
   .print-capacity-copy{display:grid;grid-template-columns:2mm minmax(0,1fr);gap:.5mm;align-items:start;min-width:0}
-  .print-capacity-copy.unassessed{color:#888}
-  .print-capacity-bullet{display:inline-block;width:1.2mm;height:1.2mm;margin:.5mm 0 0 .3mm;border:.2mm solid #111;border-radius:50%;background:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-capacity-copy.unassessed{color:#aaa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-capacity-bullet{display:block;align-self:start;justify-self:start;box-sizing:border-box;width:1.2mm;height:1.2mm;margin:.5mm 0 0 .3mm;border:.2mm solid #111;border-radius:50%;background:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-capacity-copy.unassessed .print-capacity-bullet{border-color:#aaa;background:#aaa!important}
   .print-capacity-title{font-weight:650}
   .print-capacity-comment{display:inline;margin-left:0;font-family:"Segoe Print","Comic Sans MS",cursive;font-weight:400}
