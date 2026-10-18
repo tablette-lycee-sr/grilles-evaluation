@@ -93,7 +93,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-header-name{font-size:11pt;font-weight:700;line-height:1.15}
   .print-header-details{display:flex;justify-content:space-between;gap:3mm;white-space:nowrap;font-size:9pt;line-height:1.1}
   .print-header-details span{min-width:0;overflow:hidden;text-overflow:ellipsis}
-  .print-capacity-row{display:grid;grid-template-columns:minmax(0,1fr) 24mm;gap:1mm;align-items:center;margin-left:4mm}
+  .print-capacity-row{display:grid;grid-template-columns:minmax(0,1fr) 24mm;gap:1mm;align-items:center;margin-left:4mm;margin-right:-1.5mm}
   .print-part{margin:0 0 1.2mm}
   .print-part-title{margin:0 0 .5mm;padding:1mm 2mm;border:0;border-radius:1.5mm;background:#555;color:#fff;font-size:8.5pt;line-height:1.1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-category{margin:0 0 .8mm 4mm;padding:1mm 1.5mm;border:1px solid #555;border-radius:1.5mm;overflow:hidden;break-inside:avoid}
@@ -101,21 +101,21 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-category-levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;width:24mm;gap:0}
   .print-category-level{display:inline-block;justify-self:center;min-width:6mm;padding:.2mm .4mm;border:1px solid #111;border-radius:1mm;background:#eee;text-align:center;font-size:6.5pt;font-weight:600;line-height:1.1}
   .print-category-level.active{background:#111!important;color:#fff!important;font-weight:800!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .print-subcategory{margin:0 0 .5mm 2mm;break-inside:avoid-page}
+  .print-subcategory{margin:0 0 .5mm;break-inside:avoid-page}
   .print-subcategory-title{margin:0 0 .2mm;color:#666;font-size:7pt;line-height:1.1;break-after:avoid}
   .print-capacity-row{margin-bottom:.25mm;break-inside:avoid}
-  .print-capacity-copy{min-width:0}
+  .print-capacity-copy{display:grid;grid-template-columns:2.5mm minmax(0,1fr);gap:.5mm;align-items:start;min-width:0}
   .print-capacity-copy.unassessed{color:#888}
-  .print-capacity-bullet{display:inline-block;width:1.4mm;height:1.4mm;margin:0 1.1mm 0 .4mm;border-radius:50%;background:#111;vertical-align:.1mm}
-  .print-capacity-copy.unassessed .print-capacity-bullet{background:#aaa}
+  .print-capacity-bullet{display:inline-block;width:1.5mm;height:1.5mm;margin:.5mm 0 0 .3mm;border:.2mm solid #111;border-radius:50%;background:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-capacity-copy.unassessed .print-capacity-bullet{border-color:#aaa;background:#aaa!important}
   .print-capacity-title{font-weight:650}
-  .print-capacity-comment{font-family:"Segoe Print","Comic Sans MS",cursive;font-weight:400}
+  .print-capacity-comment{display:block;margin-left:3ch;font-family:"Segoe Print","Comic Sans MS",cursive;font-weight:400}
   .print-level-table{width:24mm;border-collapse:collapse;table-layout:fixed;text-align:center;line-height:1}
   .print-level-table td{width:33.333%;height:4mm;padding:0;border:0;text-align:center}
   .print-level-cross{font-family:"Segoe Print","Comic Sans MS",cursive;font-size:10pt;font-weight:800;line-height:1}
   .print-face-row{margin-top:.5mm;margin-bottom:1mm}
-  .print-face-row .print-level-table td{height:8mm}
-  .print-level-mark{display:block;width:7mm;height:7mm;margin:0 auto}
+  .print-face-row .print-level-table td{height:6.5mm}
+  .print-level-mark{display:block;width:6.5mm;height:6.5mm;margin:0 auto}
   .print-legend{display:flex;flex-wrap:wrap;gap:1mm 5mm;margin-top:1.5mm;padding-top:1mm;border-top:1px solid #666;font-size:6.5pt;break-inside:avoid}
   .print-legend-item{white-space:nowrap}
 }
@@ -502,11 +502,12 @@ function renderPrintCapacity(node){
   const levelId=leafChoices[node.id],level=levels[levelId];
   const bullet=document.createElement("span");bullet.className="print-capacity-bullet";bullet.setAttribute("aria-hidden","true");copy.appendChild(bullet);
   if(!level)copy.classList.add("unassessed");
-  const title=document.createElement("span");title.className="print-capacity-title";title.textContent=node.titre;copy.appendChild(title);
+  const text=document.createElement("div");text.className="print-capacity-text";
+  const title=document.createElement("span");title.className="print-capacity-title";title.textContent=node.titre;text.appendChild(title);
   const comment=document.createElement("span");comment.className="print-capacity-comment";
   const comments=level?(node.commentaires?.[levelId]?[node.commentaires[levelId]]:[]):["Non évaluée"];
   comment.textContent=comments.length?` : ${comments.join(" ; ")}`:"";
-  copy.appendChild(comment);row.append(copy,makePrintLevelTable(level?levelId:null));return row;
+  text.appendChild(comment);copy.appendChild(text);row.append(copy,makePrintLevelTable(level?levelId:null));return row;
 }
 function renderPrintChildren(node){
   const fragment=document.createDocumentFragment();
