@@ -105,14 +105,19 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-subcategory-title{margin:0 0 .2mm;color:#666;font-size:7pt;line-height:1.1;break-after:avoid}
   .print-capacity-row{margin-bottom:.25mm;break-inside:avoid}
   .print-capacity-copy{min-width:0}
-  .print-capacity-check{position:relative;display:inline-block;width:2.5mm;height:2.5mm;margin-right:1mm;border:1px solid #111;vertical-align:-.35mm}
-  .print-capacity-check.checked:after{position:absolute;left:.65mm;top:.15mm;width:.65mm;height:1.25mm;border:solid #111;border-width:0 1px 1px 0;content:"";transform:rotate(45deg)}
+  .print-capacity-copy.unassessed{color:#888}
+  .print-capacity-bullet{display:inline-block;width:1.4mm;height:1.4mm;margin:0 1.1mm 0 .4mm;border-radius:50%;background:#111;vertical-align:.1mm}
+  .print-capacity-copy.unassessed .print-capacity-bullet{background:#aaa}
   .print-capacity-title{font-weight:650}
-  .print-capacity-comment{font-weight:400}
+  .print-capacity-comment{font-family:"Segoe Print","Comic Sans MS",cursive;font-weight:400}
   .print-level-table{width:24mm;border-collapse:collapse;table-layout:fixed;text-align:center;line-height:1}
   .print-level-table td{width:33.333%;height:4mm;padding:0;border:0;text-align:center}
-  .print-level-mark{display:block;width:4mm;height:4mm;margin:0 auto}
-  .print-bonus-icon{display:inline-block;width:4mm;height:4mm;margin:0 .5mm;vertical-align:middle}
+  .print-level-cross{font-family:"Segoe Print","Comic Sans MS",cursive;font-size:10pt;font-weight:800;line-height:1}
+  .print-face-row{margin-top:.5mm;margin-bottom:1mm}
+  .print-face-row .print-level-table td{height:8mm}
+  .print-level-mark{display:block;width:7mm;height:7mm;margin:0 auto}
+  .print-legend{display:flex;flex-wrap:wrap;gap:1mm 5mm;margin-top:1.5mm;padding-top:1mm;border-top:1px solid #666;font-size:6.5pt;break-inside:avoid}
+  .print-legend-item{white-space:nowrap}
 }
 @page{size:A5 portrait;margin:5mm}
 </style>
@@ -453,13 +458,13 @@ function makePrintLevelTable(levelId){
   const table=document.createElement("table");table.className="print-level-table";table.setAttribute("aria-label","Niveau obtenu : "+(levelId||"non évalué"));
   const body=document.createElement("tbody"),bodyRow=document.createElement("tr");
   for(const id of ["NA","ECA","A"]){
-    const cell=document.createElement("td");if(levelId===id)cell.appendChild(makePrintFace(id));bodyRow.appendChild(cell);
+    const cell=document.createElement("td");if(levelId===id){const cross=document.createElement("strong");cross.className="print-level-cross";cross.textContent="×";cell.appendChild(cross)}bodyRow.appendChild(cell);
   }
   body.appendChild(bodyRow);table.appendChild(body);return table;
 }
 function makePrintFace(levelId){
   const namespace="http://www.w3.org/2000/svg",face=document.createElementNS(namespace,"svg");
-  face.setAttribute("viewBox","0 0 100 100");face.setAttribute("role","img");face.setAttribute("aria-label",levelId==="D"?"Bonification D":`Niveau ${levelId}`);face.classList.add(levelId==="D"?"print-bonus-icon":"print-level-mark");
+  face.setAttribute("viewBox","0 0 100 100");face.setAttribute("role","img");face.setAttribute("aria-label",`Niveau ${levelId}`);face.classList.add("print-level-mark");
   const add=(tag,attributes)=>{const shape=document.createElementNS(namespace,tag);for(const [name,value] of Object.entries(attributes))shape.setAttribute(name,value);face.appendChild(shape)};
   const outline={fill:"none",stroke:"#111","stroke-width":"2.5"};
   add("circle",{...outline,cx:"50",cy:"50",r:"44"});
@@ -467,8 +472,16 @@ function makePrintFace(levelId){
   if(levelId==="NA")add("path",{...outline,d:"M20 76 C34 57 66 57 80 76","stroke-linecap":"round"});
   else if(levelId==="ECA")add("path",{...outline,d:"M20 70 H80","stroke-linecap":"round"});
   else if(levelId==="A")add("path",{...outline,d:"M20 63 C34 86 66 86 80 63","stroke-linecap":"round"});
-  else add("path",{d:"M20 64 C28 91 72 91 80 64 C64 55 36 55 20 64 Z",fill:"#fff",stroke:"#111","stroke-width":"2.5","stroke-linejoin":"round"});
+  else add("path",{...outline,d:"M20 63 C34 86 66 86 80 63","stroke-linecap":"round"});
   return face;
+}
+function makePrintFaceRow(){
+  const row=document.createElement("div");row.className="print-capacity-row print-face-row";
+  row.appendChild(document.createElement("div"));
+  const table=document.createElement("table");table.className="print-level-table";
+  const body=document.createElement("tbody"),bodyRow=document.createElement("tr");
+  for(const id of ["NA","ECA","A"]){const cell=document.createElement("td");cell.appendChild(makePrintFace(id));bodyRow.appendChild(cell)}
+  body.appendChild(bodyRow);table.appendChild(body);row.appendChild(table);return row;
 }
 function makePrintCategoryLevels(selected){
   const levelsEl=document.createElement("div");levelsEl.className="print-category-levels";
@@ -487,13 +500,11 @@ function renderPrintCapacity(node){
   const row=document.createElement("div");row.className="print-capacity-row";
   const copy=document.createElement("div");copy.className="print-capacity-copy";
   const levelId=leafChoices[node.id],level=levels[levelId];
-  const checkbox=document.createElement("span");checkbox.className="print-capacity-check";checkbox.setAttribute("role","checkbox");checkbox.setAttribute("aria-checked",String(Boolean(level)));checkbox.setAttribute("aria-label",level?"Capacité évaluée":"Capacité non évaluée");if(level)checkbox.classList.add("checked");copy.appendChild(checkbox);
+  const bullet=document.createElement("span");bullet.className="print-capacity-bullet";bullet.setAttribute("aria-hidden","true");copy.appendChild(bullet);
+  if(!level)copy.classList.add("unassessed");
   const title=document.createElement("span");title.className="print-capacity-title";title.textContent=node.titre;copy.appendChild(title);
-  const bonus=Number(bonusChoices[node.id])||0;
-  if(bonus>0)copy.appendChild(makePrintFace("D"));
   const comment=document.createElement("span");comment.className="print-capacity-comment";
   const comments=level?(node.commentaires?.[levelId]?[node.commentaires[levelId]]:[]):["Non évaluée"];
-  if(bonus>0&&node.commentaires?.D)comments.push(`D : ${node.commentaires.D}`);
   comment.textContent=comments.length?` : ${comments.join(" ; ")}`:"";
   copy.appendChild(comment);row.append(copy,makePrintLevelTable(level?levelId:null));return row;
 }
@@ -520,6 +531,7 @@ function renderPrintReport(){
   for(const [label,value] of metadata){const item=document.createElement("span");item.textContent=`${label} : ${value}`;details.appendChild(item)}
   header.appendChild(details);
   report.appendChild(header);
+  report.appendChild(makePrintFaceRow());
   const roots=grid.elements||[],mappedIds=new Set(partLayout.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
   for(const part of partLayout){
     const categories=part.categories.map(category=>roots.find(root=>root.id===category.nodeId)).filter(Boolean);
@@ -536,6 +548,11 @@ function renderPrintReport(){
     }
     report.appendChild(section);
   }
+  const legend=document.createElement("div");legend.className="print-legend";
+  for(const [id,label] of [["NA","Non Acquis"],["ECA","En Cours d’Acquisition"],["A","Acquis"],["D","Dépassé"]]){
+    const item=document.createElement("span");item.className="print-legend-item";item.textContent=`${id} : ${label}`;legend.appendChild(item);
+  }
+  report.appendChild(legend);
 }
 function detectCsvDelimiter(text){
   const firstLine=text.split(/\r\n|\n|\r/,1)[0]||"";let quoted=false,commas=0,semicolons=0;
