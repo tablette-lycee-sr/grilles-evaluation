@@ -93,29 +93,29 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-header-name{font-size:11pt;font-weight:700;line-height:1.15}
   .print-header-details{display:flex;justify-content:space-between;gap:3mm;white-space:nowrap;font-size:9pt;line-height:1.1}
   .print-header-details span{min-width:0;overflow:hidden;text-overflow:ellipsis}
-  .print-capacity-row{display:grid;grid-template-columns:minmax(0,1fr) 24mm;gap:1mm;align-items:center;margin-left:4mm;margin-right:-1.5mm}
+  .print-capacity-row{display:grid;grid-template-columns:minmax(0,1fr) 24mm;gap:1mm;align-items:center;margin-left:4mm}
   .print-part{margin:0 0 1.2mm}
   .print-part-title{margin:0 0 .5mm;padding:1mm 2mm;border:0;border-radius:1.5mm;background:#555;color:#fff;font-size:8.5pt;line-height:1.1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-category{margin:0 0 .8mm 4mm;padding:1mm 1.5mm;border:1px solid #555;border-radius:1.5mm;overflow:hidden;break-inside:avoid}
-  .print-category-heading{display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:-1mm -1.5mm .4mm;padding:.8mm 1.5mm;background:#e5e5e5;font-size:7.5pt;line-height:1.1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .print-category-levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;width:24mm;gap:0}
+  .print-category-heading{display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:0 0 .4mm;padding:.8mm 0;background:#e5e5e5;font-size:7.5pt;line-height:1.1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-level-track{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:24mm;flex:none}
+  .print-level-cell{display:grid;place-items:center;min-width:0}
+  .print-category-levels{gap:0}
   .print-category-level{display:inline-block;justify-self:center;min-width:6mm;padding:.2mm .4mm;border:1px solid #111;border-radius:1mm;background:#eee;text-align:center;font-size:6.5pt;font-weight:600;line-height:1.1}
   .print-category-level.active{background:#111!important;color:#fff!important;font-weight:800!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-subcategory{margin:0 0 .5mm;break-inside:avoid-page}
   .print-subcategory-title{margin:0 0 .2mm;color:#666;font-size:7pt;line-height:1.1;break-after:avoid}
   .print-capacity-row{margin-bottom:.25mm;break-inside:avoid}
-  .print-capacity-copy{display:grid;grid-template-columns:2.5mm minmax(0,1fr);gap:.5mm;align-items:start;min-width:0}
+  .print-capacity-copy{display:grid;grid-template-columns:2mm minmax(0,1fr);gap:.5mm;align-items:start;min-width:0}
   .print-capacity-copy.unassessed{color:#888}
-  .print-capacity-bullet{display:inline-block;width:1.5mm;height:1.5mm;margin:.5mm 0 0 .3mm;border:.2mm solid #111;border-radius:50%;background:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-capacity-bullet{display:inline-block;width:1.2mm;height:1.2mm;margin:.5mm 0 0 .3mm;border:.2mm solid #111;border-radius:50%;background:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-capacity-copy.unassessed .print-capacity-bullet{border-color:#aaa;background:#aaa!important}
   .print-capacity-title{font-weight:650}
-  .print-capacity-comment{display:block;margin-left:3ch;font-family:"Segoe Print","Comic Sans MS",cursive;font-weight:400}
-  .print-level-table{width:24mm;border-collapse:collapse;table-layout:fixed;text-align:center;line-height:1}
-  .print-level-table td{width:33.333%;height:4mm;padding:0;border:0;text-align:center}
+  .print-capacity-comment{display:inline;margin-left:0;font-family:"Segoe Print","Comic Sans MS",cursive;font-weight:400}
   .print-level-cross{font-family:"Segoe Print","Comic Sans MS",cursive;font-size:10pt;font-weight:800;line-height:1}
-  .print-face-row{margin-top:.5mm;margin-bottom:1mm}
-  .print-face-row .print-level-table td{height:6.5mm}
-  .print-level-mark{display:block;width:6.5mm;height:6.5mm;margin:0 auto}
+  .print-face-row{margin-top:.5mm;margin-right:calc(1.5mm + 1px);margin-bottom:1mm}
+  .print-face-row .print-level-track{min-height:6mm}
+  .print-level-mark{display:block;width:6mm;height:6mm}
   .print-legend{display:flex;flex-wrap:wrap;gap:1mm 5mm;margin-top:1.5mm;padding-top:1mm;border-top:1px solid #666;font-size:6.5pt;break-inside:avoid}
   .print-legend-item{white-space:nowrap}
 }
@@ -455,12 +455,11 @@ function render(){
   updateActivePart();
 }
 function makePrintLevelTable(levelId){
-  const table=document.createElement("table");table.className="print-level-table";table.setAttribute("aria-label","Niveau obtenu : "+(levelId||"non évalué"));
-  const body=document.createElement("tbody"),bodyRow=document.createElement("tr");
+  const track=document.createElement("div");track.className="print-level-track";track.setAttribute("aria-label","Niveau obtenu : "+(levelId||"non évalué"));
   for(const id of ["NA","ECA","A"]){
-    const cell=document.createElement("td");if(levelId===id){const cross=document.createElement("strong");cross.className="print-level-cross";cross.textContent="×";cell.appendChild(cross)}bodyRow.appendChild(cell);
+    const cell=document.createElement("span");cell.className="print-level-cell";if(levelId===id){const cross=document.createElement("strong");cross.className="print-level-cross";cross.textContent="×";cell.appendChild(cross)}track.appendChild(cell);
   }
-  body.appendChild(bodyRow);table.appendChild(body);return table;
+  return track;
 }
 function makePrintFace(levelId){
   const namespace="http://www.w3.org/2000/svg",face=document.createElementNS(namespace,"svg");
@@ -478,14 +477,13 @@ function makePrintFace(levelId){
 function makePrintFaceRow(){
   const row=document.createElement("div");row.className="print-capacity-row print-face-row";
   row.appendChild(document.createElement("div"));
-  const table=document.createElement("table");table.className="print-level-table";
-  const body=document.createElement("tbody"),bodyRow=document.createElement("tr");
-  for(const id of ["NA","ECA","A"]){const cell=document.createElement("td");cell.appendChild(makePrintFace(id));bodyRow.appendChild(cell)}
-  body.appendChild(bodyRow);table.appendChild(body);row.appendChild(table);return row;
+  const track=document.createElement("div");track.className="print-level-track";
+  for(const id of ["NA","ECA","A"]){const cell=document.createElement("span");cell.className="print-level-cell";cell.appendChild(makePrintFace(id));track.appendChild(cell)}
+  row.appendChild(track);return row;
 }
 function makePrintCategoryLevels(selected){
-  const levelsEl=document.createElement("div");levelsEl.className="print-category-levels";
-  for(const id of ["NA","ECA","A"]){const level=document.createElement("span");level.className="print-category-level";if(selected===id)level.classList.add("active");level.textContent=id;levelsEl.appendChild(level)}
+  const levelsEl=document.createElement("div");levelsEl.className="print-level-track print-category-levels";
+  for(const id of ["NA","ECA","A"]){const level=document.createElement("span");level.className="print-level-cell print-category-level";if(selected===id)level.classList.add("active");level.textContent=id;levelsEl.appendChild(level)}
   return levelsEl;
 }
 function printCategoryLevel(node){
