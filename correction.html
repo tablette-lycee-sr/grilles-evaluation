@@ -70,6 +70,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 @media(max-width:900px) and (min-width:700px){.header-actions{grid-template-columns:repeat(4,38px);gap:5px}.icon-button,.icon-file{width:38px;height:38px}}
 @media(max-width:699px){.app{padding:calc(var(--header-height) + 14px) 10px 16px 80px}.part-nav{width:56px}.part-tab{min-height:80px;font-size:.78rem}.part-tab-label{top:59%;width:max(48px,calc(20vh - 12px));padding:0 2px;font-size:.74rem;line-height:1.04}.part-tab-count{top:5px;min-width:32px;padding:3px 5px;font-size:.6rem}header{grid-template-columns:minmax(0,5fr) minmax(104px,3fr);gap:5px;padding:8px}.header-left h1{font-size:1rem;margin-bottom:6px}.student-name{height:30px;padding:4px 6px;font-size:.78rem}.header-score{font-size:.95rem}.header-actions{grid-template-columns:repeat(3,34px);gap:4px}.icon-button,.icon-file{width:34px;height:34px;border-radius:6px}.icon-button svg,.icon-file svg{width:18px;height:18px}.criterion-row{grid-template-columns:minmax(0,1fr)}.level-btn{height:56px;min-height:56px}}
 .section-head.category-head{padding:6px 10px}.category-heading-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px}.category-heading-row h2{min-width:0;margin:0;font-size:1.18rem}.category-controls{display:flex;flex:none;flex-direction:column}.category-levels{display:flex;gap:6px;flex:none}.category-levels .level-btn{width:52px;height:21px;min-height:21px;padding:0 2px;font-size:.8rem;line-height:1}.category-levels .full{display:none}.category-score-slider{display:block;width:100%;height:10px;margin:5px 0 0;padding:0;appearance:none;background:transparent;cursor:pointer;touch-action:pan-y}.category-score-slider::-webkit-slider-runnable-track{height:5px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-moz-range-track{height:5px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-webkit-slider-thumb{width:14px;height:14px;margin-top:-4.5px;appearance:none;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider::-moz-range-thumb{width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider.manual::-webkit-slider-thumb{background:#fff}.category-score-slider.manual::-moz-range-thumb{background:#fff}.category-metrics{display:none;align-items:center;gap:8px;height:26px;margin-top:3px;overflow:hidden}.app.show-metrics .category-metrics{display:flex}.category-comment{height:2.5rem;overflow:auto;margin:2px 0 0;color:var(--sub);font-size:.85rem;line-height:1.3}.category-comment.empty{visibility:hidden}
+.category-extra-controls{display:flex;align-items:center;flex-wrap:wrap;gap:5px 12px;margin-top:5px}.category-extra-controls label{display:inline-flex;align-items:center;gap:5px;color:var(--sub);font-size:.78rem}.category-extra-controls input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue)}.category-extra-controls select{max-width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:#1b1d20;color:var(--text);font:inherit;font-size:.78rem}
 .part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .node.group{background:transparent}.node.depth-1{margin-left:4px}.node.depth-2{margin-left:8px}.node.depth-3{margin-left:12px}
 .criterion-row{grid-template-columns:minmax(115px,.72fr) minmax(0,3.28fr);gap:8px}.capacity-name{gap:2px;font-size:.84rem;line-height:1.12}.capacity-name .weight{display:none}.app.show-metrics .capacity-name .weight{display:block}.node.depth-1>.criterion-row .node-title{color:var(--panel);font-size:.96rem}
@@ -184,6 +185,7 @@ let grid = structuredClone(DEFAULT_GRID);
 let config = structuredClone(DEFAULT_CONFIG);
 let manualChoices = {};
 let manualCategoryPercent = {};
+let categoryEvaluations = {};
 let leafChoices = {};
 let bonusChoices = {};
 let levels = Object.fromEntries(grid.niveaux.map(l=>[l.id,l]));
@@ -350,6 +352,31 @@ function updatePartCounts(roots){
     button.setAttribute("aria-label",`${part.title}, ${filled} capacité(s) renseignée(s) sur ${leaves.length}`);
   }
 }
+function updateCategoryEvaluation(nodeId,key,value){
+  const next={warning:false,exceeded:false,motifId:"",...categoryEvaluations[nodeId],[key]:value};
+  if(!next.warning&&!next.exceeded&&!next.motifId)delete categoryEvaluations[nodeId];
+  else categoryEvaluations[nodeId]=next;
+  render();
+}
+function makeCategoryToggle(node,labelText,key){
+  const label=document.createElement("label"),input=document.createElement("input");input.type="checkbox";input.checked=Boolean(categoryEvaluations[node.id]?.[key]);
+  input.setAttribute("aria-label",labelText);input.addEventListener("change",()=>updateCategoryEvaluation(node.id,key,input.checked));
+  label.append(input,document.createTextNode(labelText));return label;
+}
+function renderCategoryEvaluationControls(node){
+  const options=node.categoryOptions||{},motifs=node.commentMotifs||[];
+  if(!options.warning&&!options.exceeded&&!motifs.length)return null;
+  const controls=document.createElement("div");controls.className="category-extra-controls";
+  if(options.warning)controls.appendChild(makeCategoryToggle(node,"Avertissement","warning"));
+  if(options.exceeded)controls.appendChild(makeCategoryToggle(node,"Dépassé (D)","exceeded"));
+  if(motifs.length){
+    const label=document.createElement("label"),select=document.createElement("select");select.setAttribute("aria-label",`Commentaire général pour ${node.titre}`);
+    const empty=document.createElement("option");empty.value="";empty.textContent="Commentaire général…";select.appendChild(empty);
+    for(const motif of motifs){const option=document.createElement("option");option.value=motif.id;option.textContent=motif.label;select.appendChild(option)}
+    select.value=categoryEvaluations[node.id]?.motifId||"";select.addEventListener("change",()=>updateCategoryEvaluation(node.id,"motifId",select.value));label.appendChild(select);controls.appendChild(label);
+  }
+  return controls;
+}
 function renderCategory(category,node=null){
   const section=document.createElement("section");section.className="section";
   const head=document.createElement("div");head.className="section-head category-head";
@@ -418,9 +445,13 @@ function renderCategory(category,node=null){
     });
     updateSliderDisplay();categoryControls.append(slider);headingRow.appendChild(categoryControls);
     const comment=document.createElement("div");comment.className="category-comment empty";
+    const selectedMotif=(node.commentMotifs||[]).find(motif=>motif.id===categoryEvaluations[node.id]?.motifId);
     const commentLevel=effective||calculation.level;
-    if(commentLevel&&node.commentaires?.[commentLevel]){comment.classList.remove("empty");comment.textContent=node.commentaires[commentLevel]}
-    head.appendChild(headingRow);head.appendChild(metrics);head.appendChild(comment);
+    const commentText=selectedMotif?.label||(commentLevel&&node.commentaires?.[commentLevel]);
+    if(commentText){comment.classList.remove("empty");comment.textContent=commentText}
+    head.appendChild(headingRow);
+    const extraControls=renderCategoryEvaluationControls(node);if(extraControls)head.appendChild(extraControls);
+    head.appendChild(metrics);head.appendChild(comment);
   }else{
     head.appendChild(headingRow);
     if(!node){const description=document.createElement("p");description.className="small";description.textContent=category.description;head.appendChild(description)}
@@ -566,8 +597,11 @@ function renderPrintReport(){
       const label=document.createElement("span");label.className="print-category-label";
       const name=document.createElement("span");name.textContent=node.titre;
       const comment=document.createElement("span");comment.className="print-category-comment";comment.setAttribute("aria-label","Emplacement du commentaire de catégorie");
+      const evaluation=categoryEvaluations[node.id]||{},selectedMotif=(node.commentMotifs||[]).find(motif=>motif.id===evaluation.motifId);
+      if(selectedMotif)comment.textContent=selectedMotif.label;
       label.append(name,comment);
-      heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),node.titre==="Expression écrite",node.titre==="Exploitation des documents"));category.appendChild(heading);
+      const options=node.categoryOptions||{};
+      heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),Boolean(options.warning&&evaluation.warning),Boolean(options.exceeded&&evaluation.exceeded)));category.appendChild(heading);
       category.appendChild(renderPrintChildren(node));section.appendChild(category);
     }
     report.appendChild(section);
@@ -625,10 +659,18 @@ function csvNumber(value,label){
   if(!Number.isFinite(number))throw new Error(`${label} doit être un nombre.`);
   return number;
 }
+function csvBoolean(value,label){
+  const normalized=String(value||"").trim().toLowerCase();
+  if(!normalized||["false","0","non","faux"].includes(normalized))return false;
+  if(["true","1","oui","vrai"].includes(normalized))return true;
+  throw new Error(`${label} doit être vrai ou faux.`);
+}
 function gridFromCsv(text,fileName){
-  const records=parseCsv(text);const capacityRows=[],parameterRows=[];
+  const records=parseCsv(text);const capacityRows=[],categoryRows=[],motiveRows=[],parameterRows=[];
   for(const record of records){
     if(record.type==="capacite")capacityRows.push(record);
+    else if(record.type==="categorie")categoryRows.push(record);
+    else if(record.type==="motif")motiveRows.push(record);
     else if(record.type==="parametre")parameterRows.push(record);
     else throw new Error(`type de ligne inconnu : « ${record.type} ».`);
   }
@@ -636,8 +678,22 @@ function gridFromCsv(text,fileName){
   let nextGroupId=0;const nextGroup=title=>({id:`__csv_node_${++nextGroupId}`,titre:title,evaluable:false,enfants:[]});
   const elements=[],parts=new Map(),categories=new Map(),subcategories=new Map(),capacityIds=new Set();
   const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};config.coefficientsCategories={};
+  const categoryDefinitions=new Map(),categoryDefinitionsById=new Map(),categoryIds=new Set();
+  for(const row of categoryRows){
+    const partTitle=row.partie,categoryTitle=row.categorie,id=row.id;
+    if(!partTitle||!categoryTitle||!id||id.startsWith("__csv_node_")||categoryIds.has(id))throw new Error(`définition de catégorie invalide ou identifiant répété : « ${id} ».`);
+    const key=JSON.stringify([partTitle,categoryTitle]);
+    if(categoryDefinitions.has(key))throw new Error(`la catégorie « ${categoryTitle} » est définie plusieurs fois.`);
+    const coefficient=row.coefficient_categorie?csvNumber(row.coefficient_categorie,`Le coefficient de la catégorie « ${categoryTitle} »`):null;
+    if(coefficient!==null&&coefficient<=0)throw new Error(`le coefficient de la catégorie « ${categoryTitle} » doit être supérieur à zéro.`);
+    categoryIds.add(id);
+    const definition={id,key,partTitle,categoryTitle,coefficient,options:{warning:csvBoolean(row.avertissement_autorise,`L’option avertissement de « ${categoryTitle} »`),exceeded:csvBoolean(row.depasse_autorise,`L’option D de « ${categoryTitle} »`)}};
+    categoryDefinitions.set(key,definition);categoryDefinitionsById.set(id,definition);
+  }
   for(const row of capacityRows){
-    const partTitle=row.partie,categoryTitle=row.categorie,subcategoryTitle=row.sous_categorie==="_"?"":row.sous_categorie,capacityId=row.id,title=row.titre;
+    const definition=row.categorie_id?categoryDefinitionsById.get(row.categorie_id):null;
+    if(row.categorie_id&&!definition)throw new Error(`identifiant de catégorie inconnu : « ${row.categorie_id} ».`);
+    const partTitle=definition?.partTitle||row.partie,categoryTitle=definition?.categoryTitle||row.categorie,subcategoryTitle=row.sous_categorie==="_"?"":row.sous_categorie,capacityId=row.id,title=row.titre;
     if(!partTitle||!categoryTitle||!capacityId||!title)throw new Error("chaque capacité doit renseigner partie, catégorie, id et titre.");
     if(capacityId.startsWith("__csv_node_")||capacityIds.has(capacityId))throw new Error(`identifiant de capacité invalide ou répété : « ${capacityId} ».`);
     const evaluable=row.evaluable.toLowerCase();
@@ -647,9 +703,14 @@ function gridFromCsv(text,fileName){
     capacityIds.add(capacityId);
     let part=parts.get(partTitle);
     if(!part){part={id:`csv-part-${parts.size+1}`,title:partTitle,categories:[]};parts.set(partTitle,part)}
-    const categoryKey=JSON.stringify([partTitle,categoryTitle]);
+    const categoryKey=definition?.key||JSON.stringify([partTitle,categoryTitle]);
     let category=categories.get(categoryKey);
-    if(!category){category=nextGroup(categoryTitle);categories.set(categoryKey,category);elements.push(category);part.categories.push({nodeId:category.id,title:categoryTitle})}
+    if(!category){
+      const definition=categoryDefinitions.get(categoryKey);
+      category=nextGroup(categoryTitle);category.categoryOptions=definition?.options||{warning:false,exceeded:false};category.commentMotifs=[];
+      if(definition){category.id=definition.id;if(definition.coefficient!==null)config.coefficientsCategories[category.id]=definition.coefficient}
+      categories.set(categoryKey,category);elements.push(category);part.categories.push({nodeId:category.id,title:categoryTitle});
+    }
     if(row.coefficient_categorie){
       const coefficient=csvNumber(row.coefficient_categorie,`Le coefficient de la catégorie « ${categoryTitle} »`);
       if(coefficient<=0)throw new Error(`le coefficient de la catégorie « ${categoryTitle} » doit être supérieur à zéro.`);
@@ -666,6 +727,18 @@ function gridFromCsv(text,fileName){
     }
     parent.enfants.push({id:capacityId,titre:title,evaluable:true,commentaires:{NA:row.commentaire_NA,ECA:row.commentaire_ECA,A:row.commentaire_A,D:row.commentaire_D}});
     config.ponderations[capacityId]=weight;
+  }
+  for(const [key,definition] of categoryDefinitions){
+    if(!categories.has(key))throw new Error(`la catégorie définie « ${definition.id} » ne contient aucune capacité.`);
+    if(capacityIds.has(definition.id))throw new Error(`l’identifiant de catégorie « ${definition.id} » est déjà utilisé par une capacité.`);
+  }
+  const categoriesById=new Map([...categories.values()].map(category=>[category.id,category])),seenMotives=new Set();
+  for(const row of motiveRows){
+    const category=categoriesById.get(row.categorie_id),id=row.id,label=row.titre;
+    if(!category||!id||!label)throw new Error(`motif de catégorie invalide : « ${id} ».`);
+    const key=JSON.stringify([category.id,id]);
+    if(seenMotives.has(key))throw new Error(`le motif « ${id} » est répété pour la catégorie « ${category.titre} ».`);
+    seenMotives.add(key);category.commentMotifs.push({id,label});
   }
   for(const category of categories.values())if(!Object.hasOwn(config.coefficientsCategories,category.id))throw new Error(`la catégorie « ${category.titre} » doit indiquer un coefficient_categorie.`);
   const requiredParameters=["seuil.NA_max_exclusif","seuil.ECA_max_exclusif","seuil.A_max_exclusif","bonus.plafond_total","bonus.pas_saisie","typeDevoir","niveauDevoir"];
@@ -692,7 +765,7 @@ function gridFromCsv(text,fileName){
   return{grid,config,partLayout:[...parts.values()]};
 }
 function readJsonFile(file,callback){const reader=new FileReader();reader.onload=()=>{try{callback(JSON.parse(reader.result))}catch(error){setStatus("Impossible de lire ce JSON : "+error.message,"error")}};reader.onerror=()=>setStatus("La lecture du fichier a échoué.","error");reader.readAsText(file)}
-function resetChoices(){manualChoices={};manualCategoryPercent={};leafChoices={};bonusChoices={}}
+function resetChoices(){manualChoices={};manualCategoryPercent={};categoryEvaluations={};leafChoices={};bonusChoices={}}
 function activateLoadedGrid(title){document.getElementById("pageTitle").textContent=title;document.querySelector(".app").classList.add("grid-loaded");initializePartNav()}
 function applyCsvText(text,fileName){
   const loaded=gridFromCsv(text,fileName);grid=loaded.grid;config=loaded.config;partLayout=loaded.partLayout;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));

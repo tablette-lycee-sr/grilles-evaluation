@@ -1,4 +1,12 @@
-type;partie;categorie;sous_categorie;id;titre;evaluable;commentaire_NA;commentaire_ECA;commentaire_A;commentaire_D;ponderation;parametre;valeur;coefficient_categorie
+type;partie;categorie;sous_categorie;id;titre;evaluable;commentaire_NA;commentaire_ECA;commentaire_A;commentaire_D;ponderation;parametre;valeur;coefficient_categorie;categorie_id;avertissement_autorise;depasse_autorise
+categorie;Documents;Exploitation des documents;_;documents-exploitation;Exploitation des documents;false;;;;;;;;2;;false;true
+categorie;Forme;Expression écrite;_;expression-ecrite;Expression écrite;false;;;;;;;;1;;true;false
+motif;Documents;Exploitation des documents;_;docs-citations;Les citations sont présentes mais peu expliquées;;;;;;;;;;documents-exploitation;;
+motif;Documents;Exploitation des documents;_;docs-confrontation;Les documents sont traités séparément sans mise en relation;;;;;;;;;;documents-exploitation;;
+motif;Documents;Exploitation des documents;_;docs-selection;La sélection des informations pertinentes reste à renforcer;;;;;;;;;;documents-exploitation;;
+motif;Forme;Expression écrite;_;expression-syntaxe;La syntaxe et l’orthographe gênent la lecture;;;;;;;;;;expression-ecrite;;
+motif;Forme;Expression écrite;_;expression-registre;Le registre doit être mieux adapté au devoir;;;;;;;;;;expression-ecrite;;
+motif;Forme;Expression écrite;_;expression-precision;Les formulations manquent de précision;;;;;;;;;;expression-ecrite;;
 capacite;Organisation;Introduction et conclusion;Introduction;ID_accroche;Commencer par une accroche;true;Pas d'accroche.;Accroche présente mais imprécise / déconnectée.;Accroche efficace et intéressante.;Accroche et contextualisation s'appuyant sur une culture personnelle;1;;;1
 capacite;Organisation;Introduction et conclusion;Introduction;ID_definition-termes;Définir les termes du sujet;true;Pas de contexte / définitions erronées.;Contextualisation donnant globalement le sens du sujet.;Bonne maîtrise des notions et enjeux disciplinaires.;;2;;;
 capacite;Organisation;Introduction et conclusion;Introduction;ID_problematique;Proposer une problématique;true;Problématique absente ou maladroite / restrictive / menant à un hors-sujet.;Simple reprise du sujet / reformulation sans pertinence mais convenable.;Questionnement montrant que l'intérêt et la portée du sujet sont bien compris.;;3;;;
@@ -9,10 +17,10 @@ capacite;Organisation;Plan;_;ID_parties;Découper le devoir en parties;true;Abse
 capacite;Organisation;Plan;_;ID_plan;Choisir un plan pertinent;true;Manque de logique / Des passages hors sujet;Plan globalement adapté malgré des maladresses;Plan très adapté pour répondre au sujet;;2;;;
 capacite;Documents;Présentation des documents;_;ID_interet;Montrer l’intérêt des documents;true;Identification absente ou limitée des documents;Identification plutôt sommaire des documents;Identification pertinente avec des éléments de critiques;;1;;;1
 capacite;Documents;Présentation des documents;_;ID_relation;Mettre en relation les documents;true;Documents non confrontés;Mise en relation correcte des documents;Complémentarité des documents bien relevée;D;1;;;
-capacite;Documents;Exploitation des documents;_;ID_citation;Citer les documents;true;Pas de citations (ou presque);Plusieurs éléments relevés dans le(s) document(s);Nombreux éléments pertinents prélevés;;3;;;2
-capacite;Documents;Exploitation des documents;_;ID_methode-citation;Suivre la méthode pour citer;true;Méthode à revoir;Méthode appliquée de manière irrégulière;Citations relevées avec méthode et bien intégrés;;1;;;
-capacite;Forme;Expression écrite;_;ID_syntaxe;Maîtriser la syntaxe et l'orthographe;true;Trop de fautes et/ou syntaxe particulièrement confuse;Des erreurs de grammaire et d'orthographe;Maîtrise satisfaisante du Français;Aucune faute;2;;;1
-capacite;Forme;Expression écrite;_;ID_style;S'exprimer dans un style adapté;true;Style inapproprié / familier;Style convenable;Style soutenu et académique;Vocabulaire riche;1;;;
+capacite;Documents;Exploitation des documents;_;ID_citation;Citer les documents;true;Pas de citations (ou presque);Plusieurs éléments relevés dans le(s) document(s);Nombreux éléments pertinents prélevés;;3;;;2;documents-exploitation
+capacite;Documents;Exploitation des documents;_;ID_methode-citation;Suivre la méthode pour citer;true;Méthode à revoir;Méthode appliquée de manière irrégulière;Citations relevées avec méthode et bien intégrés;;1;;;;documents-exploitation
+capacite;Forme;Expression écrite;_;ID_syntaxe;Maîtriser la syntaxe et l'orthographe;true;Trop de fautes et/ou syntaxe particulièrement confuse;Des erreurs de grammaire et d'orthographe;Maîtrise satisfaisante du Français;Aucune faute;2;;;1;expression-ecrite
+capacite;Forme;Expression écrite;_;ID_style;S'exprimer dans un style adapté;true;Style inapproprié / familier;Style convenable;Style soutenu et académique;Vocabulaire riche;1;;;;expression-ecrite
 parametre;;;;;;;;;;;;seuil.NA_max_exclusif;0.5;
 parametre;;;;;;;;;;;;seuil.ECA_max_exclusif;1.5;
 parametre;;;;;;;;;;;;seuil.A_max_exclusif;2.5;
