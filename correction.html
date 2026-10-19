@@ -106,19 +106,20 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-capacity-row{display:grid;grid-template-columns:minmax(0,1fr) 27.5mm;gap:1mm;align-items:center;margin-left:4mm}
   .print-part{margin:0 0 1.2mm}
   .print-part-title{margin:0 0 .5mm;padding:.6mm 2mm;border:0;border-radius:1.5mm;background:#555;color:#fff;font-size:8.5pt;line-height:1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .print-category{margin:0 0 .8mm 4mm;padding:1mm 1.5mm;border:1px solid #555;border-radius:1.5mm;overflow:hidden;break-inside:avoid}
-  .print-category-heading{position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:0 0 .4mm;padding:.4mm 0;background:transparent;font-size:7.5pt;line-height:1.1;break-after:avoid}
+  .print-category{margin:0 0 .8mm 4mm;padding:.3mm 1.5mm 1mm;border:1px solid #555;border-radius:1.5mm;overflow:hidden;break-inside:avoid}
+  .print-category-heading{position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:0 0 .2mm;padding:0;background:transparent;font-size:7.5pt;line-height:1.1;break-after:avoid}
   .print-category-heading:before{position:absolute;z-index:-1;inset:-1mm -1.5mm 0;border-radius:1mm 1mm 0 0;background:#e5e5e5;content:"";-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .print-category-label{display:flex;align-items:baseline;gap:2mm;flex:1;min-width:0}
+  .print-category-label{display:flex;align-items:center;gap:2mm;flex:1;min-width:0}
   .print-category-comment{flex:1;min-width:8mm;font-family:"Just Another Hand",cursive;font-weight:400}
   .print-level-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:27.5mm;flex:none}
   .print-level-cell{display:grid;place-items:center;min-width:0}
-  .print-category-levels{gap:0}
-  .print-category-level{display:grid;place-items:center;box-sizing:border-box;width:4.5mm;height:4.5mm;padding:0;border:1px solid #111;border-radius:1mm;background:#eee;text-align:center;font-size:5.8pt;font-weight:600;line-height:1}
+  .print-category-levels{grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+  .print-category-level{display:grid;place-items:center;box-sizing:border-box;width:4.5mm;height:3.8mm;padding:0;border:1px solid #111;border-radius:.8mm;background:#eee;text-align:center;font-size:5.8pt;font-weight:600;line-height:1}
   .print-category-level:not(.d-level){width:5.1mm}
-  .print-category-level.d-level{display:none;border-radius:50%}
+  .print-category-level.d-level{display:none;width:3.8mm;height:3.8mm;border-radius:50%}
   .print-category-level.d-level.visible{display:grid}
   .print-warning-mark{display:block;width:5mm;height:5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-category-warning{width:3.8mm;height:3.8mm;flex:none}
   .print-warning-triangle{fill:#111!important;stroke:#111!important}
   .print-warning-exclamation{fill:none;stroke:#fff!important;stroke-width:12!important;stroke-linecap:round}
   .print-warning-dot{fill:#fff!important}
@@ -130,10 +131,10 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-capacity-copy.unassessed{color:#aaa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-capacity-bullet{display:block;align-self:start;justify-self:start;box-sizing:border-box;width:1.2mm;height:1.2mm;margin:.5mm 0 0 .3mm;border:.2mm solid #111;border-radius:50%;background:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-capacity-copy.unassessed .print-capacity-bullet{border-color:#aaa;background:#aaa!important}
-  .print-capacity-text{line-height:1}
+  .print-capacity-text{line-height:.92}
   .print-capacity-title{font-weight:650}
-  .print-capacity-comment{display:inline;margin-left:0;font-family:"Just Another Hand",cursive;font-size:7.5pt;font-weight:400;line-height:1}
-  .print-level-cross{display:block;text-align:center;font-family:"Permanent Marker",cursive;font-size:10pt;font-weight:400;line-height:.9}
+  .print-capacity-comment{display:inline;margin-left:0;font-family:"Just Another Hand",cursive;font-size:7.5pt;font-weight:400;line-height:.92}
+  .print-level-cross{display:block;text-align:center;font-family:"Permanent Marker",cursive;font-size:8.5pt;font-weight:400;line-height:.8}
   .print-level-dot{display:block;box-sizing:border-box;width:.55mm;height:.55mm;border-radius:50%;background:#888!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-level-mark{display:block;width:5.2mm;height:5.2mm}
   .print-legend{display:flex;flex-wrap:wrap;gap:1mm 5mm;margin-top:1.5mm;padding-top:1mm;border-top:1px solid #666;font-size:6.5pt;break-inside:avoid}
@@ -536,15 +537,15 @@ function makePrintFaceTrack(){
   return track;
 }
 function makePrintWarning(){
-  const namespace="http://www.w3.org/2000/svg",warning=document.createElementNS(namespace,"svg");warning.setAttribute("viewBox","0 0 100 100");warning.setAttribute("role","img");warning.setAttribute("aria-label","Attention : dysfonctionnement grave");warning.classList.add("print-warning-mark");
+  const namespace="http://www.w3.org/2000/svg",warning=document.createElementNS(namespace,"svg");warning.setAttribute("viewBox","0 0 100 100");warning.setAttribute("role","img");warning.setAttribute("aria-label","Attention : dysfonctionnement grave");warning.classList.add("print-warning-mark","print-category-warning");
   const triangle=document.createElementNS(namespace,"path");triangle.classList.add("print-warning-triangle");triangle.setAttribute("d","M50 7 Q54 7 56 12 L94 82 Q98 90 89 92 H11 Q2 90 6 82 L44 12 Q46 7 50 7 Z");triangle.setAttribute("fill","#111");triangle.setAttribute("stroke","#111");triangle.setAttribute("stroke-width","5");triangle.setAttribute("stroke-linejoin","round");triangle.style.setProperty("fill","#111","important");triangle.style.setProperty("stroke","#111","important");warning.appendChild(triangle);
   const exclamation=document.createElementNS(namespace,"path");exclamation.classList.add("print-warning-exclamation");exclamation.setAttribute("d","M50 29 V62");exclamation.setAttribute("stroke","#fff");exclamation.setAttribute("stroke-width","12");exclamation.setAttribute("stroke-linecap","round");exclamation.style.setProperty("stroke","#fff","important");warning.appendChild(exclamation);
   const dot=document.createElementNS(namespace,"circle");dot.classList.add("print-warning-dot");dot.setAttribute("cx","50");dot.setAttribute("cy","77");dot.setAttribute("r","5");dot.setAttribute("fill","#fff");dot.style.setProperty("fill","#fff","important");warning.appendChild(dot);return warning;
 }
-function makePrintCategoryLevels(selected,showWarning=false,showBonus=false){
+function makePrintCategoryLevels(selected,showBonus=false){
   const levelsEl=document.createElement("div");levelsEl.className="print-level-track print-category-levels";
-  const warningCell=document.createElement("span");warningCell.className="print-level-cell";if(showWarning)warningCell.appendChild(makePrintWarning());levelsEl.appendChild(warningCell);
-  for(const id of ["NA","ECA","A","D"]){const cell=document.createElement("span");cell.className="print-level-cell";const level=document.createElement("span");level.className="print-category-level";if(id==="D"){level.classList.add("d-level");if(showBonus)level.classList.add("visible")}if(selected===id||(id==="D"&&showBonus))level.classList.add("active");level.textContent=id;cell.appendChild(level);levelsEl.appendChild(cell)}
+  const dSelected=showBonus||selected==="D";
+  for(const id of ["NA","ECA","A","D"]){const cell=document.createElement("span");cell.className="print-level-cell";const level=document.createElement("span");level.className="print-category-level";if(id==="D"){level.classList.add("d-level");if(dSelected)level.classList.add("visible")}if(dSelected?id==="D":selected===id)level.classList.add("active");level.textContent=id;cell.appendChild(level);levelsEl.appendChild(cell)}
   return levelsEl;
 }
 function printCategoryLevel(node){
@@ -606,9 +607,11 @@ function renderPrintReport(){
       const comment=document.createElement("span");comment.className="print-category-comment";comment.setAttribute("aria-label","Emplacement du commentaire de catégorie");
       const evaluation=categoryEvaluations[node.id]||{},selectedMotif=(node.commentMotifs||[]).find(motif=>motif.id===evaluation.motifId);
       if(selectedMotif)comment.textContent=selectedMotif.label;
-      label.append(name,comment);
       const options=node.categoryOptions||{};
-      heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),Boolean(options.warning&&evaluation.warning),Boolean(options.exceeded&&evaluation.exceeded)));category.appendChild(heading);
+      label.append(name);
+      if(options.warning&&evaluation.warning)label.appendChild(makePrintWarning());
+      label.appendChild(comment);
+      heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),Boolean(options.exceeded&&evaluation.exceeded)));category.appendChild(heading);
       category.appendChild(renderPrintChildren(node));section.appendChild(category);
     }
     report.appendChild(section);
