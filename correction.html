@@ -109,7 +109,8 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-category-levels{gap:0}
   .print-category-level{display:grid;place-items:center;box-sizing:border-box;width:4.5mm;height:4.5mm;padding:0;border:1px solid #111;border-radius:1mm;background:#eee;text-align:center;font-size:5.8pt;font-weight:600;line-height:1}
   .print-category-level:not(.d-level){width:5.1mm}
-  .print-category-level.d-level{border-radius:50%}
+  .print-category-level.d-level{display:none;border-radius:50%}
+  .print-category-level.d-level.visible{display:grid}
   .print-warning-mark{display:block;width:5mm;height:5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-warning-triangle{fill:#111!important;stroke:#111!important}
   .print-warning-exclamation{fill:none;stroke:#fff!important;stroke-width:12!important;stroke-linecap:round}
@@ -502,10 +503,10 @@ function makePrintWarning(){
   const exclamation=document.createElementNS(namespace,"path");exclamation.classList.add("print-warning-exclamation");exclamation.setAttribute("d","M50 29 V62");exclamation.setAttribute("stroke","#fff");exclamation.setAttribute("stroke-width","12");exclamation.setAttribute("stroke-linecap","round");exclamation.style.setProperty("stroke","#fff","important");warning.appendChild(exclamation);
   const dot=document.createElementNS(namespace,"circle");dot.classList.add("print-warning-dot");dot.setAttribute("cx","50");dot.setAttribute("cy","77");dot.setAttribute("r","5");dot.setAttribute("fill","#fff");dot.style.setProperty("fill","#fff","important");warning.appendChild(dot);return warning;
 }
-function makePrintCategoryLevels(selected,showWarning=false){
+function makePrintCategoryLevels(selected,showWarning=false,showBonus=false){
   const levelsEl=document.createElement("div");levelsEl.className="print-level-track print-category-levels";
   const warningCell=document.createElement("span");warningCell.className="print-level-cell";if(showWarning)warningCell.appendChild(makePrintWarning());levelsEl.appendChild(warningCell);
-  for(const id of ["NA","ECA","A","D"]){const cell=document.createElement("span");cell.className="print-level-cell";const level=document.createElement("span");level.className="print-category-level";if(id==="D")level.classList.add("d-level");if(selected===id)level.classList.add("active");level.textContent=id;cell.appendChild(level);levelsEl.appendChild(cell)}
+  for(const id of ["NA","ECA","A","D"]){const cell=document.createElement("span");cell.className="print-level-cell";const level=document.createElement("span");level.className="print-category-level";if(id==="D"){level.classList.add("d-level");if(showBonus)level.classList.add("visible")}if(selected===id||(id==="D"&&showBonus))level.classList.add("active");level.textContent=id;cell.appendChild(level);levelsEl.appendChild(cell)}
   return levelsEl;
 }
 function printCategoryLevel(node){
@@ -566,7 +567,7 @@ function renderPrintReport(){
       const name=document.createElement("span");name.textContent=node.titre;
       const comment=document.createElement("span");comment.className="print-category-comment";comment.setAttribute("aria-label","Emplacement du commentaire de catégorie");
       label.append(name,comment);
-      heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),node.titre==="Expression écrite"));category.appendChild(heading);
+      heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),node.titre==="Expression écrite",node.titre==="Exploitation des documents"));category.appendChild(heading);
       category.appendChild(renderPrintChildren(node));section.appendChild(category);
     }
     report.appendChild(section);
