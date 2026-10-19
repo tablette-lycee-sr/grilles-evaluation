@@ -83,6 +83,8 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 .capacity-choices{gap:4px}.children{margin-top:2px}.children .node{border:0;border-radius:0;margin-top:2px;padding:5px 0;background:transparent}.section>.node.depth-0{padding:0;border-top:0;background:transparent}
 .choice-btn.active{background:#44474c;background:color-mix(in srgb,var(--level-color) 44%,#44474c);border-color:color-mix(in srgb,var(--level-color) 62%,#686b70);color:#fff}
 @media(max-width:699px){.category-heading-row{align-items:flex-start;gap:4px}.category-levels{gap:3px}.category-levels .level-btn{width:36px;height:14px;min-height:14px;padding:0;font-size:.65rem;line-height:1}.category-flag-row,.category-flag-button{height:14px}.category-comment{height:2.5rem}}
+.category-levels .level-btn{height:21px;min-height:21px}.category-flag-row,.category-flag-button{height:48px}.category-flag-button{width:48px}.category-flag-icon{width:48px;height:48px}.category-flag-button.exceeded[aria-pressed="true"] .category-flag-label{fill:#292c30}
+@media(max-width:699px){.category-levels .level-btn{height:19px;min-height:19px}}
 .part-heading{font-size:1.8rem;font-weight:800;line-height:1.15;color:#858a90;border:0;padding:0}
 .node.depth-1>.criterion-row .node-title{color:#858a90;font-size:1.02rem}
 .section-head.category-head{border-bottom:0}
@@ -377,7 +379,7 @@ function toggleCategoryEvaluation(nodeId,key){
   const current=categoryEvaluations[nodeId]||{},next={warning:false,exceeded:false,...current,motifIds:{warning:"",exceeded:"",...current.motifIds}};
   const isOpen=current.activeMotifKind===key;
   if(current[key]&&isOpen){next[key]=false;next.activeMotifKind="";next.motifIds[key]=""}
-  else{next[key]=true;next.activeMotifKind=key}
+  else{next[key]=true;next.activeMotifKind=key;if(key==="exceeded")delete manualChoices[nodeId]}
   if(!next.warning&&!next.exceeded)delete categoryEvaluations[nodeId];
   else categoryEvaluations[nodeId]=next;
   render();
