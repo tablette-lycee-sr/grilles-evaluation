@@ -91,6 +91,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 @media(max-width:699px){.header-fields{gap:3px}.header-fields .student-name{padding:4px 5px;font-size:.72rem}.grade-line{gap:6px}.grade-line .final-grade{flex-basis:50%;width:50%;min-width:0}.header-score{font-size:.95rem}}
 @media print{
   :root{color-scheme:light}
+  html,body{background:#fff!important}
   body{margin:0;background:#fff!important;color:#111!important;font:7pt/1.12 system-ui,-apple-system,"Segoe UI",sans-serif}
   body>:not(.app){display:none!important}
   .app{width:auto;margin:0;padding:0}
@@ -107,7 +108,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-part{margin:0 0 1.2mm}
   .print-part-title{margin:0 0 .5mm;padding:.6mm 2mm;border:0;border-radius:1.5mm;background:#555;color:#fff;font-size:8.5pt;line-height:1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-category{margin:0 0 .8mm 4mm;padding:.3mm 1.5mm 1mm;border:1px solid #555;border-radius:1.5mm;overflow:hidden;break-inside:avoid}
-  .print-category-heading{position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:0 0 .2mm;padding:0;background:transparent;font-size:7.5pt;line-height:1.1;break-after:avoid}
+  .print-category-heading{position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:0 0 .2mm;padding:0 0 .3mm;background:transparent;font-size:7.5pt;line-height:1.1;break-after:avoid}
   .print-category-heading:before{position:absolute;z-index:-1;inset:-1mm -1.5mm 0;border-radius:1mm 1mm 0 0;background:#e5e5e5;content:"";-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-category-label{display:flex;align-items:center;gap:2mm;flex:1;min-width:0}
   .print-category-comment{flex:1;min-width:8mm;font-family:"Just Another Hand",cursive;font-weight:400}
@@ -505,12 +506,12 @@ function render(){
   updatePartCounts(roots);
   updateActivePart();
 }
-function makePrintLevelTable(levelId,dSelected=false){
-  const track=document.createElement("div");track.className="print-level-track";track.setAttribute("aria-label",`Niveau obtenu : ${levelId||"non évalué"}${dSelected?", bonus D":""}`);
+function makePrintLevelTable(levelId){
+  const track=document.createElement("div");track.className="print-level-track";track.setAttribute("aria-label","Niveau obtenu : "+(levelId||"non évalué"));
   for(const id of ["NA","ECA","A","D"]){
     const cell=document.createElement("span");cell.className="print-level-cell";
-    if((id==="D"&&dSelected)||(id!=="D"&&id===levelId)){const cross=document.createElement("strong");cross.className="print-level-cross";cross.textContent="X";cell.appendChild(cross)}
-    else{const dot=document.createElement("span");dot.className="print-level-dot";dot.setAttribute("aria-hidden","true");cell.appendChild(dot)}
+    if(id!=="D"&&id===levelId){const cross=document.createElement("strong");cross.className="print-level-cross";cross.textContent="X";cell.appendChild(cross)}
+    else if(id!=="D"){const dot=document.createElement("span");dot.className="print-level-dot";dot.setAttribute("aria-hidden","true");cell.appendChild(dot)}
     track.appendChild(cell);
   }
   return track;
@@ -566,7 +567,7 @@ function renderPrintCapacity(node){
   const comment=document.createElement("span");comment.className="print-capacity-comment";
   const comments=level?(node.commentaires?.[levelId]?[node.commentaires[levelId]]:[]):["Non évaluée"];
   comment.textContent=comments.length?` : ${comments.join(" ; ")}`:"";
-  text.appendChild(comment);copy.appendChild(text);row.append(copy,makePrintLevelTable(level?levelId:null,Boolean(bonusChoices[node.id])));return row;
+  text.appendChild(comment);copy.appendChild(text);row.append(copy,makePrintLevelTable(level?levelId:null));return row;
 }
 function renderPrintChildren(node){
   const fragment=document.createDocumentFragment();
