@@ -89,11 +89,14 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .app{width:auto;margin:0;padding:0}
   .app>:not(#printReport){display:none!important}
   #printReport{display:block!important}
-  .print-header{display:grid;gap:1mm;margin:0 0 1.5mm;padding:0 0 1mm;border-bottom:1px solid #333}
+  .print-header{display:grid;gap:.7mm;margin:0 0 1.5mm;padding:0 0 1mm;border-bottom:1px solid #333}
+  .print-header-top{display:flex;justify-content:space-between;align-items:baseline;gap:3mm}
   .print-header-name{font-size:11pt;font-weight:700;line-height:1.15}
-  .print-header-details{display:flex;justify-content:space-between;gap:3mm;white-space:nowrap;font-size:9pt;line-height:1.1}
+  .print-header-grade{flex:none;font-size:9pt;font-weight:650}
+  .print-header-bottom{display:grid;grid-template-columns:minmax(0,1fr) 27.5mm;gap:1mm;align-items:center;margin-left:4mm;margin-right:calc(1.5mm + 1px)}
+  .print-header-details{display:flex;gap:3mm;min-width:0;white-space:nowrap;font-size:8pt;line-height:1.1}
   .print-header-details span{min-width:0;overflow:hidden;text-overflow:ellipsis}
-  .print-capacity-row{display:grid;grid-template-columns:minmax(0,1fr) 25mm;gap:1mm;align-items:center;margin-left:4mm}
+  .print-capacity-row{display:grid;grid-template-columns:minmax(0,1fr) 27.5mm;gap:1mm;align-items:center;margin-left:4mm}
   .print-part{margin:0 0 1.2mm}
   .print-part-title{margin:0 0 .5mm;padding:1mm 2mm;border:0;border-radius:1.5mm;background:#555;color:#fff;font-size:8.5pt;line-height:1.1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-category{margin:0 0 .8mm 4mm;padding:1mm 1.5mm;border:1px solid #555;border-radius:1.5mm;overflow:hidden;break-inside:avoid}
@@ -101,10 +104,11 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-category-heading:before{position:absolute;z-index:-1;inset:-1mm -1.5mm 0;border-radius:1mm 1mm 0 0;background:#e5e5e5;content:"";-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-category-label{display:flex;align-items:baseline;gap:2mm;flex:1;min-width:0}
   .print-category-comment{flex:1;min-width:8mm;font-family:"Segoe Print","Comic Sans MS",cursive;font-weight:400}
-  .print-level-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:25mm;flex:none}
+  .print-level-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:27.5mm;flex:none}
   .print-level-cell{display:grid;place-items:center;min-width:0}
   .print-category-levels{gap:0}
   .print-category-level{display:grid;place-items:center;box-sizing:border-box;width:4.5mm;height:4.5mm;padding:0;border:1px solid #111;border-radius:1mm;background:#eee;text-align:center;font-size:5.8pt;font-weight:600;line-height:1}
+  .print-category-level:not(.d-level){width:5.1mm}
   .print-category-level.d-level{border-radius:50%}
   .print-warning-mark{display:block;width:4mm;height:4mm}
   .print-category-level.active{background:#111!important;color:#fff!important;font-weight:800!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -117,10 +121,9 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-capacity-copy.unassessed .print-capacity-bullet{border-color:#aaa;background:#aaa!important}
   .print-capacity-title{font-weight:650}
   .print-capacity-comment{display:inline;margin-left:0;font-family:"Segoe Print","Comic Sans MS",cursive;font-weight:400}
-  .print-level-cross{font-family:"Segoe Print","Comic Sans MS",cursive;font-size:10pt;font-weight:800;line-height:1}
-  .print-face-row{margin-top:.5mm;margin-right:calc(1.5mm + 1px);margin-bottom:1mm}
-  .print-face-row .print-level-track{min-height:6mm}
-  .print-level-mark{display:block;width:6mm;height:6mm}
+  .print-level-cross{display:block;text-align:center;font-family:"Segoe Print","Comic Sans MS",cursive;font-size:10pt;font-weight:800;line-height:1}
+  .print-level-dot{display:block;width:.9mm;height:.9mm;border-radius:50%;background:#bbb}
+  .print-level-mark{display:block;width:5.2mm;height:5.2mm}
   .print-legend{display:flex;flex-wrap:wrap;gap:1mm 5mm;margin-top:1.5mm;padding-top:1mm;border-top:1px solid #666;font-size:6.5pt;break-inside:avoid}
   .print-legend-item{white-space:nowrap}
 }
@@ -462,7 +465,10 @@ function render(){
 function makePrintLevelTable(levelId){
   const track=document.createElement("div");track.className="print-level-track";track.setAttribute("aria-label","Niveau obtenu : "+(levelId||"non évalué"));
   for(const id of [null,"NA","ECA","A",null]){
-    const cell=document.createElement("span");cell.className="print-level-cell";if(id&&levelId===id){const cross=document.createElement("strong");cross.className="print-level-cross";cross.textContent="×";cell.appendChild(cross)}track.appendChild(cell);
+    const cell=document.createElement("span");cell.className="print-level-cell";
+    if(id&&id===levelId){const cross=document.createElement("strong");cross.className="print-level-cross";cross.textContent="×";cell.appendChild(cross)}
+    else if(id){const dot=document.createElement("span");dot.className="print-level-dot";dot.setAttribute("aria-hidden","true");cell.appendChild(dot)}
+    track.appendChild(cell);
   }
   return track;
 }
@@ -481,13 +487,11 @@ function makePrintFace(levelId){
   else add("path",{...outline,d:"M20 63 C34 86 66 86 80 63","stroke-linecap":"round"});
   return face;
 }
-function makePrintFaceRow(){
-  const row=document.createElement("div");row.className="print-capacity-row print-face-row";
-  row.appendChild(document.createElement("div"));
+function makePrintFaceTrack(){
   const track=document.createElement("div");track.className="print-level-track";
   const emptyCell=document.createElement("span");emptyCell.className="print-level-cell";emptyCell.appendChild(document.createElement("span"));track.appendChild(emptyCell);
   for(const id of ["NA","ECA","A","D"]){const cell=document.createElement("span");cell.className="print-level-cell";cell.appendChild(makePrintFace(id));track.appendChild(cell)}
-  row.appendChild(track);return row;
+  return track;
 }
 function makePrintWarning(){
   const namespace="http://www.w3.org/2000/svg",warning=document.createElementNS(namespace,"svg");warning.setAttribute("viewBox","0 0 100 100");warning.setAttribute("role","img");warning.setAttribute("aria-label","Attention : dysfonctionnement grave");warning.classList.add("print-warning-mark");
@@ -535,17 +539,16 @@ function renderPrintChildren(node){
 function renderPrintReport(){
   const report=document.getElementById("printReport");report.replaceChildren();
   const header=document.createElement("div");header.className="print-header";
-  const student=document.createElement("div");student.className="print-header-name";student.textContent=`Élève : ${document.getElementById("studentName").value.trim()||"—"}`;header.appendChild(student);
+  const top=document.createElement("div");top.className="print-header-top";
+  const student=document.createElement("div");student.className="print-header-name";student.textContent=`Élève : ${document.getElementById("studentName").value.trim()||"—"}`;
+  const grade=document.createElement("span");grade.className="print-header-grade";grade.textContent=`Note : ${document.getElementById("finalGrade").value.trim()||"—"}`;
+  top.append(student,grade);header.appendChild(top);
+  const bottom=document.createElement("div");bottom.className="print-header-bottom";
   const details=document.createElement("div");details.className="print-header-details";
-  const metadata=[
-    ["Type",grid.typeDevoir||grid.titre||"—"],
-    ["Niveau",grid.niveauDevoir||"—"],
-    ["Note",document.getElementById("finalGrade").value.trim()||"—"]
-  ];
-  for(const [label,value] of metadata){const item=document.createElement("span");item.textContent=`${label} : ${value}`;details.appendChild(item)}
-  header.appendChild(details);
+  const type=document.createElement("span");type.textContent=grid.typeDevoir||grid.titre||"—";
+  const level=document.createElement("span");level.textContent=grid.niveauDevoir||"—";
+  details.append(type,level);bottom.append(details,makePrintFaceTrack());header.appendChild(bottom);
   report.appendChild(header);
-  report.appendChild(makePrintFaceRow());
   const roots=grid.elements||[],mappedIds=new Set(partLayout.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
   for(const part of partLayout){
     const categories=part.categories.map(category=>roots.find(root=>root.id===category.nodeId)).filter(Boolean);
