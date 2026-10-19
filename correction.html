@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Moteur de correction — prototype</title>
-<link rel="preload" href="fonts/JustAnotherHand1.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/JustAnotherHand1.woff2" as="font" type="font/woff2" crossorigin> 
 <link rel="preload" href="fonts/JustAnotherHand2.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/PermanentMarker.woff2" as="font" type="font/woff2" crossorigin>
 <style>
@@ -75,14 +75,14 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 @media(min-width:700px){.capacity-choices{grid-template-columns:repeat(4,minmax(0,1fr))}.app{padding:calc(var(--header-height) + 20px) 20px 20px 100px}.node{padding:14px}.level-btn{min-height:48px;height:48px}.choice-btn{font-size:.68rem;min-height:52px}}
 @media(max-width:900px) and (min-width:700px){.header-actions{grid-template-columns:repeat(4,38px);gap:5px}.icon-button,.icon-file{width:38px;height:38px}}
 @media(max-width:699px){.app{padding:calc(var(--header-height) + 14px) 10px 16px 80px}.part-nav{width:56px}.part-tab{min-height:80px;font-size:.78rem}.part-tab-label{top:59%;width:max(48px,calc(20vh - 12px));padding:0 2px;font-size:.74rem;line-height:1.04}.part-tab-count{top:5px;min-width:32px;padding:3px 5px;font-size:.6rem}header{grid-template-columns:minmax(0,5fr) minmax(104px,3fr);gap:5px;padding:8px}.header-left h1{font-size:1rem;margin-bottom:6px}.student-name{height:30px;padding:4px 6px;font-size:.78rem}.header-score{font-size:.95rem}.header-actions{grid-template-columns:repeat(3,34px);gap:4px}.icon-button,.icon-file{width:34px;height:34px;border-radius:6px}.icon-button svg,.icon-file svg{width:18px;height:18px}.criterion-row{grid-template-columns:minmax(0,1fr)}.level-btn{height:56px;min-height:56px}}
-.section-head.category-head{padding:6px 10px}.category-heading-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px}.category-heading-row h2{min-width:0;margin:0;font-size:1.18rem}.category-controls{display:flex;flex:none;flex-direction:column}.category-levels{display:flex;gap:6px;flex:none}.category-levels .level-btn{width:52px;height:21px;min-height:21px;padding:0 2px;font-size:.8rem;line-height:1}.category-levels .full{display:none}.category-score-slider{display:block;width:100%;height:10px;margin:5px 0 0;padding:0;appearance:none;background:transparent;cursor:pointer;touch-action:pan-y}.category-score-slider::-webkit-slider-runnable-track{height:5px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-moz-range-track{height:5px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-webkit-slider-thumb{width:14px;height:14px;margin-top:-4.5px;appearance:none;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider::-moz-range-thumb{width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider.manual::-webkit-slider-thumb{background:#fff}.category-score-slider.manual::-moz-range-thumb{background:#fff}.category-metrics{display:none;align-items:center;gap:8px;height:26px;margin-top:3px;overflow:hidden}.app.show-metrics .category-metrics{display:flex}.category-comment{height:2.5rem;overflow:auto;margin:2px 0 0;color:var(--sub);font-size:.85rem;line-height:1.3}.category-comment.empty{visibility:hidden}
-.category-extra-controls{display:flex;align-items:center;flex-wrap:wrap;gap:5px 12px;margin-top:5px}.category-extra-controls label{display:inline-flex;align-items:center;gap:5px;color:var(--sub);font-size:.78rem}.category-extra-controls input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue)}.category-extra-controls select{max-width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:#1b1d20;color:var(--text);font:inherit;font-size:.78rem}
+.section-head.category-head{padding:6px 10px}.category-heading-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px}.category-heading-row h2{min-width:0;margin:0;font-size:1.18rem}.category-controls{display:flex;flex:none;flex-direction:column}.category-levels{display:flex;gap:6px;flex:none}.category-levels .level-btn{width:52px;height:16px;min-height:16px;padding:0 2px;font-size:.8rem;line-height:1}.category-levels .full{display:none}.category-score-slider{display:block;width:100%;height:6px;margin:0;padding:0;appearance:none;background:transparent;cursor:pointer;touch-action:pan-y}.category-score-slider::-webkit-slider-runnable-track{height:4px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-moz-range-track{height:4px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-webkit-slider-thumb{width:10px;height:10px;margin-top:-3px;appearance:none;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider::-moz-range-thumb{width:8px;height:8px;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider.manual::-webkit-slider-thumb{background:#fff}.category-score-slider.manual::-moz-range-thumb{background:#fff}.category-flag-row{display:flex;align-items:center;justify-content:space-between;width:100%;height:14px}.category-flag-spacer,.category-flag-button{display:grid;place-items:center;flex:none;width:20px;height:14px}.category-flag-button{padding:0;border:0;border-radius:0;background:transparent;color:#fff}.category-flag-button:focus-visible{outline:2px solid #fff;outline-offset:1px}.category-flag-icon{display:block;width:16px;height:16px;overflow:visible}.category-flag-shape{fill:var(--muted);stroke:var(--muted);stroke-width:1.5}.category-flag-symbol{fill:#fff;stroke:#fff;stroke-width:2;stroke-linecap:round}.category-flag-button.warning[aria-pressed="true"] .category-flag-shape{fill:#fff;stroke:var(--red);stroke-width:2}.category-flag-button.warning[aria-pressed="true"] .category-flag-symbol{fill:#292c30;stroke:#292c30}.category-flag-button.exceeded[aria-pressed="true"] .category-flag-shape{fill:var(--blue);stroke:var(--blue)}.category-flag-label{fill:#fff;font-size:11px;font-weight:700;text-anchor:middle}.category-metrics{display:none;align-items:center;gap:8px;height:26px;margin-top:3px;overflow:hidden}.app.show-metrics .category-metrics{display:flex}.category-comment{height:2.5rem;overflow:auto;margin:2px 0 0;color:var(--sub);font-size:.85rem;line-height:1.3}.category-comment.empty{visibility:hidden}
+.category-extra-controls{display:flex;align-items:center;justify-content:flex-end;margin-top:2px}.category-extra-controls select{max-width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:#1b1d20;color:var(--text);font:inherit;font-size:.78rem}
 .part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .node.group{background:transparent}.node.depth-1{margin-left:4px}.node.depth-2{margin-left:8px}.node.depth-3{margin-left:12px}
 .criterion-row{grid-template-columns:minmax(115px,.72fr) minmax(0,3.28fr);gap:8px}.capacity-name{gap:2px;font-size:.84rem;line-height:1.12}.capacity-name .weight{display:none}.app.show-metrics .capacity-name .weight{display:block}.node.depth-1>.criterion-row .node-title{color:var(--panel);font-size:.96rem}
 .capacity-choices{gap:4px}.children{margin-top:2px}.children .node{border:0;border-radius:0;margin-top:2px;padding:5px 0;background:transparent}.section>.node.depth-0{padding:0;border-top:0;background:transparent}
 .choice-btn.active{background:#44474c;background:color-mix(in srgb,var(--level-color) 44%,#44474c);border-color:color-mix(in srgb,var(--level-color) 62%,#686b70);color:#fff}
-@media(max-width:699px){.category-heading-row{align-items:flex-start;gap:4px}.category-levels{gap:3px}.category-levels .level-btn{width:36px;height:19px;min-height:19px;padding:0;font-size:.65rem;line-height:1}.category-comment{height:2.5rem}}
+@media(max-width:699px){.category-heading-row{align-items:flex-start;gap:4px}.category-levels{gap:3px}.category-levels .level-btn{width:36px;height:14px;min-height:14px;padding:0;font-size:.65rem;line-height:1}.category-comment{height:2.5rem}}
 .part-heading{font-size:1.8rem;font-weight:800;line-height:1.15;color:#858a90;border:0;padding:0}
 .node.depth-1>.criterion-row .node-title{color:#858a90;font-size:1.02rem}
 .section-head.category-head{border-bottom:0}
@@ -195,6 +195,18 @@ let config = structuredClone(DEFAULT_CONFIG);
 let manualChoices = {};
 let manualCategoryPercent = {};
 let categoryEvaluations = {};
+const CATEGORY_MOTIFS={
+  warning:[
+    {id:"warning-omissions",label:"Des éléments importants sont absents."},
+    {id:"warning-justification",label:"Les affirmations sont insuffisamment justifiées."},
+    {id:"warning-confusion",label:"Une confusion fragilise l’analyse."}
+  ],
+  exceeded:[
+    {id:"exceeded-analysis",label:"Analyse particulièrement approfondie."},
+    {id:"exceeded-documents",label:"Mise en relation remarquable des documents."},
+    {id:"exceeded-writing",label:"Expression écrite particulièrement maîtrisée."}
+  ]
+};
 let leafChoices = {};
 let bonusChoices = {};
 let levels = Object.fromEntries(grid.niveaux.map(l=>[l.id,l]));
@@ -361,29 +373,43 @@ function updatePartCounts(roots){
     button.setAttribute("aria-label",`${part.title}, ${filled} capacité(s) renseignée(s) sur ${leaves.length}`);
   }
 }
-function updateCategoryEvaluation(nodeId,key,value){
-  const next={warning:false,exceeded:false,motifId:"",...categoryEvaluations[nodeId],[key]:value};
-  if(!next.warning&&!next.exceeded&&!next.motifId)delete categoryEvaluations[nodeId];
+function toggleCategoryEvaluation(nodeId,key){
+  const current=categoryEvaluations[nodeId]||{},next={warning:false,exceeded:false,...current,motifIds:{warning:"",exceeded:"",...current.motifIds}};
+  const isOpen=current.activeMotifKind===key;
+  if(current[key]&&isOpen){next[key]=false;next.activeMotifKind="";next.motifIds[key]=""}
+  else{next[key]=true;next.activeMotifKind=key}
+  if(!next.warning&&!next.exceeded)delete categoryEvaluations[nodeId];
   else categoryEvaluations[nodeId]=next;
   render();
 }
-function makeCategoryToggle(node,labelText,key){
-  const label=document.createElement("label"),input=document.createElement("input");input.type="checkbox";input.checked=Boolean(categoryEvaluations[node.id]?.[key]);
-  input.setAttribute("aria-label",labelText);input.addEventListener("change",()=>updateCategoryEvaluation(node.id,key,input.checked));
-  label.append(input,document.createTextNode(labelText));return label;
+function updateCategoryMotif(nodeId,key,motifId){
+  const current=categoryEvaluations[nodeId]||{};
+  categoryEvaluations[nodeId]={...current,motifId,motifKind:key,motifIds:{warning:"",exceeded:"",...current.motifIds,[key]:motifId}};
+  render();
+}
+function makeCategoryFlagButton(node,key){
+  const labels={warning:"Avertissement",exceeded:"Dépassé"},button=document.createElement("button");
+  button.type="button";button.className=`category-flag-button ${key}`;button.title=labels[key];button.setAttribute("aria-label",labels[key]);
+  button.setAttribute("aria-pressed",String(Boolean(categoryEvaluations[node.id]?.[key])));
+  const namespace="http://www.w3.org/2000/svg",icon=document.createElementNS(namespace,"svg");icon.setAttribute("viewBox","0 0 24 24");icon.classList.add("category-flag-icon");
+  if(key==="warning"){
+    const triangle=document.createElementNS(namespace,"path");triangle.setAttribute("d","M12 2.5 22 21H2Z");triangle.classList.add("category-flag-shape");icon.appendChild(triangle);
+    const line=document.createElementNS(namespace,"path");line.setAttribute("d","M12 8v6");line.classList.add("category-flag-symbol");icon.appendChild(line);
+    const dot=document.createElementNS(namespace,"circle");dot.setAttribute("cx","12");dot.setAttribute("cy","17.5");dot.setAttribute("r","1");dot.classList.add("category-flag-symbol");icon.appendChild(dot);
+  }else{
+    const circle=document.createElementNS(namespace,"circle");circle.setAttribute("cx","12");circle.setAttribute("cy","12");circle.setAttribute("r","10");circle.classList.add("category-flag-shape");icon.appendChild(circle);
+    const label=document.createElementNS(namespace,"text");label.setAttribute("x","12");label.setAttribute("y","16");label.classList.add("category-flag-label");label.textContent="D";icon.appendChild(label);
+  }
+  button.appendChild(icon);button.addEventListener("click",()=>toggleCategoryEvaluation(node.id,key));return button;
 }
 function renderCategoryEvaluationControls(node){
-  const options=node.categoryOptions||{},motifs=node.commentMotifs||[];
-  if(!options.warning&&!options.exceeded&&!motifs.length)return null;
+  const evaluation=categoryEvaluations[node.id]||{},key=evaluation.activeMotifKind;
+  if(!key||!evaluation[key])return null;
   const controls=document.createElement("div");controls.className="category-extra-controls";
-  if(options.warning)controls.appendChild(makeCategoryToggle(node,"Avertissement","warning"));
-  if(options.exceeded)controls.appendChild(makeCategoryToggle(node,"Dépassé (D)","exceeded"));
-  if(motifs.length){
-    const label=document.createElement("label"),select=document.createElement("select");select.setAttribute("aria-label",`Commentaire général pour ${node.titre}`);
-    const empty=document.createElement("option");empty.value="";empty.textContent="Commentaire général…";select.appendChild(empty);
-    for(const motif of motifs){const option=document.createElement("option");option.value=motif.id;option.textContent=motif.label;select.appendChild(option)}
-    select.value=categoryEvaluations[node.id]?.motifId||"";select.addEventListener("change",()=>updateCategoryEvaluation(node.id,"motifId",select.value));label.appendChild(select);controls.appendChild(label);
-  }
+  const select=document.createElement("select");select.setAttribute("aria-label",key==="warning"?`Motif d’avertissement pour ${node.titre}`:`Motif de dépassement pour ${node.titre}`);
+  const empty=document.createElement("option");empty.value="";empty.textContent=key==="warning"?"Choisir un motif d’avertissement…":"Choisir un motif de dépassement…";select.appendChild(empty);
+  for(const motif of CATEGORY_MOTIFS[key]){const option=document.createElement("option");option.value=motif.id;option.textContent=motif.label;select.appendChild(option)}
+  select.value=evaluation.motifIds?.[key]||"";select.addEventListener("change",()=>updateCategoryMotif(node.id,key,select.value));controls.appendChild(select);
   return controls;
 }
 function renderCategory(category,node=null){
@@ -452,11 +478,14 @@ function renderCategory(category,node=null){
         event.preventDefault();delete manualCategoryPercent[node.id];updateSliderDisplay();updateFinalScore();
       }
     });
-    updateSliderDisplay();categoryControls.append(slider);headingRow.appendChild(categoryControls);
+    updateSliderDisplay();
+    const categoryOptions=node.categoryOptions||{warning:true,exceeded:true},flagRow=document.createElement("div");flagRow.className="category-flag-row";
+    flagRow.appendChild(categoryOptions.warning?makeCategoryFlagButton(node,"warning"):Object.assign(document.createElement("span"),{className:"category-flag-spacer"}));
+    flagRow.appendChild(categoryOptions.exceeded?makeCategoryFlagButton(node,"exceeded"):Object.assign(document.createElement("span"),{className:"category-flag-spacer"}));
+    categoryControls.append(slider,flagRow);headingRow.appendChild(categoryControls);
     const comment=document.createElement("div");comment.className="category-comment empty";
-    const selectedMotif=(node.commentMotifs||[]).find(motif=>motif.id===categoryEvaluations[node.id]?.motifId);
     const commentLevel=effective||calculation.level;
-    const commentText=selectedMotif?.label||(commentLevel&&node.commentaires?.[commentLevel]);
+    const commentText=commentLevel&&node.commentaires?.[commentLevel];
     if(commentText){comment.classList.remove("empty");comment.textContent=commentText}
     head.appendChild(headingRow);
     const extraControls=renderCategoryEvaluationControls(node);if(extraControls)head.appendChild(extraControls);
