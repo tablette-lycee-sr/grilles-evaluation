@@ -6,12 +6,14 @@
 <title>Moteur de correction — prototype</title>
 <link rel="preload" href="fonts/JustAnotherHand1.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/JustAnotherHand2.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/PermanentMarker.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 :root{color-scheme:dark;--bg:#242629;--panel:#2d3034;--muted:#44474c;--text:#f3f4f5;--sub:#bfc3c8;--line:#50545a;--red:#e45b60;--yellow:#e8c64a;--green:#49bd7b;--blue:#55a7ee;--accent:#554878;--accent-ink:#fff;--header-height:max(16.67vh,128px)}
 *{box-sizing:border-box}html{background:var(--bg);scrollbar-gutter:stable;overscroll-behavior-y:contain}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
 @font-face{font-family:"Just Another Hand";font-style:normal;font-weight:400;src:url("fonts/JustAnotherHand2.woff2") format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:"Just Another Hand";font-style:normal;font-weight:400;src:url("fonts/JustAnotherHand1.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Permanent Marker";font-style:normal;font-weight:400;src:url("fonts/PermanentMarker.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 .app{width:min(1080px,100%);margin-left:max(0px,calc((100vw - 1080px)/2));padding:calc(var(--header-height) + 20px) 16px 16px 96px}
 .app:not(.grid-loaded) .part-nav,.app:not(.grid-loaded) #content{display:none}
 .initial-state{position:fixed;inset:var(--header-height) 0 0;display:grid;place-items:center;padding:20px;color:var(--sub);text-align:center;font-size:1rem}
@@ -130,7 +132,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-capacity-copy.unassessed .print-capacity-bullet{border-color:#aaa;background:#aaa!important}
   .print-capacity-title{font-weight:650}
   .print-capacity-comment{display:inline;margin-left:0;font-family:"Just Another Hand",cursive;font-weight:400}
-  .print-level-cross{display:block;text-align:center;font-family:"Just Another Hand",cursive;font-size:12pt;font-weight:800;line-height:1}
+  .print-level-cross{display:block;text-align:center;font-family:"Permanent Marker",cursive;font-size:11pt;font-weight:400;line-height:1}
   .print-level-dot{display:block;box-sizing:border-box;width:.55mm;height:.55mm;border-radius:50%;background:#888!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-level-mark{display:block;width:5.2mm;height:5.2mm}
   .print-legend{display:flex;flex-wrap:wrap;gap:1mm 5mm;margin-top:1.5mm;padding-top:1mm;border-top:1px solid #666;font-size:6.5pt;break-inside:avoid}
