@@ -1,1143 +1,856 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Moteur de correction</title>
-  <style>
-    :root {
-      --bg: #171b1f;
-      --panel: #1f252b;
-      --panel-strong: #28313a;
-      --border: #3b4650;
-      --text: #edf2f7;
-      --muted: #a5b1bc;
-      --accent: #71b7ff;
-      --success: #4fc983;
-      --warning: #f7c76a;
-      --danger: #ed6d6d;
-      --shadow: rgba(0,0,0,.28);
-    }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font: 16px/1.45 system-ui, -apple-system, Segoe UI, sans-serif;
-    }
-    body { padding: 24px; }
-    .app {
-      width: min(1100px, 100%);
-      margin: 0 auto;
-    }
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 16px;
-      padding: 12px 18px;
-      background: rgba(23,27,31,.95);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 8px 20px var(--shadow);
-      backdrop-filter: blur(8px);
-    }
-    .title-wrap { min-width: 0; }
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(1.2rem, 2vw, 1.7rem);
-    }
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-    .field {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      gap: 4px;
-    }
-    .field label {
-      color: var(--muted);
-      font-size: .76rem;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-    input[type="text"], select, button {
-      font: inherit;
-    }
-    input[type="text"] {
-      width: min(360px, 100%);
-      background: #11171b;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 10px;
-    }
-    .grade-box {
-      width: 160px;
-    }
-    .icon-button, .import-option, .action-button {
-      border: 1px solid var(--border);
-      background: var(--panel-strong);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-    .import-menu {
-      position: relative;
-    }
-    .import-options {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      min-width: 260px;
-      display: none;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      box-shadow: 0 12px 24px var(--shadow);
-      padding: 8px;
-      z-index: 30;
-    }
-    .import-menu[open] .import-options { display: block; }
-    .import-option {
-      display: block;
-      width: 100%;
-      text-align: left;
-      margin: 4px 0;
-    }
-    .import-heading {
-      font-size: .7rem;
-      color: var(--muted);
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      padding: 6px 8px 0;
-    }
-    #status {
-      margin-top: 14px;
-      min-height: 24px;
-      color: var(--muted);
-      font-size: .9rem;
-    }
-    .status-error { color: var(--danger); }
-    .status-success { color: var(--success); }
-    .part-section {
-      margin-top: 20px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      background: rgba(255,255,255,.01);
-    }
-    .part-heading {
-      margin: 0 0 12px;
-      font-size: 1.25rem;
-      color: #dfe7ef;
-    }
-    .section {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-top: 12px;
-      overflow: hidden;
-      background: rgba(255,255,255,.01);
-    }
-    .section-head {
-      background: rgba(255,255,255,.02);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-    }
-    .section-head h2 {
-      margin: 0;
-      font-size: 1.05rem;
-    }
-    .category-levels {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-    .level-btn {
-      border: 1px solid var(--border);
-      background: #2b343d;
-      color: var(--text);
-      border-radius: 6px;
-      padding: 5px 8px;
-      min-width: 42px;
-      cursor: pointer;
-      font-weight: 700;
-    }
-    .level-btn.active {
-      background: var(--accent);
-      color: #0d1821;
-      border-color: var(--accent);
-    }
-    .category-metrics {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin: 8px 0;
-      color: var(--muted);
-      font-size: .8rem;
-    }
-    .category-comment {
-      padding: 0 12px 12px;
-      color: var(--muted);
-      font-size: .9rem;
-    }
-    .children {
-      padding: 0 12px 12px;
-    }
-    .node {
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-    .node:first-child { border-top: 0; }
-    .criterion-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
-      gap: 12px;
-      align-items: center;
-    }
-    .capacity-name {
-      font-weight: 600;
-    }
-    .weight {
-      font-size: .72rem;
-      color: var(--muted);
-    }
-    .capacity-choices {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-    }
-    .choice-btn {
-      border: 1px solid var(--border);
-      background: #2d3740;
-      border-radius: 8px;
-      color: var(--text);
-      min-height: 54px;
-      cursor: pointer;
-      padding: 8px 10px;
-      text-align: left;
-      line-height: 1.2;
-    }
-    .choice-btn.active {
-      border-color: var(--accent);
-      background: rgba(113,183,255,.18);
-    }
-    .choice-btn[data-level="NA"].active { background: rgba(237,109,109,.2); border-color: var(--danger); }
-    .choice-btn[data-level="ECA"].active { background: rgba(247,199,106,.18); border-color: var(--warning); }
-    .choice-btn[data-level="A"].active { background: rgba(79,201,131,.18); border-color: var(--success); }
-    .choice-btn[data-level="D"].active { background: rgba(113,183,255,.2); border-color: var(--accent); }
-    .empty-state {
-      color: var(--muted);
-      padding: 16px 8px;
-    }
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      padding: 0;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      border: 0;
-    }
-    @media (max-width: 720px) {
-      body { padding: 16px; }
-      header { grid-template-columns: 1fr; }
-      .toolbar { justify-content: flex-start; }
-      .criterion-row { grid-template-columns: 1fr; }
-      .capacity-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    :root {
-      color-scheme: dark;
-      --bg: #242629;
-      --panel: #2d3034;
-      --panel-strong: #3a3d42;
-      --border: #50545a;
-      --text: #f3f4f5;
-      --muted: #aeb3b9;
-      --accent: #55a7ee;
-      --header-height: 128px;
-    }
-    html { background: var(--bg); scrollbar-gutter: stable; }
-    body { padding: 0; background: var(--bg); }
-    .app {
-      width: min(1080px, 100%);
-      margin: 0 auto;
-      padding: calc(var(--header-height) + 20px) 16px 20px 96px;
-    }
-    header {
-      position: fixed;
-      inset: 0 0 auto;
-      height: var(--header-height);
-      grid-template-columns: minmax(0, 5fr) minmax(170px, 3fr);
-      align-items: center;
-      gap: 12px;
-      padding: 10px max(18px, calc((100vw - 1080px) / 2));
-      border: 0;
-      border-bottom: 1px solid var(--border);
-      border-radius: 0;
-      background: rgba(36, 38, 41, .98);
-      box-shadow: none;
-      backdrop-filter: none;
-    }
-    .header-left { min-width: 0; }
-    .header-left h1 { margin: 0 0 7px; font-size: 1.2rem; line-height: 1.15; }
-    .header-fields { display: grid; grid-template-columns: minmax(0, 360px); gap: 5px; }
-    .student-name { width: 100%; height: 34px; padding: 6px 10px; border-radius: 6px; font-size: .9rem; }
-    .grade-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .grade-line .final-grade { flex: 0 1 180px; width: min(50%, 180px); min-width: 0; }
-    .header-score { flex: none; color: var(--muted); font-size: 1rem; font-weight: 600; white-space: nowrap; }
-    .header-actions { display: grid; grid-template-columns: repeat(4, 44px); justify-content: end; gap: 8px; }
-    .icon-button, .header-actions > button {
-      display: grid;
-      place-items: center;
-      width: 44px;
-      height: 44px;
-      padding: 0;
-      border: 1px solid #5a5e64;
-      border-radius: 7px;
-      background: #34373b;
-      color: var(--text);
-      font-size: .7rem;
-      text-align: center;
-    }
-    .icon-button:hover, .header-actions > button:hover { background: #4a4e54; }
-    .import-menu > summary { list-style: none; cursor: pointer; }
-    .import-menu > summary::-webkit-details-marker { display: none; }
-    .import-options { top: calc(100% + 6px); min-width: 210px; padding: 4px; border-radius: 6px; }
-    .import-option { border: 0; border-radius: 4px; background: transparent; font-size: .85rem; }
-    .import-option:hover { background: #4a4e54; }
-    #status {
-      position: fixed;
-      z-index: 30;
-      top: calc(var(--header-height) + 8px);
-      left: 50%;
-      max-width: calc(100vw - 24px);
-      padding: 8px 12px;
-      transform: translateX(-50%);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--panel);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, .35);
-    }
-    #status:empty { display: none; }
-    .status-error { border-color: var(--danger) !important; }
-    .part-nav {
-      position: fixed;
-      z-index: 10;
-      top: var(--header-height);
-      bottom: 0;
-      left: max(0px, calc((100vw - 1080px) / 2));
-      display: flex;
-      width: 64px;
-      flex-direction: column;
-      overflow-y: auto;
-      border-right: 1px solid var(--border);
-      background: #292c30;
-    }
-    .part-tab {
-      position: relative;
-      display: block;
-      flex: 1 0 25%;
-      min-height: 100px;
-      width: 100%;
-      padding: 0;
-      border: 0;
-      border-bottom: 1px solid #55595f;
-      border-radius: 0;
-      background: #3a3d42;
-      color: #fff;
-      font-size: .88rem;
-      font-weight: 650;
-      line-height: 1.05;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    .part-tab:hover { background: #4a4e54; }
-    .part-tab[aria-current="location"] { background: #fff; color: #17191c; }
-    .part-tab.complete::before { position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--accent); content: ""; }
-    .part-tab-label { position: absolute; top: 59%; left: 50%; width: max(56px, calc(20.83vh - 20px)); padding: 0 2px; transform: translate(-50%, -50%) rotate(-90deg); overflow-wrap: anywhere; text-align: center; }
-    .part-tab-count { position: absolute; z-index: 1; top: 6px; left: 50%; min-width: 34px; padding: 4px 6px; transform: translateX(-50%); border-radius: 999px; background: #55595f; color: #fff; font-size: .66rem; line-height: 1; white-space: nowrap; }
-    .part-tab.complete .part-tab-count { background: var(--accent); color: #111; }
-    .part-section { scroll-margin-top: calc(var(--header-height) + 12px); margin: 0 0 28px; }
-    .part-heading { margin: 0 0 16px; padding: 0 0 10px; border-bottom: 1px solid var(--border); color: #858a90; font-size: 1.55rem; font-weight: 800; line-height: 1.2; }
-    .section { margin: 18px 0; border-radius: 10px; background: transparent; }
-    .section-head { padding: 8px 10px; background: var(--panel); }
-    .section-head h2 { font-size: 1.18rem; }
-    .category-metrics { min-height: 26px; margin: 3px 0 0; }
-    .category-comment { min-height: 2.5rem; padding: 4px 10px; background: #292c30; font-size: .85rem; }
-    .children { margin-top: 4px; padding: 0 10px 8px; }
-    .node { padding: 8px 0; border-color: #3c3f44; }
-    .node .criterion-row { grid-template-columns: minmax(115px, .72fr) minmax(0, 3.28fr); gap: 8px; align-items: start; }
-    .capacity-name { font-size: .88rem; line-height: 1.15; }
-    .weight { display: none; }
-    .capacity-choices { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
-    .choice-btn { min-height: 48px; padding: 7px; border-radius: 6px; font-size: .78rem; line-height: 1.2; }
-    .empty-state { padding: 20px; color: var(--muted); }
-    @media (max-width: 720px) {
-      :root { --header-height: 112px; }
-      .app { padding: calc(var(--header-height) + 14px) 10px 16px 76px; }
-      header { grid-template-columns: minmax(0, 5fr) minmax(104px, 3fr); gap: 5px; padding: 8px; }
-      .header-left h1 { font-size: 1rem; }
-      .student-name { height: 30px; padding: 4px 6px; font-size: .78rem; }
-      .header-fields { gap: 3px; }
-      .grade-line { gap: 6px; }
-      .grade-line .final-grade { flex-basis: 50%; width: 50%; }
-      .header-score { font-size: .85rem; }
-      .header-actions { grid-template-columns: repeat(3, 34px); gap: 4px; }
-      .icon-button, .header-actions > button { width: 34px; height: 34px; border-radius: 6px; font-size: .58rem; }
-      .part-nav { width: 56px; }
-      .part-tab { min-height: 80px; font-size: .78rem; }
-      .part-tab-label { width: max(48px, calc(20vh - 12px)); font-size: .74rem; }
-      .part-tab-count { top: 5px; min-width: 32px; padding: 3px 5px; font-size: .6rem; }
-      .node .criterion-row { grid-template-columns: minmax(0, 1fr); }
-      .capacity-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media print {
-      :root { color-scheme: light; }
-      html, body { background: #fff !important; color: #111 !important; }
-      .part-nav, header, #status { display: none !important; }
-      .app { width: auto; margin: 0; padding: 0; }
-      .part-section { margin: 0 0 12px; }
-      .part-heading { color: #555; }
-      .section, .section-head, .category-comment { background: #fff !important; color: #111 !important; }
-      .part-tab, button { print-color-adjust: exact; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moteur de correction — prototype</title>
+<link rel="preload" href="fonts/Satisfy.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/PermanentMarker.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+:root{color-scheme:dark;--bg:#242629;--panel:#2d3034;--muted:#44474c;--text:#f3f4f5;--sub:#bfc3c8;--line:#50545a;--red:#e45b60;--yellow:#e8c64a;--green:#49bd7b;--blue:#55a7ee;--accent:#554878;--accent-ink:#fff;--header-height:max(16.67vh,128px)}
+*{box-sizing:border-box}html{background:var(--bg);scrollbar-gutter:stable;overscroll-behavior-y:contain}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+@font-face{font-family:"Satisfy";font-style:normal;font-weight:400;src:url("fonts/Satisfy.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Permanent Marker";font-style:normal;font-weight:400;src:url("fonts/PermanentMarker.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+.app{width:min(1080px,100%);margin-left:max(0px,calc((100vw - 1080px)/2));padding:calc(var(--header-height) + 20px) 16px 16px 96px}
+.app:not(.grid-loaded) .part-nav,.app:not(.grid-loaded) #content{display:none}
+.initial-state{position:fixed;inset:var(--header-height) 0 0;display:grid;place-items:center;padding:20px;color:var(--sub);text-align:center;font-size:1rem}
+.app.grid-loaded .initial-state{display:none}
+.part-nav{position:fixed;z-index:10;top:var(--header-height);bottom:0;left:max(0px,calc((100vw - 1080px)/2));width:64px;display:flex;flex-direction:column;background:#292c30;border-right:1px solid var(--line);overflow-y:auto}
+.part-tab{position:relative;display:block;flex:1 0 25%;min-height:100px;width:100%;padding:0;border:0;border-bottom:1px solid #55595f;border-radius:0;background:#3a3d42;color:#fff;font-size:.88rem;font-weight:650;line-height:1.05;overflow:hidden}
+.part-tab:hover{background:#4a4e54}.part-tab[aria-current="location"]{background:#fff;color:#17191c}
+.part-tab.complete::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent)}
+.settings-option{display:flex;align-items:center;gap:10px;padding:8px 0;color:var(--text)}.settings-option input{width:18px;height:18px;accent-color:var(--blue)}
+.part-tab-label{position:absolute;left:50%;top:59%;display:block;width:max(56px,calc(20.83vh - 20px));padding:0 2px;text-align:center;white-space:normal;overflow-wrap:anywhere;hyphens:auto;line-height:1.05;transform:translate(-50%,-50%) rotate(-90deg)}
+.part-tab-count{position:absolute;z-index:1;top:6px;left:50%;width:auto;min-width:34px;padding:4px 6px;border-radius:999px;background:#55595f;color:#fff;font-size:.66rem;font-weight:700;line-height:1;text-align:center;white-space:nowrap;transform:translateX(-50%)}
+.part-tab.complete .part-tab-count{background:var(--accent);color:var(--accent-ink)}
+.part-section{scroll-margin-top:var(--header-height);margin:0 0 28px}
+.part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding:0;border:0}
+.category-placeholder{padding:12px 14px;border-top:1px solid #3c3f44}
+header{position:fixed;z-index:20;inset:0 0 auto;height:var(--header-height);display:grid;grid-template-columns:5fr 3fr;align-items:center;gap:12px;padding:10px 18px;background:rgba(36,38,41,.98);border-bottom:1px solid var(--line)}
+.header-left{grid-column:1;min-width:0}.header-left h1{font-size:1.25rem;line-height:1.15;margin:0 0 6px}h2{font-size:1.05rem;margin:0 0 6px}
+.student-name{width:min(100%,360px);height:34px;padding:6px 10px;border:1px solid #62666d;border-radius:6px;background:#1b1d20;color:#fff;font:inherit;font-size:.9rem}
+.header-score{display:block;min-width:0;margin:0;color:#969ba1;font-size:1.05rem;font-weight:600;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.header-actions{grid-column:2;display:grid;grid-template-columns:repeat(4,44px);justify-content:start;align-content:center;gap:8px;margin:0}
+button,.filelabel{font:inherit;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#3a3d42;color:var(--text);cursor:pointer}
+button:focus-visible,.filelabel:focus-within{outline:2px solid white;outline-offset:2px}button.secondary{background:transparent}
+.icon-button,.icon-file{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #5a5e64;border-radius:7px;background:#34373b;color:#fff}
+.icon-button:hover,.icon-file:hover{background:#4a4e54}.icon-button svg,.icon-file svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.import-menu{position:relative}.import-menu>summary{list-style:none;cursor:pointer}.import-menu>summary::-webkit-details-marker{display:none}
+.import-options{position:absolute;z-index:40;top:calc(100% + 6px);right:0;display:none;min-width:210px;padding:4px;border:1px solid var(--line);border-radius:6px;background:var(--panel);box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.import-menu[open] .import-options{display:grid}
+.import-option{padding:9px 10px;border-radius:4px;color:var(--text);font-size:.85rem;white-space:nowrap;cursor:pointer}.import-option:hover{background:#4a4e54}
+.import-heading{margin:5px 8px 3px;color:var(--sub);font-size:.7rem;font-weight:700;text-transform:uppercase}
+.import-catalog{display:grid}.import-catalog-button{width:100%;padding:9px 10px;border:0;border-radius:4px;background:transparent;text-align:left;white-space:normal}.import-catalog-button:hover{background:#4a4e54}
+.import-separator{height:1px;margin:4px 6px;background:var(--line)}
+input[type=file]{position:fixed;left:-10000px;width:1px;height:1px;opacity:0}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.status-toast{position:fixed;z-index:30;top:calc(var(--header-height) + 8px);left:50%;transform:translateX(-50%);max-width:calc(100vw - 24px);padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.35);font-size:.85rem}
+.status-toast[data-kind="error"]{border-color:var(--red)}
+.header-score output{display:block}
+dialog{width:min(420px,calc(100vw - 32px));border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section{margin:18px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden}.section-head{background:var(--panel);padding:12px 14px}
+.node{padding:12px;border-top:1px solid #3c3f44}.node.group{background:rgba(255,255,255,.015)}
+.node.depth-1{margin-left:10px}.node.depth-2{margin-left:18px}.node.depth-3{margin-left:26px}
+.node-title{font-weight:650;margin:0}.criterion-row{display:grid;grid-template-columns:minmax(200px,1.2fr) minmax(0,2.8fr);gap:12px;align-items:start}.criterion-row.category-summary{grid-template-columns:minmax(0,1fr)}.capacity-name{display:flex;flex-direction:column;gap:4px;min-width:0}.capacity-name .weight{font-size:.72rem;color:var(--sub);font-weight:600}.capacity-choices{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:6px}.levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%}
+.level-btn{height:48px;min-height:48px;border:2px solid transparent;background:var(--muted);color:#f5f5f5;padding:7px 3px;font-weight:650;font-size:.72rem;line-height:1.2;min-width:0;white-space:normal;word-break:break-word}.choice-btn{border:1px solid var(--line);background:#2b2f33;color:var(--text);padding:8px 8px;text-align:left;line-height:1.35;min-height:48px;font:inherit;font-size:.8rem;font-weight:400;border-radius:8px;cursor:pointer;white-space:normal;word-break:break-word;display:flex;align-items:center}.choice-btn.active{background:var(--level-color);border-color:var(--level-color);color:#1b1d20}.level-btn .abbr{display:block;font-size:1rem}.level-btn .full{display:block;font-size:.68rem;font-weight:450;opacity:.9}
+.level-btn.suggested{border-color:var(--level-color);background:var(--muted)}
+.level-btn.manual{background:var(--level-color);border-color:var(--level-color);color:#202124}
+.level-btn.final-selected{font-weight:650}
+.level-btn.d-bonus{background:var(--blue);border-color:var(--blue);color:#111}.level-btn.d-bonus.active{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.meta{display:flex;flex-wrap:nowrap;gap:8px;margin-top:8px;align-items:center;height:30px;overflow:hidden}
+.pill{font-size:.75rem;border:1px solid var(--line);border-radius:999px;padding:3px 8px;color:var(--sub)}
+.pill.partial{border-color:var(--yellow);color:var(--yellow)}.pill.manualtag{border-color:#aaa;color:#ddd}
+.comment{height:4.5rem;box-sizing:border-box;overflow:auto;margin:9px 0 0;padding:9px 10px;border-left:2px solid #666;background:#292c30;color:#d9dce0;font-size:.9rem}.comment.empty{visibility:hidden}
+.children{margin-top:8px}.children .node{border-radius:8px;margin-top:8px;border:1px solid #3c3f44}
+.bonus-row{display:flex;gap:8px;align-items:stretch;margin-top:9px;flex-wrap:wrap}
+.bonus-toggle{border:2px solid transparent;background:#44474c;color:#f5f5f5;min-width:90px}
+.bonus-toggle.active{background:var(--blue);border-color:var(--blue);color:#111}
+.bonus-controls{display:flex;align-items:center;gap:8px;flex:1;min-width:180px}
+.bonus-controls label{font-size:.82rem;color:var(--sub)}
+.bonus-controls input{width:86px;background:#1b1d20;color:#fff;border:1px solid #62666d;border-radius:7px;padding:8px;font:inherit}
+.bonus-help{font-size:.78rem;color:var(--sub);align-self:center}
+@media(min-width:700px){.capacity-choices{grid-template-columns:repeat(3,minmax(0,1fr))}.app{padding:calc(var(--header-height) + 20px) 20px 20px 100px}.node{padding:14px}.level-btn{min-height:48px;height:48px}.choice-btn{font-size:.8rem;min-height:52px}}
+@media(max-width:900px) and (min-width:700px){.header-actions{grid-template-columns:repeat(4,38px);gap:5px}.icon-button,.icon-file{width:38px;height:38px}}
+@media(max-width:699px){.app{padding:calc(var(--header-height) + 14px) 10px 16px 80px}.part-nav{width:56px}.part-tab{min-height:80px;font-size:.78rem}.part-tab-label{top:59%;width:max(48px,calc(20vh - 12px));padding:0 2px;font-size:.74rem;line-height:1.04}.part-tab-count{top:5px;min-width:32px;padding:3px 5px;font-size:.6rem}header{grid-template-columns:minmax(0,5fr) minmax(104px,3fr);gap:5px;padding:8px}.header-left h1{font-size:1rem;margin-bottom:6px}.student-name{height:30px;padding:4px 6px;font-size:.78rem}.header-score{font-size:.95rem}.header-actions{grid-template-columns:repeat(3,34px);gap:4px}.icon-button,.icon-file{width:34px;height:34px;border-radius:6px}.icon-button svg,.icon-file svg{width:18px;height:18px}.criterion-row{grid-template-columns:minmax(0,1fr)}.level-btn{height:56px;min-height:56px}}
+.section-head.category-head{padding:6px 10px}.category-heading-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px}.category-heading-row h2{min-width:0;margin:0;font-size:1.18rem}.category-controls{display:flex;flex:none;flex-direction:column}.category-levels{display:flex;gap:6px;flex:none}.category-levels .level-btn{width:52px;height:16px;min-height:16px;padding:0 2px;font-size:.8rem;line-height:1}.category-levels .full{display:none}.category-score-slider{display:block;width:100%;height:10px;margin:5px 0 0;padding:0;appearance:none;background:transparent;cursor:pointer;touch-action:pan-y}.category-score-slider::-webkit-slider-runnable-track{height:5px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-moz-range-track{height:5px;border-radius:999px;background:linear-gradient(to right,var(--na-color) 0%,var(--na-color) var(--na-stop),var(--eca-color) var(--na-stop),var(--eca-color) var(--eca-stop),var(--a-color) var(--eca-stop),var(--a-color) 100%)}.category-score-slider::-webkit-slider-thumb{width:14px;height:14px;margin-top:-4.5px;appearance:none;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider::-moz-range-thumb{width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:#858a90}.category-score-slider.manual::-webkit-slider-thumb{background:#fff}.category-score-slider.manual::-moz-range-thumb{background:#fff}.category-flag-row{display:flex;align-items:center;justify-content:space-between;width:100%;height:16px}.category-flag-button{display:grid;place-items:center;flex:none;width:20px;height:16px;padding:0;border:0;border-radius:0;background:transparent;color:#fff}.category-flag-button:focus-visible{outline:2px solid #fff;outline-offset:1px}.category-flag-icon{display:block;width:16px;height:16px;overflow:visible}.category-flag-shape{fill:var(--muted);stroke:var(--muted);stroke-width:1.5}.category-flag-symbol{fill:#fff;stroke:#fff;stroke-width:2;stroke-linecap:round}.category-flag-button.warning[aria-pressed="true"] .category-flag-shape{fill:#fff;stroke:var(--red);stroke-width:2}.category-flag-button.warning[aria-pressed="true"] .category-flag-symbol{fill:#292c30;stroke:#292c30}.category-flag-button.exceeded[aria-pressed="true"] .category-flag-shape{fill:var(--blue);stroke:var(--blue)}.category-flag-label{fill:#fff;font-size:11px;font-weight:700;text-anchor:middle}.category-metrics{display:none;align-items:center;gap:8px;height:26px;margin-top:3px;overflow:hidden}.app.show-metrics .category-metrics{display:flex}.category-comment{height:2.5rem;overflow:auto;margin:2px 0 0;color:var(--sub);font-size:.85rem;line-height:1.3}.category-comment.empty{visibility:hidden}
+.category-extra-controls{display:flex;align-items:center;justify-content:flex-end;margin-top:2px}.category-extra-controls select{max-width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:#1b1d20;color:var(--text);font:inherit;font-size:.78rem}
+.part-heading{font-size:1.55rem;font-weight:800;line-height:1.2;color:#a9adb2;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.node.group{background:transparent}.node.depth-1{margin-left:4px}.node.depth-2{margin-left:8px}.node.depth-3{margin-left:12px}
+.criterion-row{grid-template-columns:minmax(115px,.72fr) minmax(0,3.28fr);gap:8px}.capacity-name{gap:2px;font-size:.84rem;line-height:1.12}.capacity-name .weight{display:none}.app.show-metrics .capacity-name .weight{display:block}.node.depth-1>.criterion-row .node-title{color:var(--panel);font-size:.96rem}
+.capacity-choices{gap:4px}.children{margin-top:2px}.children .node{border:0;border-radius:0;margin-top:2px;padding:5px 0;background:transparent}.section>.node.depth-0{padding:0;border-top:0;background:transparent}
+.choice-btn.active{background:#44474c;background:color-mix(in srgb,var(--level-color) 44%,#44474c);border-color:color-mix(in srgb,var(--level-color) 62%,#686b70);color:#fff}
+@media(max-width:699px){.category-heading-row{align-items:flex-start;gap:4px}.category-levels{gap:3px}.category-levels .level-btn{width:36px;height:14px;min-height:14px;padding:0;font-size:.65rem;line-height:1}.category-flag-row,.category-flag-button{height:14px}.category-comment{height:2.5rem}}
+.category-levels .level-btn{height:21px;min-height:21px}.category-flag-row,.category-flag-button{height:48px}.category-flag-button{width:48px}.category-flag-icon{width:48px;height:48px}.category-flag-button.exceeded[aria-pressed="true"] .category-flag-label{fill:#292c30}
+@media(max-width:699px){.category-levels .level-btn{height:19px;min-height:19px}}
+.part-heading{font-size:1.8rem;font-weight:800;line-height:1.15;color:#858a90;border:0;padding:0}
+.node.depth-1>.criterion-row .node-title{color:#858a90;font-size:1.02rem}
+.section-head.category-head{border-bottom:0}
+.section>.node.depth-0{padding-right:10px;padding-left:10px}
+.header-fields{display:grid;grid-template-columns:minmax(0,360px);gap:4px;width:min(100%,720px)}.grade-line{display:flex;align-items:center;gap:8px;min-width:0}.grade-line .final-grade{flex:0 1 180px;width:min(50%,180px);min-width:0}.header-score{flex:none}
+@media(max-width:699px){.header-fields{gap:3px}.header-fields .student-name{padding:4px 5px;font-size:.72rem}.grade-line{gap:6px}.grade-line .final-grade{flex-basis:50%;width:50%;min-width:0}.header-score{font-size:.95rem}}
+@media print{
+  :root{color-scheme:light}
+  html,body{background:#fff!important}
+  body{margin:0;background:#fff!important;color:#111!important;font:7pt/1.12 system-ui,-apple-system,"Segoe UI",sans-serif}
+  body>:not(.app){display:none!important}
+  .app{width:auto;margin:0;padding:0}
+  .app>:not(#printReport){display:none!important}
+  #printReport{display:block!important}
+  .print-header{display:grid;gap:.7mm;margin:0 0 1.5mm;padding:0 0 1mm;border-bottom:1px solid #333}
+  .print-header-top{display:flex;justify-content:space-between;align-items:baseline;gap:3mm}
+  .print-header-name{font-size:11pt;font-weight:700;line-height:1.15}
+  .print-header-grade{flex:none;font-size:9pt;font-weight:650}
+  .print-header-bottom{display:grid;grid-template-columns:minmax(0,1fr) 22mm;gap:1mm;align-items:center;margin-left:4mm;margin-right:calc(1.5mm + 1px)}
+  .print-header-details{display:flex;gap:3mm;min-width:0;white-space:nowrap;font-size:8pt;line-height:1.1}
+  .print-header-details span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .print-capacity-row{display:grid;grid-template-columns:minmax(0,1fr) 22mm;gap:1mm;align-items:center;margin-left:4mm}
+  .print-part{margin:0 0 1.2mm}
+  .print-part-title{margin:0 0 .5mm;padding:.6mm 2mm;border:0;border-radius:1.5mm;background:#555;color:#fff;font-size:8.5pt;line-height:1;break-after:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-category{margin:0 0 .8mm 4mm;padding:.3mm 1.5mm 1mm;border:1px solid #555;border-radius:1.5mm;overflow:hidden;break-inside:avoid}
+  .print-category-heading{position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:center;gap:2mm;margin:0 0 .2mm;padding:0 0 .3mm;background:transparent;font-size:7.5pt;line-height:1.1;break-after:avoid}
+  .print-category-heading:before{position:absolute;z-index:-1;inset:-1mm -1.5mm 0;border-radius:1mm 1mm 0 0;background:#e5e5e5;content:"";-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-category-label{display:flex;align-items:center;gap:2mm;flex:1;min-width:0}
+  .print-category-comment{flex:1;min-width:8mm;font-family:"Satisfy",cursive;font-weight:400}
+  .print-level-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:22mm;flex:none}
+  .print-level-cell{display:grid;place-items:center;min-width:0}
+  .print-category-levels{grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+  .print-category-level{display:grid;place-items:center;box-sizing:border-box;width:4.5mm;height:3.8mm;padding:0;border:1px solid #111;border-radius:.8mm;background:#eee;text-align:center;font-size:5.8pt;font-weight:600;line-height:1}
+  .print-category-level:not(.d-level){width:5.1mm}
+  .print-category-level.d-level{display:none;width:3.8mm;height:3.8mm;border-radius:50%}
+  .print-category-level.d-level.visible{display:grid}
+  .print-warning-mark{display:block;width:5mm;height:5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-category-warning{width:3.8mm;height:3.8mm;flex:none}
+  .print-warning-triangle{fill:#111!important;stroke:#111!important}
+  .print-warning-exclamation{fill:none;stroke:#fff!important;stroke-width:12!important;stroke-linecap:round}
+  .print-warning-dot{fill:#fff!important}
+  .print-category-level.active{background:#111!important;color:#fff!important;font-weight:800!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-subcategory{margin:0 0 .5mm;break-inside:avoid-page}
+  .print-subcategory-title{margin:0 0 .2mm;color:#666;font-size:6.5pt;line-height:1.05;break-after:avoid}
+  .print-capacity-row{margin-bottom:0;break-inside:avoid}
+  .print-capacity-copy{display:grid;grid-template-columns:2mm minmax(0,1fr);gap:.5mm;align-items:start;min-width:0}
+  .print-capacity-copy.unassessed{color:#aaa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-capacity-bullet{display:block;align-self:start;justify-self:start;box-sizing:border-box;width:.8mm;height:.8mm;margin:.5mm 0 0 .3mm;border:.15mm solid #111;border-radius:50%;background:#111!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-capacity-copy.unassessed .print-capacity-bullet{border-color:#aaa;background:#aaa!important}
+  .print-capacity-text{line-height:.92}
+  .print-capacity-title{font-weight:650}
+  .print-capacity-comment{display:inline;margin-left:0;font-family:"Satisfy",cursive;font-size:7.5pt;font-weight:400;line-height:.92}
+  .print-level-cross{display:block;text-align:center;font-family:"Permanent Marker",cursive;font-size:8.5pt;font-weight:400;line-height:.8}
+  .print-level-dot{display:block;box-sizing:border-box;width:.55mm;height:.55mm;border-radius:50%;background:#888!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-level-mark{display:block;width:5.2mm;height:5.2mm}
+  .print-legend{display:flex;flex-wrap:wrap;gap:1mm 5mm;margin-top:1.5mm;padding-top:1mm;border-top:1px solid #666;font-size:6.5pt;break-inside:avoid}
+  .print-legend-item{white-space:nowrap}
+}
+@page{size:A5 portrait;margin:5mm}
+</style>
 </head>
 <body>
-  <div class="app">
-    <nav class="part-nav" id="partNav" aria-label="Navigation des parties"></nav>
-    <header>
-      <div class="header-left">
-        <h1 id="pageTitle">Chargement de la grille…</h1>
-        <div class="header-fields">
-          <input id="studentName" class="student-name" type="text" placeholder="Nom de l'élève" aria-label="Nom de l'élève">
-          <div class="grade-line">
-            <input id="finalGrade" class="student-name final-grade" type="text" placeholder="Note finale" aria-label="Note finale">
-            <div class="header-score" aria-label="Note calculée"><output id="finalScore">—/20</output></div>
-          </div>
-        </div>
-      </div>
-      <div class="header-actions" aria-label="Actions">
-
-        <details class="import-menu" id="importMenu">
-          <summary class="icon-button" title="Choisir une grille" aria-label="Choisir une grille">CSV</summary>
-          <div class="import-options">
-            <div class="import-heading">Catalogue</div>
-            <div id="gridCatalog"></div>
-          </div>
-        </details>
-        <button id="resetBtn" type="button" title="Réinitialiser" aria-label="Réinitialiser">Effacer</button>
-        <button id="printBtn" type="button" title="Imprimer" aria-label="Imprimer">PDF</button>
-      </div>
-    </header>
-
-    <div id="status" aria-live="polite"></div>
-    <main id="content"></main>
+<div class="app">
+<nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
+<header aria-label="En-tête">
+  <div class="header-left">
+    <h1 id="pageTitle" aria-label="Titre de la grille"></h1>
+    <div class="header-fields">
+      <input id="studentName" class="student-name" type="text" placeholder="Nom de l’élève" aria-label="Nom de l’élève">
+      <div class="grade-line"><input id="finalGrade" class="student-name final-grade" type="text" placeholder="Note finale" aria-label="Note finale"><div class="header-score" aria-label="Proposition de note finale avec bonus"><output id="finalScore">—/20</output></div></div>
+    </div>
   </div>
-
-  <script>
-    const DEFAULT_LEVELS = [
-      { id: 'NA', libelle: 'Non acquis', couleur: '#ed6d6d', valeur: 0 },
-      { id: 'ECA', libelle: 'En cours d’acquisition', couleur: '#f7c76a', valeur: 1 },
-      { id: 'A', libelle: 'Acquis', couleur: '#4fc983', valeur: 2 },
-      { id: 'D', libelle: 'Dépassé', couleur: '#71b7ff', valeur: 3 }
-    ];
-
-    let partLayout = [];
-    let grid = { version: 1, id: '', titre: '', niveaux: DEFAULT_LEVELS, elements: [] };
-    let config = { seuils: {}, bonus: {}, ponderations: {}, coefficientsCategories: {} };
-    let leafChoices = {};
-    let bonusChoices = {};
-    let manualCategoryPercent = {};
-    let manualChoices = {};
-    let categoryEvaluations = {};
-    let levels = Object.fromEntries(DEFAULT_LEVELS.map(level => [level.id, level]));
-
-    const contentEl = document.getElementById('content');
-    const statusEl = document.getElementById('status');
-    const pageTitleEl = document.getElementById('pageTitle');
-    const finalScoreEl = document.getElementById('finalScore');
-
-    function setStatus(message, kind = '') {
-      statusEl.textContent = message || '';
-      statusEl.className = message ? (kind === 'error' ? 'status-error' : 'status-success') : '';
-    }
-
-    function normalizeType(value) {
-      return String(value || '').trim().toLowerCase();
-    }
-
-    function isLeaf(node) {
-      return !node || !Array.isArray(node.enfants) || node.enfants.length === 0;
-    }
-
-    function descendantsLeaves(node) {
-      if (!node) return [];
-      if (isLeaf(node)) return [node];
-      return (node.enfants || []).flatMap(descendantsLeaves);
-    }
-
-    function getWeight(node) {
-      const value = config.ponderations?.[node.id];
-      return Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : 1;
-    }
-
-    function getCategoryCoefficient(node) {
-      const value = config.coefficientsCategories?.[node.id];
-      return Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : 1;
-    }
-
-    function getLeafScore(node) {
-      const id = leafChoices[node.id];
-      const level = id && levels[id];
-      if (!level) return null;
-      return { score: level.valeur, weight: getWeight(node), node };
-    }
-
-    function calculate(node) {
-      const leaves = descendantsLeaves(node);
-      const scored = leaves.map(getLeafScore).filter(Boolean);
-      const total = leaves.length;
-      if (!scored.length) return { level: null, mean: null, count: 0, total, partial: total > 0 };
-
-      const weightedTotal = scored.reduce((sum, item) => sum + item.score * item.weight, 0);
-      const weightTotal = scored.reduce((sum, item) => sum + item.weight, 0);
-      const mean = weightedTotal / weightTotal;
-      const thresholds = config.seuils || {};
-
-      let level = 'A';
-      if (mean < Number(thresholds.NA_max_exclusif ?? 0.5)) level = 'NA';
-      else if (mean < Number(thresholds.ECA_max_exclusif ?? 1.5)) level = 'ECA';
-
-      return { level, mean, count: scored.length, total, partial: scored.length < total };
-    }
-
-    function effectiveLevel(node) {
-      if (isLeaf(node)) return leafChoices[node.id] || null;
-      if (Object.hasOwn(manualChoices, node.id)) return manualChoices[node.id];
-      return calculate(node).level;
-    }
-
-    function getCategoryPercentage(node) {
-      if (Object.hasOwn(manualCategoryPercent, node.id)) return manualCategoryPercent[node.id];
-      const mean = calculate(node).mean;
-      return mean === null ? null : mean * 50;
-    }
-
-    function totalBonus() {
-      return Object.values(bonusChoices).reduce((sum, item) => sum + Number(item || 0), 0);
-    }
-
-    function calculateFinalScore() {
-      const categoryScores = (grid.elements || []).map(category => {
-        const percentage = getCategoryPercentage(category);
-        if (percentage === null) return null;
-        return { percentage, coefficient: getCategoryCoefficient(category) };
-      }).filter(Boolean);
-
-      if (!categoryScores.length) return null;
-      const coefficientTotal = categoryScores.reduce((sum, item) => sum + item.coefficient, 0);
-      const weightedPercent = categoryScores.reduce((sum, item) => sum + item.percentage * item.coefficient, 0);
-      return Math.min(20, 20 * (weightedPercent / (100 * coefficientTotal)) + totalBonus());
-    }
-
-    function updateFinalScore() {
-      const score = calculateFinalScore();
-      finalScoreEl.textContent = score === null ? '—/20' : `${score.toFixed(2).replace('.', ',')}/20`;
-    }
-
-    function detectCsvDelimiter(text) {
-      const firstLine = (text.split(/\r\n|\n|\r/, 1)[0] || '');
-      let quoted = false;
-      let commas = 0;
-      let semicolons = 0;
-      for (let i = 0; i < firstLine.length; i++) {
-        const char = firstLine[i];
-        if (char === '"') {
-          if (quoted && firstLine[i + 1] === '"') { i++; continue; }
-          quoted = !quoted;
-        } else if (!quoted) {
-          if (char === ',') commas++;
-          if (char === ';') semicolons++;
-        }
-      }
-      return semicolons > commas ? ';' : ',';
-    }
-
-    function parseCsv(text) {
-      const source = String(text || '').replace(/^\uFEFF/, '');
-      const delimiter = detectCsvDelimiter(source);
-      const rows = [];
-      let row = [];
-      let field = '';
-      let quoted = false;
-
-      for (let i = 0; i < source.length; i++) {
-        const char = source[i];
-        if (quoted) {
-          if (char === '"') {
-            if (source[i + 1] === '"') {
-              field += '"';
-              i++;
-            } else {
-              quoted = false;
-            }
-          } else {
-            field += char;
-          }
-          continue;
-        }
-
-        if (char === '"') {
-          if (field.length === 0) quoted = true;
-          else field += char;
-          continue;
-        }
-
-        if (char === delimiter) {
-          row.push(field);
-          field = '';
-          continue;
-        }
-
-        if (char === '\n' || char === '\r') {
-          if (char === '\r' && source[i + 1] === '\n') i++;
-          row.push(field);
-          if (row.some(value => value.trim() !== '')) rows.push(row);
-          row = [];
-          field = '';
-          continue;
-        }
-
-        field += char;
-      }
-
-      if (quoted) throw new Error('Guillemet CSV non fermé.');
-      if (field.length || row.length) {
-        row.push(field);
-        if (row.some(value => value.trim() !== '')) rows.push(row);
-      }
-
-      if (rows.length < 2) throw new Error('Le fichier CSV est vide ou incomplet.');
-
-      const headers = rows.shift().map(value => value.trim());
-      if (new Set(headers).size !== headers.length) throw new Error('Les colonnes du CSV ne sont pas uniques.');
-
-      const required = [
-        'type', 'partie', 'categorie', 'id', 'sous_categorie', 'titre', 'evaluable',
-        'commentaire_NA', 'commentaire_ECA', 'commentaire_A', 'commentaire_D',
-        'ponderation', 'parametre', 'valeur', 'coefficient_categorie', 'categorie_id'
-      ];
-
-      const missing = required.filter(header => !headers.includes(header));
-      if (missing.length) throw new Error(`Colonnes manquantes : ${missing.join(', ')}.`);
-
-      return rows.map((values, index) => {
-        if (values.length > headers.length) {
-          throw new Error(`La ligne ${index + 2} contient trop de colonnes.`);
-        }
-        const obj = {};
-        headers.forEach((header, column) => {
-          obj[header] = (values[column] || '').trim();
-        });
-        return obj;
-      });
-    }
-
-    function csvNumber(value, label) {
-      const n = Number(String(value).trim().replace(',', '.'));
-      if (!Number.isFinite(n)) throw new Error(`${label} doit être un nombre.`);
-      return n;
-    }
-
-    function gridFromCsv(text, fileName) {
-      const records = parseCsv(text);
-      const parts = new Map();
-      const categories = new Map();
-      const subcategories = new Map();
-      const categoryDefinitions = new Map();
-      const categoryById = new Map();
-      const capacityIds = new Set();
-      const categoryKeys = new Set();
-      const elements = [];
-      const configData = {
-        seuils: {},
-        bonus: {},
-        ponderations: {},
-        coefficientsCategories: {}
-      };
-
-      for (const record of records) {
-        const type = normalizeType(record.type);
-        if (type === 'categorie') {
-          const partTitle = String(record.partie || '').trim();
-          const categoryTitle = String(record.categorie || '').trim();
-          const id = String(record.id || '').trim();
-          if (!partTitle || !categoryTitle || !id) {
-            throw new Error(`Définition de catégorie invalide : ${JSON.stringify(record)}`);
-          }
-          const key = JSON.stringify([partTitle, categoryTitle]);
-          if (categoryKeys.has(key)) {
-            throw new Error(`La catégorie « ${categoryTitle} » est définie plusieurs fois.`);
-          }
-          categoryKeys.add(key);
-          categoryDefinitions.set(key, { id, partTitle, categoryTitle, coefficient: record.coefficient_categorie ? csvNumber(record.coefficient_categorie, `Coefficient de ${categoryTitle}`) : null });
-          categoryById.set(id, { id, partTitle, categoryTitle });
-        }
-      }
-
-      for (const record of records) {
-        const type = normalizeType(record.type);
-        if (type === 'capacite') {
-          const capacityId = String(record.id || '').trim();
-          const title = String(record.titre || '').trim();
-          const categoryId = String(record.categorie_id || '').trim();
-          if (!capacityId || !title) throw new Error(`Capacité invalide : ${JSON.stringify(record)}`);
-          if (capacityIds.has(capacityId)) throw new Error(`Capacité dupliquée : ${capacityId}`);
-          capacityIds.add(capacityId);
-
-          const def = categoryId ? categoryById.get(categoryId) : null;
-          const partTitle = def?.partTitle || String(record.partie || '').trim();
-          const categoryTitle = def?.categoryTitle || String(record.categorie || '').trim();
-          const subcategoryTitle = String(record.sous_categorie || '').trim() === '_' ? '' : String(record.sous_categorie || '').trim();
-
-          if (!partTitle || !categoryTitle) throw new Error(`Capacité sans partie ou catégorie : ${title}`);
-
-          let part = parts.get(partTitle);
-          if (!part) {
-            part = { id: `part-${parts.size + 1}`, title: partTitle, categories: [] };
-            parts.set(partTitle, part);
-          }
-
-          const categoryKey = JSON.stringify([partTitle, categoryTitle]);
-          let category = categories.get(categoryKey);
-          if (!category) {
-            const defData = categoryDefinitions.get(categoryKey);
-            category = {
-              id: defData?.id || `category-${categories.size + 1}`,
-              titre: categoryTitle,
-              enfants: [],
-              commentMotifs: []
-            };
-            categories.set(categoryKey, category);
-            elements.push(category);
-            part.categories.push({ nodeId: category.id, title: categoryTitle });
-            if (defData && defData.coefficient !== null) configData.coefficientsCategories[category.id] = defData.coefficient;
-          }
-
-          if (record.coefficient_categorie) {
-            const coefficient = csvNumber(record.coefficient_categorie, `Coefficient de ${categoryTitle}`);
-            configData.coefficientsCategories[category.id] = coefficient;
-          }
-
-          let parent = category;
-          if (subcategoryTitle) {
-            const subKey = JSON.stringify([partTitle, categoryTitle, subcategoryTitle]);
-            let sub = subcategories.get(subKey);
-            if (!sub) {
-              sub = { id: `sub-${subcategories.size + 1}`, titre: subcategoryTitle, enfants: [] };
-              subcategories.set(subKey, sub);
-              category.enfants.push(sub);
-            }
-            parent = sub;
-          }
-
-          const evaluable = String(record.evaluable || '').trim().toLowerCase();
-          if (!['true', '1', 'oui', 'vrai'].includes(evaluable)) {
-            throw new Error(`La capacité « ${title} » n'est pas évaluable.`);
-          }
-
-          const weight = csvNumber(record.ponderation, `Pondération de ${title}`);
-          if (weight <= 0) throw new Error(`La pondération de ${title} doit être > 0.`);
-
-          const comment = {
-            NA: record.commentaire_NA || '',
-            ECA: record.commentaire_ECA || '',
-            A: record.commentaire_A || '',
-            D: record.commentaire_D || ''
-          };
-
-          parent.enfants.push({
-            id: capacityId,
-            titre: title,
-            evaluable: true,
-            commentaires: comment
-          });
-
-          configData.ponderations[capacityId] = weight;
-        }
-      }
-
-      for (const [key, definition] of categoryDefinitions) {
-        if (!categories.has(key)) {
-          throw new Error(`La catégorie ${definition.id} n'a aucune capacité.`);
-        }
-      }
-
-      for (const record of records) {
-        if (normalizeType(record.type) === 'motif') {
-          const categoryId = String(record.categorie_id || '').trim();
-          const motifId = String(record.id || '').trim();
-          const label = String(record.titre || '').trim();
-          const category = [...categories.values()].find(node => node.id === categoryId);
-          if (!category || !motifId || !label) continue;
-          category.commentMotifs = category.commentMotifs || [];
-          category.commentMotifs.push({ id: motifId, label });
-        }
-      }
-
-      for (const record of records) {
-        const type = normalizeType(record.type);
-        if (type !== 'parametre') continue;
-        const key = String(record.parametre || '').trim();
-        if (!key) continue;
-        const value = String(record.valeur || '').trim();
-        if (!value) continue;
-        if (key.startsWith('seuil.')) {
-          configData.seuils[key.replace('seuil.', '')] = csvNumber(value, key);
-        } else if (key.startsWith('bonus.')) {
-          configData.bonus[key.replace('bonus.', '')] = csvNumber(value, key);
-        } else if (key === 'typeDevoir') {
-          configData.typeDevoir = value;
-        } else if (key === 'niveauDevoir') {
-          configData.niveauDevoir = value;
-        }
-      }
-
-      if (!Object.keys(configData.seuils).length) {
-        configData.seuils = { NA_max_exclusif: 0.5, ECA_max_exclusif: 1.5, A_max_exclusif: 2.5 };
-      }
-      if (!Object.keys(configData.bonus).length) {
-        configData.bonus = { plafond_total: 3, pas_saisie: 0.25 };
-      }
-
-      const id = `csv-${(fileName || 'grille').replace(/\.csv$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
-      const title = configData.typeDevoir || 'Étude critique';
-      const levelLabel = configData.niveauDevoir || 'Niveau';
-      const rootGrid = {
-        version: 1,
-        id,
-        titre: `${title} — ${levelLabel}`,
-        typeDevoir: title,
-        niveauDevoir: levelLabel,
-        niveaux: DEFAULT_LEVELS,
-        elements
-      };
-
-      const partList = [...parts.values()].map(part => ({
-        id: part.id,
-        title: part.title,
-        categories: part.categories
-      }));
-
-      return { grid: rootGrid, config: { ...config, ...configData, grille: id }, partLayout: partList };
-    }
-
-    function resetChoices() {
-      leafChoices = {};
-      bonusChoices = {};
-      manualCategoryPercent = {};
-      manualChoices = {};
-      categoryEvaluations = {};
-    }
-
-    function applyCsvText(text, fileName) {
-      const loaded = gridFromCsv(text, fileName);
-      grid = loaded.grid;
-      config = loaded.config;
-      partLayout = loaded.partLayout;
-      levels = Object.fromEntries(grid.niveaux.map(level => [level.id, level]));
-      pageTitleEl.textContent = grid.titre;
-      resetChoices();
+  <div class="header-actions no-print" aria-label="Actions">
+    <details class="import-menu" id="importMenu"><summary class="icon-button" title="Importer une grille" aria-label="Importer une grille"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></summary><div class="import-options"><p class="import-heading">Grilles du dépôt</p><div class="import-catalog" id="gridCatalog">Chargement du catalogue…</div><div class="import-separator"></div><label class="import-option" for="gridCsvInput">CSV depuis l’ordinateur…</label><label class="import-option" for="gridInput">Grille JSON…</label><label class="import-option" for="configInput">Paramètres JSON…</label></div></details>
+    <button id="resetBtn" class="icon-button" type="button" title="Réinitialiser les choix" aria-label="Réinitialiser les choix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1-6.2 10.2"/></svg></button>
+    <button id="printBtn" class="icon-button" type="button" title="Imprimer / PDF" aria-label="Imprimer / PDF"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H4a2 2 0 0 0-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/></svg></button>
+    <button id="settingsBtn" class="icon-button" type="button" title="Configuration" aria-label="Configuration"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-1.99 1.8l-.17 1.43c-.34.14-.66.32-.97.52l-1.35-.49a2 2 0 0 0-2.44.91l-.22.38a2 2 0 0 0 .44 2.56l1.1.93a7 7 0 0 0 0 1.12l-1.1.93a2 2 0 0 0-.44 2.56l.22.38a2 2 0 0 0 2.44.91l1.35-.49c.31.2.63.38.97.52l.17 1.43a2 2 0 0 0 1.99 1.8h.44a2 2 0 0 0 1.99-1.8l.17-1.43c.34-.14.66-.32.97-.52l1.35.49a2 2 0 0 0 2.44-.91l.22-.38a2 2 0 0 0-.44-2.56l-1.1-.93a7 7 0 0 0 0-1.12l1.1-.93a2 2 0 0 0 .44-2.56l-.22-.38a2 2 0 0 0-2.44-.91l-1.35.49a7 7 0 0 0-.97-.52l-.17-1.43a2 2 0 0 0-1.99-1.8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </div>
+</header>
+<input id="gridInput" type="file" accept=".json,application/json" aria-label="Charger la grille JSON">
+<input id="configInput" type="file" accept=".json,application/json" aria-label="Charger les paramètres JSON">
+<input id="gridCsvInput" type="file" accept=".csv,text/csv" aria-label="Charger une grille CSV complète">
+<div id="status" class="sr-only" role="status" aria-live="polite"></div>
+<dialog id="settingsDialog"><div class="dialog-heading"><h2>Configuration</h2><button id="closeSettings" class="icon-button" type="button" aria-label="Fermer la configuration">×</button></div><label class="settings-option"><input id="showMetrics" type="checkbox">Métriques de calcul</label></dialog>
+<div id="initialState" class="initial-state">Choisissez une grille de correction...</div>
+<main id="content"></main>
+<div id="printReport" aria-hidden="true"></div>
+</div>
+<script>
+const DEFAULT_GRID = {"version": 1, "id": "etude-critique-introduction-conclusion-v1", "titre": "Étude critique — Introduction et conclusion", "niveaux": [{"id": "NA", "libelle": "Non acquis", "valeur": 0, "couleur": "#e45b60"}, {"id": "ECA", "libelle": "En cours d'acquisition", "valeur": 1, "couleur": "#e8c64a"}, {"id": "A", "libelle": "Acquis", "valeur": 2, "couleur": "#49bd7b"}], "elements": [{"id": "introduction-conclusion", "titre": "Introduction et conclusion", "evaluable": true, "commentaires": {"NA": "Début et fin du devoir absents, très limités et/ou maladroits.", "ECA": "Commentaire à préciser à partir de la grille définitive.", "A": "Première et dernière impression très positive : le sujet est compris.", "D": "Commentaire à confirmer à partir de la grille source."}, "enfants": [{"id": "introduction", "titre": "Introduction", "evaluable": true, "commentaires": {}, "enfants": [{"id": "accroche", "titre": "Commencer par une accroche", "evaluable": true, "commentaires": {"NA": "Pas d'accroche.", "ECA": "Accroche présente mais imprécise / déconnectée.", "A": "Accroche efficace et intéressante.", "D": "Accroche et contextualisation s'appuyant sur une culture personnelle."}}, {"id": "definition-termes", "titre": "Définir les termes du sujet", "evaluable": true, "commentaires": {"NA": "Pas de contexte / définitions erronées.", "ECA": "Contextualisation donnant globalement le sens du sujet.", "A": "Bonne maîtrise des notions et enjeux disciplinaires.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "problematique", "titre": "Proposer une problématique", "evaluable": true, "commentaires": {"NA": "Problématique absente ou maladroite, restrictive / menant à un hors-sujet.", "ECA": "Simple reprise du sujet, reformulation sans pertinence mais convenable.", "A": "Questionnement montrant que l'intérêt et la portée du sujet sont bien compris.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "annonce-plan", "titre": "Annoncer le plan", "evaluable": true, "commentaires": {"NA": "Pas d'annonce de plan / annonce très confuse.", "ECA": "Annonce sommaire / plutôt approximative du plan.", "A": "Annonce efficace et qui oriente le devoir.", "D": "Commentaire à confirmer à partir de la grille source."}}]}, {"id": "conclusion", "titre": "Conclusion", "evaluable": true, "commentaires": {}, "enfants": [{"id": "synthese", "titre": "Formuler une synthèse", "evaluable": true, "commentaires": {"NA": "Pas de conclusion.", "ECA": "Phrase conclusive simple / anecdotique / confuse.", "A": "Véritable réponse à la problématique.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "ouverture", "titre": "Proposer une ouverture", "evaluable": true, "commentaires": {"NA": "Pas d'ouverture.", "ECA": "Présence d'une ouverture mais plutôt artificielle.", "A": "Réelle mise en perspective du sujet.", "D": "Commentaire à confirmer à partir de la grille source."}}]}]}], "description": "NA, ECA et A sont des niveaux de maîtrise exclusifs. D est une bonification indépendante : le texte D décrit le motif de valorisation."};
+const DEFAULT_CONFIG = {"version": 1, "grille": "etude-critique-introduction-conclusion-v1", "description": "Paramètres de départ à ajuster après essais pédagogiques. D est une bonification indépendante, plafonnée au total indiqué.", "ponderations": {"accroche": 1, "definition-termes": 2, "problematique": 3, "annonce-plan": 2, "synthese": 2, "ouverture": 1}, "seuils": {"NA_max_exclusif": 0.5, "ECA_max_exclusif": 1.5, "A_max_exclusif": 2.5}, "bonus": {"plafond_total": 3, "pas_saisie": 0.25}};
+const PART_LAYOUT = [
+  {id:"organisation-du-devoir",title:"Organisation du devoir",categories:[{nodeId:"introduction-conclusion",title:"Introduction et conclusion"}]},
+  {id:"documents",title:"Documents",categories:[
+    {title:"Nature et source des documents",description:"Catégorie fictive à remplacer par les critères définitifs de la grille."},
+    {title:"Sélection des informations",description:"Capacités fictives à préciser pour le prototype."}
+  ]},
+  {id:"analyse",title:"Analyse",categories:[
+    {title:"Compréhension des enjeux",description:"Catégorie fictive à remplacer par les critères définitifs de la grille."},
+    {title:"Construction du raisonnement",description:"Capacités fictives à préciser pour le prototype."}
+  ]},
+  {id:"forme",title:"Forme",categories:[
+    {title:"Expression écrite",description:"Catégorie fictive à remplacer par les critères définitifs de la grille."},
+    {title:"Présentation du devoir",description:"Capacités fictives à préciser pour le prototype."}
+  ]}
+];
+let partLayout = PART_LAYOUT;
+let grid = structuredClone(DEFAULT_GRID);
+let config = structuredClone(DEFAULT_CONFIG);
+let manualChoices = {};
+let manualCategoryPercent = {};
+let categoryEvaluations = {};
+const CATEGORY_MOTIFS={
+  warning:[
+    {id:"warning-omissions",label:"Des éléments importants sont absents."},
+    {id:"warning-justification",label:"Les affirmations sont insuffisamment justifiées."},
+    {id:"warning-confusion",label:"Une confusion fragilise l’analyse."}
+  ],
+  exceeded:[
+    {id:"exceeded-analysis",label:"Analyse particulièrement approfondie."},
+    {id:"exceeded-documents",label:"Mise en relation remarquable des documents."},
+    {id:"exceeded-writing",label:"Expression écrite particulièrement maîtrisée."}
+  ]
+};
+let leafChoices = {};
+let bonusChoices = {};
+let levels = Object.fromEntries(grid.niveaux.map(l=>[l.id,l]));
+const statusEl = document.getElementById("status");
+const contentEl = document.getElementById("content");
+const partNavEl = document.getElementById("partNav");
+let statusTimer;
+function setStatus(message, kind=""){
+  window.clearTimeout(statusTimer);
+  statusEl.textContent=message;statusEl.className=message?"status-toast":"sr-only";statusEl.dataset.kind=kind;
+  if(message)statusTimer=window.setTimeout(()=>{statusEl.textContent="";statusEl.className="sr-only";statusEl.dataset.kind=""},kind==="error"?10000:5000);
+}
+function allNodes(nodes,result=[]){for(const n of nodes||[]){result.push(n);allNodes(n.enfants,result)}return result}
+function isLeaf(n){return !n.enfants||n.enfants.length===0}
+function descendantsLeaves(n){if(isLeaf(n))return[n];return(n.enfants||[]).flatMap(descendantsLeaves)}
+function getWeight(node){const w=config.ponderations?.[node.id];return Number.isFinite(Number(w))&&Number(w)>0?Number(w):1}
+function getCategoryCoefficient(node){const coefficient=config.coefficientsCategories?.[node.id];return Number.isFinite(Number(coefficient))&&Number(coefficient)>0?Number(coefficient):1}
+function getLeafScore(node){const id=leafChoices[node.id];return id&&levels[id]?{score:levels[id].valeur,weight:getWeight(node),node}:null}
+function calculate(node){
+  const leaves=descendantsLeaves(node),scored=leaves.map(getLeafScore).filter(Boolean),total=leaves.length,count=scored.length;
+  if(!count)return{level:null,mean:null,count,total,partial:total>0};
+  const weightedTotal=scored.reduce((s,x)=>s+x.score*x.weight,0),weightTotal=scored.reduce((s,x)=>s+x.weight,0),mean=weightedTotal/weightTotal,t=config.seuils||{};
+  let level="A";
+  if(mean<Number(t.NA_max_exclusif??0.5))level="NA";
+  else if(mean<Number(t.ECA_max_exclusif??1.5))level="ECA";
+  else level="A";
+  return{level,mean,count,total,partial:count<total};
+}
+function effectiveLevel(node){if(isLeaf(node))return leafChoices[node.id]||null;if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];return calculate(node).level}
+function getCategoryPercentage(node){
+  if(Object.hasOwn(manualCategoryPercent,node.id))return manualCategoryPercent[node.id];
+  const mean=calculate(node).mean;
+  return mean===null?null:mean*50;
+}
+function categorySliderStops(){
+  const stop=value=>Math.min(100,Math.max(0,Number(value)*50));
+  const naStop=stop(config.seuils?.NA_max_exclusif??0.5);
+  return{na:naStop,eca:Math.max(naStop,stop(config.seuils?.ECA_max_exclusif??1.5))};
+}
+function chosenOrigin(node){if(isLeaf(node))return leafChoices[node.id]?"manual":"none";if(Object.hasOwn(manualChoices,node.id))return"manual";return calculate(node).level?"auto":"none"}
+function totalBonus(){return Object.values(bonusChoices).reduce((s,v)=>s+(Number(v)||0),0)}
+function bonusCap(){return Math.max(0,Number(config.bonus?.plafond_total??3))}
+function setBonus(node,value){
+  const cap=bonusCap(),other=totalBonus()-(Number(bonusChoices[node.id])||0);
+  let n=Math.max(0,Number(value)||0);n=Math.min(n,Math.max(0,cap-other));
+  bonusChoices[node.id]=Math.round(n*100)/100;
+  if(bonusChoices[node.id]===0)delete bonusChoices[node.id];
+}
+function makeChoiceButton(node, level, selected, commentText, isBonus=false){
+  const b=document.createElement("button");b.type="button";b.className="choice-btn";b.style.setProperty("--level-color",level.couleur);
+  if(selected)b.classList.add("active");
+  b.textContent=commentText || level.libelle;
+  b.setAttribute("aria-pressed",String(Boolean(selected)));
+  b.addEventListener("click",()=>{
+    if(isBonus){
+      if(bonusChoices[node.id])delete bonusChoices[node.id];
+      else setBonus(node,Math.min(0.5,Math.max(0,bonusCap()-totalBonus())));
       render();
-      setStatus(`Grille chargée depuis « ${fileName} ».`, 'success');
+      return;
     }
-
-    function readCsvFile(file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          applyCsvText(String(reader.result || ''), file.name);
-        } catch (error) {
-          setStatus(`CSV invalide : ${error.message}`, 'error');
-        }
-      };
-      reader.onerror = () => setStatus('Lecture du fichier CSV impossible.', 'error');
-      reader.readAsText(file, 'UTF-8');
-    }
-
-    function loadRepositoryGrid(entry, button) {
-      if (!button) return;
-      button.disabled = true;
-      setStatus(`Chargement de la grille « ${entry.titre} »…`);
-      fetch(entry.fichier, { cache: 'no-store' })
-        .then(response => {
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return response.text();
-        })
-        .then(text => applyCsvText(text, entry.fichier))
-        .catch(error => setStatus(`Impossible de charger « ${entry.titre} » : ${error.message}`, 'error'))
-        .finally(() => {
-          button.disabled = false;
-          document.getElementById('importMenu').open = false;
-        });
-    }
-
-    async function loadGridCatalog() {
-      const catalogEl = document.getElementById('gridCatalog');
-      catalogEl.innerHTML = '';
-      try {
-        const response = await fetch('grilles.json', { cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const catalog = await response.json();
-        const entries = Array.isArray(catalog.grilles) ? catalog.grilles.filter(item => item && typeof item.titre === 'string' && typeof item.fichier === 'string') : [];
-        const filtered = entries.filter(entry => entry.fichier.toLowerCase().includes('documents'));
-        const finalEntries = filtered.length ? filtered : entries;
-
-        if (!finalEntries.length) throw new Error('Aucune grille n’est disponible.');
-
-        for (const entry of finalEntries) {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'import-option';
-          button.textContent = entry.titre;
-          button.addEventListener('click', () => loadRepositoryGrid(entry, button));
-          catalogEl.appendChild(button);
-        }
-
-        if (finalEntries[0]) {
-          loadRepositoryGrid(finalEntries[0], catalogEl.querySelector('.import-option'));
-        }
-      } catch (error) {
-        setStatus(`Catalogue indisponible : ${error.message}`, 'error');
-      }
-    }
-
-    function renderNode(node, depth = 0, hideTitle = false) {
-      const wrapper = document.createElement('section');
-      wrapper.className = 'node';
-      const criterionRow = document.createElement('div');
-      criterionRow.className = 'criterion-row';
-
-      if (!hideTitle) {
-        const nameWrap = document.createElement('div');
-        nameWrap.className = 'capacity-name';
-        const titleEl = document.createElement('div');
-        titleEl.textContent = node.titre;
-        const weightEl = document.createElement('div');
-        weightEl.className = 'weight';
-        weightEl.textContent = `poids : ${getWeight(node)}`;
-        nameWrap.append(titleEl, weightEl);
-        criterionRow.appendChild(nameWrap);
-      }
-
-      if (node.enfants && node.enfants.length) {
-        const children = document.createElement('div');
-        children.className = 'children';
-        for (const child of node.enfants) {
-          children.appendChild(renderNode(child, depth + 1, false));
-        }
-        criterionRow.appendChild(children);
-        wrapper.appendChild(criterionRow);
-        return wrapper;
-      }
-
-      const choices = document.createElement('div');
-      choices.className = 'capacity-choices';
-      for (const level of DEFAULT_LEVELS) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'choice-btn';
-        button.dataset.level = level.id;
-        const selected = leafChoices[node.id] === level.id;
-        button.textContent = level.libelle;
-        if (selected) button.classList.add('active');
-        button.addEventListener('click', () => {
-          if (leafChoices[node.id] === level.id) delete leafChoices[node.id];
-          else leafChoices[node.id] = level.id;
-          render();
-        });
-        choices.appendChild(button);
-      }
-      criterionRow.appendChild(choices);
-      wrapper.appendChild(criterionRow);
-      return wrapper;
-    }
-
-    function renderCategory(categoryNode) {
-      const section = document.createElement('section');
-      section.className = 'section';
-
-      const head = document.createElement('div');
-      head.className = 'section-head';
-
-      const title = document.createElement('h2');
-      title.textContent = categoryNode.titre;
-      head.appendChild(title);
-
-      const levelButtons = document.createElement('div');
-      levelButtons.className = 'category-levels';
-      for (const level of DEFAULT_LEVELS) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'level-btn';
-        button.textContent = level.id;
-        const effective = effectiveLevel(categoryNode);
-        if (effective === level.id) button.classList.add('active');
-        button.addEventListener('click', () => {
-          if (manualChoices[categoryNode.id] === level.id) delete manualChoices[categoryNode.id];
-          else manualChoices[categoryNode.id] = level.id;
-          render();
-        });
-        levelButtons.appendChild(button);
-      }
-      head.appendChild(levelButtons);
-      section.appendChild(head);
-
-      const metrics = document.createElement('div');
-      metrics.className = 'category-metrics';
-      const percentage = getCategoryPercentage(categoryNode);
-      const percentLabel = document.createElement('span');
-      percentLabel.textContent = percentage === null ? 'Capacités pondérées : —' : `Capacités pondérées : ${percentage.toFixed(1).replace('.', ',')} %`;
-      const coeff = document.createElement('span');
-      coeff.textContent = `Coeff. catégorie : ${getCategoryCoefficient(categoryNode)}`;
-      metrics.append(percentLabel, coeff);
-      section.appendChild(metrics);
-
-      const comment = document.createElement('div');
-      comment.className = 'category-comment';
-      const level = effectiveLevel(categoryNode) || calculate(categoryNode).level;
-      const commentText = level && categoryNode.commentaires && categoryNode.commentaires[level];
-      comment.textContent = commentText || 'Aucun commentaire de catégorie.';
-      section.appendChild(comment);
-
-      const childrenWrap = document.createElement('div');
-      childrenWrap.className = 'children';
-      for (const child of categoryNode.enfants || []) {
-        childrenWrap.appendChild(renderNode(child, 1, false));
-      }
-      section.appendChild(childrenWrap);
-
-      return section;
-    }
-
-    function render() {
-      contentEl.innerHTML = '';
-      if (!partLayout.length || !grid.elements?.length) {
-        contentEl.innerHTML = '<div class="empty-state">Aucune grille chargée.</div>';
-        document.getElementById('partNav').replaceChildren();
-        updateFinalScore();
-        return;
-      }
-
-      const partNav = document.getElementById('partNav');
-      partNav.replaceChildren();
-      for (const part of partLayout) {
-        const partSection = document.createElement('section');
-        partSection.className = 'part-section';
-        partSection.id = `part-${part.id}`;
-
-        const tab = document.createElement('button');
-        tab.type = 'button';
-        tab.className = 'part-tab';
-        tab.setAttribute('aria-controls', partSection.id);
-        tab.setAttribute('aria-label', part.title);
-        const count = document.createElement('span');
-        count.className = 'part-tab-count';
-        const label = document.createElement('span');
-        label.className = 'part-tab-label';
-        label.textContent = part.title;
-        tab.append(count, label);
-        tab.addEventListener('click', () => {
-          const top = partSection.getBoundingClientRect().top + window.scrollY - document.querySelector('header').offsetHeight - 12;
-          window.scrollTo({ top, behavior: 'smooth' });
-        });
-        partNav.appendChild(tab);
-
-        const leaves = (part.categories || []).flatMap(categoryRef => {
-          const category = (grid.elements || []).find(node => node.id === categoryRef.nodeId);
-          return category ? descendantsLeaves(category) : [];
-        });
-        const filled = leaves.filter(node => leafChoices[node.id]).length;
-        count.textContent = `${filled}/${leaves.length}`;
-        tab.classList.toggle('complete', leaves.length > 0 && filled === leaves.length);
-
-        const heading = document.createElement('h2');
-        heading.className = 'part-heading';
-        heading.textContent = part.title;
-        partSection.appendChild(heading);
-
-        for (const categoryRef of part.categories || []) {
-          const categoryNode = (grid.elements || []).find(node => node.id === categoryRef.nodeId);
-          if (categoryNode) partSection.appendChild(renderCategory(categoryNode));
-        }
-
-        contentEl.appendChild(partSection);
-      }
-
-      updateActivePart();
-      updateFinalScore();
-    }
-
-    function updateActivePart() {
-      const marker = window.innerHeight * 0.32;
-      let activeId = null;
-      for (const part of partLayout) {
-        const section = document.getElementById(`part-${part.id}`);
-        if (section && section.getBoundingClientRect().top <= marker) activeId = part.id;
-      }
-      for (const tab of document.querySelectorAll('.part-tab')) {
-        if (tab.getAttribute('aria-controls') === `part-${activeId}`) tab.setAttribute('aria-current', 'location');
-        else tab.removeAttribute('aria-current');
-      }
-    }
-
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      resetChoices();
+    if(leafChoices[node.id]===level.id)delete leafChoices[node.id];
+    else leafChoices[node.id]=level.id;
+    render();
+  });
+  return b;
+}
+function makeLevelButton(node,level,effective,origin,suggested,isBonus=false){
+  const b=document.createElement("button");b.type="button";b.className="level-btn";b.style.setProperty("--level-color",level.couleur);
+  if(isBonus){b.classList.add("d-bonus");if(bonusChoices[node.id])b.classList.add("active")}
+  if(suggested===level.id)b.classList.add("suggested");
+  if(origin==="manual"&&effective===level.id)b.classList.add("manual");
+  if(effective===level.id)b.classList.add("final-selected");
+  b.setAttribute("aria-pressed",String(effective===level.id));
+  b.innerHTML=`<span class="abbr">${level.id}</span><span class="full">${level.id === "D" ? "Bonus" : level.libelle}</span>`;
+  b.addEventListener("click",()=>{
+    if(isBonus){
+      if(bonusChoices[node.id])delete bonusChoices[node.id];
+      else setBonus(node,Math.min(0.5,Math.max(0,bonusCap()-totalBonus())));
       render();
-      setStatus('Les sélections ont été réinitialisées.', 'success');
+      return;
+    }
+    if(isLeaf(node)){leafChoices[node.id]=leafChoices[node.id]===level.id?null:level.id}
+    else if(Object.hasOwn(manualChoices,node.id)&&manualChoices[node.id]===level.id){delete manualChoices[node.id]}
+    else{manualChoices[node.id]=level.id}
+    render()
+  });return b
+}
+function renderNode(node,depth=0,hideTitle=false){
+  const wrap=document.createElement("section");wrap.className=`node ${isLeaf(node)?"leaf":"group"} depth-${Math.min(depth,3)}`;
+  const eff=effectiveLevel(node),origin=chosenOrigin(node),calc=isLeaf(node)?null:calculate(node);
+  const nameBlock=document.createElement("div");nameBlock.className="capacity-name";
+  const nameText=document.createElement("div");nameText.className="node-title";nameText.textContent=node.titre;
+  const weightText=document.createElement("div");weightText.className="weight";weightText.textContent=`poids:${getWeight(node)}`;
+  nameBlock.appendChild(nameText);nameBlock.appendChild(weightText);
+  const criterionRow=document.createElement("div");criterionRow.className="criterion-row";
+  if(hideTitle)criterionRow.classList.add("category-summary");
+  if(!hideTitle)criterionRow.appendChild(nameBlock);
+
+  if(!isLeaf(node) && depth > 0){
+    wrap.appendChild(criterionRow);
+    const children=document.createElement("div");children.className="children";
+    for(const child of node.enfants)children.appendChild(renderNode(child,depth+1));
+    wrap.appendChild(children);
+    return wrap;
+  }
+
+  if(!isLeaf(node) && depth === 0){
+    const children=document.createElement("div");children.className="children";
+    for(const child of node.enfants)children.appendChild(renderNode(child,depth+1));
+    wrap.appendChild(children);
+    return wrap;
+  }
+
+  const selectionWrap=document.createElement("div");selectionWrap.className="capacity-choices";
+  const choices=grid.niveaux;
+  for(const l of choices){
+    const isBonus = l.id === "D";
+    const commentText = isBonus ? (node.commentaires?.D || "Commentaire à confirmer à partir de la grille source.") : (node.commentaires?.[l.id] || l.libelle);
+    const selected = isBonus ? Boolean(bonusChoices[node.id]) : eff === l.id;
+    selectionWrap.appendChild(makeChoiceButton(node,l,selected,commentText,isBonus));
+  }
+  criterionRow.appendChild(selectionWrap);
+  wrap.appendChild(criterionRow);
+  return wrap;
+}
+function initializePartNav(){
+  partNavEl.innerHTML="";
+  for(const part of partLayout){
+    const button=document.createElement("button");button.type="button";button.className="part-tab";
+    button.setAttribute("aria-controls",`part-${part.id}`);button.setAttribute("aria-label",part.title);
+    const count=document.createElement("span");count.className="part-tab-count";count.textContent="0/0";button.appendChild(count);
+    const label=document.createElement("span");label.className="part-tab-label";label.textContent=part.title;button.appendChild(label);
+    button.addEventListener("click",()=>{
+      const section=document.getElementById(`part-${part.id}`);
+      if(section){const headerHeight=document.querySelector("header").getBoundingClientRect().height;window.scrollTo({top:window.scrollY+section.getBoundingClientRect().top-headerHeight,behavior:"instant"})}
+      setActivePart(part.id);
     });
-
-    document.getElementById('printBtn').addEventListener('click', () => window.print());
-    window.addEventListener('scroll', updateActivePart, { passive: true });
-
-    document.getElementById('gridCatalog').addEventListener('click', () => {
-      const menu = document.getElementById('importMenu');
-      menu.open = !menu.open;
+    partNavEl.appendChild(button);
+  }
+}
+function setActivePart(id){
+  for(const button of partNavEl.querySelectorAll(".part-tab")){
+    if(button.getAttribute("aria-controls")===`part-${id}`)button.setAttribute("aria-current","location");
+    else button.removeAttribute("aria-current");
+  }
+}
+function updateActivePart(){
+  const marker=window.innerHeight*.32;let active=partLayout[0].id;
+  for(const part of partLayout){
+    const section=document.getElementById(`part-${part.id}`);
+    if(section&&section.getBoundingClientRect().top<=marker)active=part.id;
+  }
+  setActivePart(active);
+}
+function updatePartCounts(roots){
+  const mappedIds=new Set(partLayout.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
+  for(const part of partLayout){
+    const nodes=part.categories.map(category=>roots.find(root=>root.id===category.nodeId)).filter(Boolean);
+    if(part.id===partLayout[0].id)nodes.push(...roots.filter(root=>!mappedIds.has(root.id)));
+    const leaves=nodes.flatMap(descendantsLeaves),filled=leaves.filter(node=>leafChoices[node.id]).length;
+    const button=partNavEl.querySelector(`[aria-controls="part-${part.id}"]`);
+    button.querySelector(".part-tab-count").textContent=`${filled}/${leaves.length}`;
+    button.classList.toggle("complete",leaves.length>0&&filled===leaves.length);
+    button.setAttribute("aria-label",`${part.title}, ${filled} capacité(s) renseignée(s) sur ${leaves.length}`);
+  }
+}
+function toggleCategoryEvaluation(nodeId,key){
+  const current=categoryEvaluations[nodeId]||{},next={warning:false,exceeded:false,...current,motifIds:{warning:"",exceeded:"",...current.motifIds}};
+  const isOpen=current.activeMotifKind===key;
+  if(current[key]&&isOpen){next[key]=false;next.activeMotifKind="";next.motifIds[key]=""}
+  else{next[key]=true;next.activeMotifKind=key;if(key==="exceeded")delete manualChoices[nodeId]}
+  if(!next.warning&&!next.exceeded)delete categoryEvaluations[nodeId];
+  else categoryEvaluations[nodeId]=next;
+  render();
+}
+function updateCategoryMotif(nodeId,key,motifId){
+  const current=categoryEvaluations[nodeId]||{};
+  categoryEvaluations[nodeId]={...current,motifId,motifKind:key,motifIds:{warning:"",exceeded:"",...current.motifIds,[key]:motifId}};
+  render();
+}
+function makeCategoryFlagButton(node,key){
+  const labels={warning:"Avertissement",exceeded:"Dépassé"},button=document.createElement("button");
+  button.type="button";button.className=`category-flag-button ${key}`;button.title=labels[key];button.setAttribute("aria-label",labels[key]);
+  button.setAttribute("aria-pressed",String(Boolean(categoryEvaluations[node.id]?.[key])));
+  const namespace="http://www.w3.org/2000/svg",icon=document.createElementNS(namespace,"svg");icon.setAttribute("viewBox","0 0 24 24");icon.classList.add("category-flag-icon");
+  if(key==="warning"){
+    const triangle=document.createElementNS(namespace,"path");triangle.setAttribute("d","M12 2.5 22 21H2Z");triangle.classList.add("category-flag-shape");icon.appendChild(triangle);
+    const line=document.createElementNS(namespace,"path");line.setAttribute("d","M12 8v6");line.classList.add("category-flag-symbol");icon.appendChild(line);
+    const dot=document.createElementNS(namespace,"circle");dot.setAttribute("cx","12");dot.setAttribute("cy","17.5");dot.setAttribute("r","1");dot.classList.add("category-flag-symbol");icon.appendChild(dot);
+  }else{
+    const circle=document.createElementNS(namespace,"circle");circle.setAttribute("cx","12");circle.setAttribute("cy","12");circle.setAttribute("r","10");circle.classList.add("category-flag-shape");icon.appendChild(circle);
+    const label=document.createElementNS(namespace,"text");label.setAttribute("x","12");label.setAttribute("y","16");label.classList.add("category-flag-label");label.textContent="D";icon.appendChild(label);
+  }
+  button.appendChild(icon);button.addEventListener("click",()=>toggleCategoryEvaluation(node.id,key));return button;
+}
+function renderCategoryEvaluationControls(node){
+  const evaluation=categoryEvaluations[node.id]||{},key=evaluation.activeMotifKind;
+  if(!key||!evaluation[key])return null;
+  const controls=document.createElement("div");controls.className="category-extra-controls";
+  const select=document.createElement("select");select.setAttribute("aria-label",key==="warning"?`Motif d’avertissement pour ${node.titre}`:`Motif de dépassement pour ${node.titre}`);
+  const empty=document.createElement("option");empty.value="";empty.textContent=key==="warning"?"Choisir un motif d’avertissement…":"Choisir un motif de dépassement…";select.appendChild(empty);
+  for(const motif of CATEGORY_MOTIFS[key]){const option=document.createElement("option");option.value=motif.id;option.textContent=motif.label;select.appendChild(option)}
+  select.value=evaluation.motifIds?.[key]||"";select.addEventListener("change",()=>updateCategoryMotif(node.id,key,select.value));controls.appendChild(select);
+  return controls;
+}
+function renderCategory(category,node=null){
+  const section=document.createElement("section");section.className="section";
+  const head=document.createElement("div");head.className="section-head category-head";
+  const headingRow=document.createElement("div");headingRow.className="category-heading-row";
+  const heading=document.createElement("h2");heading.textContent=node?.titre||category.title||"Catégorie";headingRow.appendChild(heading);
+  if(node&&!isLeaf(node)){
+    const calculation=calculate(node),effective=effectiveLevel(node),origin=chosenOrigin(node);
+    const categoryControls=document.createElement("div");categoryControls.className="category-controls";
+    const controls=document.createElement("div");controls.className="category-levels";
+    for(const level of grid.niveaux){
+      const button=makeLevelButton(node,level,effective,origin,calculation.level);
+      button.classList.add("category-level-btn");button.setAttribute("aria-label",`${level.id} ${level.libelle}`);
+      button.querySelector(".full")?.remove();controls.appendChild(button);
+    }
+    categoryControls.appendChild(controls);
+    const slider=document.createElement("input");slider.type="range";slider.className="category-score-slider";slider.min="0";slider.max="100";slider.step="1";
+    const colors={NA:"#e45b60",ECA:"#e8c64a",A:"#49bd7b"};
+    for(const id of Object.keys(colors))colors[id]=grid.niveaux.find(level=>level.id===id)?.couleur||colors[id];
+    const stops=categorySliderStops();
+    slider.style.setProperty("--na-color",colors.NA);slider.style.setProperty("--eca-color",colors.ECA);slider.style.setProperty("--a-color",colors.A);
+    slider.style.setProperty("--na-stop",`${stops.na}%`);slider.style.setProperty("--eca-stop",`${stops.eca}%`);
+    slider.setAttribute("aria-label",`Pourcentage des capacités pondérées pour ${node.titre}`);
+    const metrics=document.createElement("div");metrics.className="category-metrics";
+    const percentage=getCategoryPercentage(node);
+    const mean=document.createElement("span");mean.className="pill category-percentage";metrics.appendChild(mean);
+    const coefficient=document.createElement("span");coefficient.className="pill";coefficient.textContent=`Coeff. catégorie : ${getCategoryCoefficient(node)}`;metrics.appendChild(coefficient);
+    const updateSliderDisplay=()=>{
+      const value=getCategoryPercentage(node),manual=Object.hasOwn(manualCategoryPercent,node.id);
+      slider.value=String(value??0);slider.classList.toggle("manual",manual);
+      slider.setAttribute("aria-valuetext",value===null?"Aucune capacité évaluée":`${value.toFixed(1).replace(".",",")} %, ${manual?"saisie manuelle":"calcul automatique"}`);
+      mean.textContent=`Capacités pondérées : ${value===null?"—":`${value.toFixed(1).replace(".",",")} %`}`;
+    };
+    let pointerStart=null;
+    const touchDragThreshold=4;
+    slider.addEventListener("pointerdown",event=>{
+      const bounds=slider.getBoundingClientRect(),value=Number(slider.value);
+      const thumbX=bounds.left+7+(bounds.width-14)*value/100;
+      pointerStart={x:event.clientX,y:event.clientY,value,pointerType:event.pointerType,manual:Object.hasOwn(manualCategoryPercent,node.id),manualValue:manualCategoryPercent[node.id],onThumb:Math.abs(event.clientX-thumbX)<=9};
     });
-
-    document.getElementById('finalGrade').addEventListener('input', () => {
-      const value = document.getElementById('finalGrade').value.trim();
-      if (!value) {
-        finalScoreEl.textContent = '—/20';
-        return;
+    slider.addEventListener("input",()=>{manualCategoryPercent[node.id]=Number(slider.value);updateSliderDisplay();updateFinalScore()});
+    slider.addEventListener("pointerup",event=>{
+      const start=pointerStart;pointerStart=null;
+      const distance=start?Math.hypot(event.clientX-start.x,event.clientY-start.y):Infinity;
+      if(start&&start.pointerType!=="mouse"&&distance<=touchDragThreshold){
+        slider.value=String(start.value);
+        if(start.manual&&!start.onThumb)manualCategoryPercent[node.id]=start.manualValue;
+        else delete manualCategoryPercent[node.id];
+        updateSliderDisplay();updateFinalScore();
+      }else if(start?.manual&&start.onThumb&&distance<=3&&Number(slider.value)===start.value){
+        delete manualCategoryPercent[node.id];updateSliderDisplay();updateFinalScore();
       }
-      if (!Number.isNaN(Number(value.replace(',', '.')))) {
-        finalScoreEl.textContent = `${Number(value.replace(',', '.')).toFixed(2).replace('.', ',')}/20`;
+    });
+    slider.addEventListener("pointercancel",event=>{
+      const start=pointerStart;pointerStart=null;
+      if(start&&start.pointerType!=="mouse"&&Math.hypot(event.clientX-start.x,event.clientY-start.y)<=touchDragThreshold){
+        slider.value=String(start.value);
+        if(start.manual&&!start.onThumb)manualCategoryPercent[node.id]=start.manualValue;
+        else delete manualCategoryPercent[node.id];
+        updateSliderDisplay();updateFinalScore();
       }
     });
-
-    window.addEventListener('DOMContentLoaded', () => {
-      pageTitleEl.textContent = 'Chargement de la grille…';
-      loadGridCatalog();
+    slider.addEventListener("keydown",event=>{
+      if(event.key==="Escape"&&Object.hasOwn(manualCategoryPercent,node.id)){
+        event.preventDefault();delete manualCategoryPercent[node.id];updateSliderDisplay();updateFinalScore();
+      }
     });
-  </script>
-</body>
-</html>
+    updateSliderDisplay();
+    const flagRow=document.createElement("div");flagRow.className="category-flag-row";
+    flagRow.append(makeCategoryFlagButton(node,"warning"),makeCategoryFlagButton(node,"exceeded"));
+    categoryControls.append(slider,flagRow);headingRow.appendChild(categoryControls);
+    const comment=document.createElement("div");comment.className="category-comment empty";
+    const commentLevel=effective||calculation.level;
+    const commentText=commentLevel&&node.commentaires?.[commentLevel];
+    if(commentText){comment.classList.remove("empty");comment.textContent=commentText}
+    head.appendChild(headingRow);
+    const extraControls=renderCategoryEvaluationControls(node);if(extraControls)head.appendChild(extraControls);
+    head.appendChild(metrics);head.appendChild(comment);
+  }else{
+    head.appendChild(headingRow);
+    if(!node){const description=document.createElement("p");description.className="small";description.textContent=category.description;head.appendChild(description)}
+  }
+  section.appendChild(head);
+  if(node)section.appendChild(renderNode(node,0,!isLeaf(node)));
+  else{const placeholder=document.createElement("div");placeholder.className="category-placeholder small";placeholder.textContent=category.description;section.appendChild(placeholder)}
+  return section;
+}
+function calculateFinalScore(){
+  const categoryScores=(grid.elements||[]).map(category=>{
+    const percentage=getCategoryPercentage(category);
+    return percentage===null?null:{percentage,coefficient:getCategoryCoefficient(category)};
+  }).filter(Boolean);
+  if(!categoryScores.length)return null;
+  const weightedPercent=categoryScores.reduce((sum,category)=>sum+category.percentage*category.coefficient,0);
+  const coefficientTotal=categoryScores.reduce((sum,category)=>sum+category.coefficient,0);
+  return Math.min(20,20*(weightedPercent/(100*coefficientTotal))+totalBonus());
+}
+function updateFinalScore(){
+  const score=calculateFinalScore(),formatted=score===null?"—/20":`${score.toFixed(2).replace(".",",")}/20`;
+  document.getElementById("finalScore").textContent=formatted;
+}
+function render(){
+  contentEl.innerHTML="";
+  const roots=grid.elements||[];
+  const mappedIds=new Set(partLayout.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
+  for(const part of partLayout){
+    const partSection=document.createElement("section");partSection.className="part-section";partSection.id=`part-${part.id}`;
+    const heading=document.createElement("h2");heading.className="part-heading";heading.textContent=part.title;partSection.appendChild(heading);
+    for(const category of part.categories){
+      const node=category.nodeId?roots.find(root=>root.id===category.nodeId):null;
+      const missing=category.nodeId&&!node?{...category,description:"Cette catégorie n'est pas présente dans la grille actuellement chargée."}:category;
+      partSection.appendChild(renderCategory(missing,node));
+    }
+    if(part.id===partLayout[0].id){
+      for(const node of roots.filter(root=>!mappedIds.has(root.id)))
+        partSection.appendChild(renderCategory({title:node.titre},node));
+    }
+    contentEl.appendChild(partSection);
+  }
+  updateFinalScore();
+  updatePartCounts(roots);
+  updateActivePart();
+}
+function makePrintLevelTable(levelId){
+  const track=document.createElement("div");track.className="print-level-track";track.setAttribute("aria-label","Niveau obtenu : "+(levelId||"non évalué"));
+  for(const id of ["NA","ECA","A","D"]){
+    const cell=document.createElement("span");cell.className="print-level-cell";
+    if(id!=="D"&&id===levelId){const cross=document.createElement("strong");cross.className="print-level-cross";cross.textContent="X";cell.appendChild(cross)}
+    else if(id!=="D"){const dot=document.createElement("span");dot.className="print-level-dot";dot.setAttribute("aria-hidden","true");cell.appendChild(dot)}
+    track.appendChild(cell);
+  }
+  return track;
+}
+function makePrintFace(levelId){
+  const namespace="http://www.w3.org/2000/svg",face=document.createElementNS(namespace,"svg");
+  face.setAttribute("viewBox","0 0 100 100");face.setAttribute("role","img");face.setAttribute("aria-label",`Niveau ${levelId}`);face.classList.add("print-level-mark");
+  if(levelId==="D")face.classList.add("print-level-d");
+  const add=(tag,attributes)=>{const shape=document.createElementNS(namespace,tag);for(const [name,value] of Object.entries(attributes))shape.setAttribute(name,value);face.appendChild(shape)};
+  const outline={fill:"none",stroke:"#111","stroke-width":"2.5"};
+  add("circle",{...outline,cx:"50",cy:"50",r:"44"});
+  add("circle",{...outline,cx:"30",cy:"39",r:"8"});add("circle",{...outline,cx:"70",cy:"39",r:"8"});
+  if(levelId==="D")add("path",{d:"M20 64 C28 91 72 91 80 64 C64 55 36 55 20 64 Z",fill:"#fff",stroke:"#111","stroke-width":"2.5","stroke-linejoin":"round"});
+  else if(levelId==="NA")add("path",{...outline,d:"M20 76 C34 57 66 57 80 76","stroke-linecap":"round"});
+  else if(levelId==="ECA")add("path",{...outline,d:"M20 70 H80","stroke-linecap":"round"});
+  else if(levelId==="A")add("path",{...outline,d:"M20 63 C34 86 66 86 80 63","stroke-linecap":"round"});
+  else add("path",{...outline,d:"M20 63 C34 86 66 86 80 63","stroke-linecap":"round"});
+  return face;
+}
+function makePrintFaceTrack(){
+  const track=document.createElement("div");track.className="print-level-track";
+  for(const id of ["NA","ECA","A","D"]){const cell=document.createElement("span");cell.className="print-level-cell";cell.appendChild(makePrintFace(id));track.appendChild(cell)}
+  return track;
+}
+function makePrintWarning(){
+  const namespace="http://www.w3.org/2000/svg",warning=document.createElementNS(namespace,"svg");warning.setAttribute("viewBox","0 0 100 100");warning.setAttribute("role","img");warning.setAttribute("aria-label","Attention : dysfonctionnement grave");warning.classList.add("print-warning-mark","print-category-warning");
+  const triangle=document.createElementNS(namespace,"path");triangle.classList.add("print-warning-triangle");triangle.setAttribute("d","M50 7 Q54 7 56 12 L94 82 Q98 90 89 92 H11 Q2 90 6 82 L44 12 Q46 7 50 7 Z");triangle.setAttribute("fill","#111");triangle.setAttribute("stroke","#111");triangle.setAttribute("stroke-width","5");triangle.setAttribute("stroke-linejoin","round");triangle.style.setProperty("fill","#111","important");triangle.style.setProperty("stroke","#111","important");warning.appendChild(triangle);
+  const exclamation=document.createElementNS(namespace,"path");exclamation.classList.add("print-warning-exclamation");exclamation.setAttribute("d","M50 29 V62");exclamation.setAttribute("stroke","#fff");exclamation.setAttribute("stroke-width","12");exclamation.setAttribute("stroke-linecap","round");exclamation.style.setProperty("stroke","#fff","important");warning.appendChild(exclamation);
+  const dot=document.createElementNS(namespace,"circle");dot.classList.add("print-warning-dot");dot.setAttribute("cx","50");dot.setAttribute("cy","77");dot.setAttribute("r","5");dot.setAttribute("fill","#fff");dot.style.setProperty("fill","#fff","important");warning.appendChild(dot);return warning;
+}
+function makePrintCategoryLevels(selected,showBonus=false){
+  const levelsEl=document.createElement("div");levelsEl.className="print-level-track print-category-levels";
+  const dSelected=showBonus||selected==="D";
+  for(const id of ["NA","ECA","A","D"]){const cell=document.createElement("span");cell.className="print-level-cell";const level=document.createElement("span");level.className="print-category-level";if(id==="D"){level.classList.add("d-level");if(dSelected)level.classList.add("visible")}if(dSelected?id==="D":selected===id)level.classList.add("active");level.textContent=id;cell.appendChild(level);levelsEl.appendChild(cell)}
+  return levelsEl;
+}
+function printCategoryLevel(node){
+  if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];
+  const percentage=getCategoryPercentage(node);if(percentage===null)return null;
+  const mean=percentage/50,thresholds=config.seuils||{};
+  if(mean<Number(thresholds.NA_max_exclusif??0.5))return"NA";
+  if(mean<Number(thresholds.ECA_max_exclusif??1.5))return"ECA";
+  return"A";
+}
+function renderPrintCapacity(node){
+  const row=document.createElement("div");row.className="print-capacity-row";
+  const copy=document.createElement("div");copy.className="print-capacity-copy";
+  const levelId=leafChoices[node.id],level=levels[levelId];
+  const bullet=document.createElement("span");bullet.className="print-capacity-bullet";bullet.setAttribute("aria-hidden","true");copy.appendChild(bullet);
+  if(!level)copy.classList.add("unassessed");
+  const text=document.createElement("div");text.className="print-capacity-text";
+  const title=document.createElement("span");title.className="print-capacity-title";title.textContent=node.titre;text.appendChild(title);
+  const comment=document.createElement("span");comment.className="print-capacity-comment";
+  const comments=level?(node.commentaires?.[levelId]?[node.commentaires[levelId]]:[]):["Non évaluée"];
+  comment.textContent=comments.length?` : ${comments.join(" ; ")}`:"";
+  text.appendChild(comment);copy.appendChild(text);row.append(copy,makePrintLevelTable(level?levelId:null));return row;
+}
+function renderPrintChildren(node){
+  const fragment=document.createDocumentFragment();
+  for(const child of node.enfants||[]){
+    if(isLeaf(child)){fragment.appendChild(renderPrintCapacity(child));continue}
+    const subcategory=document.createElement("section");subcategory.className="print-subcategory";
+    const heading=document.createElement("h4");heading.className="print-subcategory-title";heading.textContent=child.titre;subcategory.appendChild(heading);
+    subcategory.appendChild(renderPrintChildren(child));fragment.appendChild(subcategory);
+  }
+  return fragment;
+}
+function renderPrintReport(){
+  const report=document.getElementById("printReport");report.replaceChildren();
+  const header=document.createElement("div");header.className="print-header";
+  const top=document.createElement("div");top.className="print-header-top";
+  const student=document.createElement("div");student.className="print-header-name";student.textContent=`Élève : ${document.getElementById("studentName").value.trim()||"—"}`;
+  const grade=document.createElement("span");grade.className="print-header-grade";grade.textContent=`Note : ${document.getElementById("finalGrade").value.trim()||"—"}`;
+  top.append(student,grade);header.appendChild(top);
+  const bottom=document.createElement("div");bottom.className="print-header-bottom";
+  const details=document.createElement("div");details.className="print-header-details";
+  const type=document.createElement("span");type.textContent=grid.typeDevoir||grid.titre||"—";
+  const level=document.createElement("span");level.textContent=grid.niveauDevoir||"—";
+  details.append(type,level);bottom.append(details,makePrintFaceTrack());header.appendChild(bottom);
+  report.appendChild(header);
+  const roots=grid.elements||[],mappedIds=new Set(partLayout.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
+  for(const part of partLayout){
+    const categories=part.categories.map(category=>roots.find(root=>root.id===category.nodeId)).filter(Boolean);
+    if(part.id===partLayout[0].id)categories.push(...roots.filter(root=>!mappedIds.has(root.id)));
+    if(!categories.length)continue;
+    const section=document.createElement("section");section.className="print-part";
+    const title=document.createElement("h2");title.className="print-part-title";title.textContent=part.title;section.appendChild(title);
+    for(const node of categories){
+      const category=document.createElement("section");category.className="print-category";
+      const heading=document.createElement("h3");heading.className="print-category-heading";
+      const label=document.createElement("span");label.className="print-category-label";
+      const name=document.createElement("span");name.textContent=node.titre;
+      const comment=document.createElement("span");comment.className="print-category-comment";comment.setAttribute("aria-label","Emplacement du commentaire de catégorie");
+      const evaluation=categoryEvaluations[node.id]||{},selectedMotif=(node.commentMotifs||[]).find(motif=>motif.id===evaluation.motifId);
+      if(selectedMotif)comment.textContent=selectedMotif.label;
+      label.append(name);
+      if(evaluation.warning)label.appendChild(makePrintWarning());
+      label.appendChild(comment);
+      heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),Boolean(evaluation.exceeded)));category.appendChild(heading);
+      category.appendChild(renderPrintChildren(node));section.appendChild(category);
+    }
+    report.appendChild(section);
+  }
+  const legend=document.createElement("div");legend.className="print-legend";
+  for(const [id,label] of [["NA","Non Acquis"],["ECA","En Cours d’Acquisition"],["A","Acquis"],["D","Dépassé"]]){
+    const item=document.createElement("span");item.className="print-legend-item";item.textContent=`${id} : ${label}`;legend.appendChild(item);
+  }
+  report.appendChild(legend);
+}
+function detectCsvDelimiter(text){
+  const firstLine=text.split(/\r\n|\n|\r/,1)[0]||"";let quoted=false,commas=0,semicolons=0;
+  for(let index=0;index<firstLine.length;index++){
+    const character=firstLine[index];
+    if(character==='"'){
+      if(quoted&&firstLine[index+1]==='"'){index++;continue}
+      quoted=!quoted;
+    }else if(!quoted&&character===",")commas++;
+    else if(!quoted&&character===";")semicolons++;
+  }
+  return semicolons>commas?";":",";
+}
+function parseCsv(text){
+  const source=text.replace(/^\uFEFF/,"");const delimiter=detectCsvDelimiter(source);const rows=[];
+  let row=[],field="",quoted=false;
+  for(let index=0;index<source.length;index++){
+    const character=source[index];
+    if(quoted){
+      if(character==='"'){
+        if(source[index+1]==='"'){field+='"';index++}
+        else quoted=false;
+      }else field+=character;
+    }else if(character==='"'&&field.length===0)quoted=true;
+    else if(character===delimiter){row.push(field);field=""}
+    else if(character==="\n"||character==="\r"){
+      if(character==="\r"&&source[index+1]==="\n")index++;
+      row.push(field);if(row.some(value=>value.trim()!==""))rows.push(row);row=[];field="";
+    }else field+=character;
+  }
+  if(quoted)throw new Error("un guillemet CSV n'est pas refermé.");
+  if(field.length||row.length){row.push(field);if(row.some(value=>value.trim()!==""))rows.push(row)}
+  if(rows.length<2)throw new Error("le fichier ne contient aucune donnée.");
+  const headers=rows.shift().map(value=>value.trim());
+  if(new Set(headers).size!==headers.length)throw new Error("les noms de colonnes doivent être uniques.");
+  const required=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","commentaire_D","ponderation","parametre","valeur","coefficient_categorie"];
+  const missing=required.filter(header=>!headers.includes(header));
+  if(missing.length)throw new Error(`colonnes manquantes : ${missing.join(", ")}.`);
+  return rows.map((values,index)=>{
+    if(values.length>headers.length)throw new Error(`la ligne ${index+2} contient trop de colonnes.`);
+    return Object.fromEntries(headers.map((header,column)=>[header,(values[column]||"").trim()]));
+  });
+}
+function csvNumber(value,label){
+  const number=Number(String(value).trim().replace(",","."));
+  if(!Number.isFinite(number))throw new Error(`${label} doit être un nombre.`);
+  return number;
+}
+function gridFromCsv(text,fileName){
+  const records=parseCsv(text);const capacityRows=[],categoryRows=[],motiveRows=[],parameterRows=[];
+  for(const record of records){
+    if(record.type==="capacite")capacityRows.push(record);
+    else if(record.type==="categorie")categoryRows.push(record);
+    else if(record.type==="motif")motiveRows.push(record);
+    else if(record.type==="parametre")parameterRows.push(record);
+    else throw new Error(`type de ligne inconnu : « ${record.type} ».`);
+  }
+  if(!capacityRows.length)throw new Error("aucune ligne de capacité n'a été trouvée.");
+  let nextGroupId=0;const nextGroup=title=>({id:`__csv_node_${++nextGroupId}`,titre:title,evaluable:false,enfants:[]});
+  const elements=[],parts=new Map(),categories=new Map(),subcategories=new Map(),capacityIds=new Set();
+  const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};config.coefficientsCategories={};
+  const categoryDefinitions=new Map(),categoryDefinitionsById=new Map(),categoryIds=new Set();
+  for(const row of categoryRows){
+    const partTitle=row.partie,categoryTitle=row.categorie,id=row.id;
+    if(!partTitle||!categoryTitle||!id||id.startsWith("__csv_node_")||categoryIds.has(id))throw new Error(`définition de catégorie invalide ou identifiant répété : « ${id} ».`);
+    const key=JSON.stringify([partTitle,categoryTitle]);
+    if(categoryDefinitions.has(key))throw new Error(`la catégorie « ${categoryTitle} » est définie plusieurs fois.`);
+    const coefficient=row.coefficient_categorie?csvNumber(row.coefficient_categorie,`Le coefficient de la catégorie « ${categoryTitle} »`):null;
+    if(coefficient!==null&&coefficient<=0)throw new Error(`le coefficient de la catégorie « ${categoryTitle} » doit être supérieur à zéro.`);
+    categoryIds.add(id);
+    const definition={id,key,partTitle,categoryTitle,coefficient};
+    categoryDefinitions.set(key,definition);categoryDefinitionsById.set(id,definition);
+  }
+  for(const row of capacityRows){
+    const definition=row.categorie_id?categoryDefinitionsById.get(row.categorie_id):null;
+    if(row.categorie_id&&!definition)throw new Error(`identifiant de catégorie inconnu : « ${row.categorie_id} ».`);
+    const partTitle=definition?.partTitle||row.partie,categoryTitle=definition?.categoryTitle||row.categorie,subcategoryTitle=row.sous_categorie==="_"?"":row.sous_categorie,capacityId=row.id,title=row.titre;
+    if(!partTitle||!categoryTitle||!capacityId||!title)throw new Error("chaque capacité doit renseigner partie, catégorie, id et titre.");
+    if(capacityId.startsWith("__csv_node_")||capacityIds.has(capacityId))throw new Error(`identifiant de capacité invalide ou répété : « ${capacityId} ».`);
+    const evaluable=row.evaluable.toLowerCase();
+    if(!["true","1","oui","vrai"].includes(evaluable))throw new Error(`la capacité « ${title} » doit être évaluable.`);
+    const weight=csvNumber(row.ponderation,`La pondération de « ${title} »`);
+    if(weight<=0)throw new Error(`la pondération de « ${title} » doit être supérieure à zéro.`);
+    capacityIds.add(capacityId);
+    let part=parts.get(partTitle);
+    if(!part){part={id:`csv-part-${parts.size+1}`,title:partTitle,categories:[]};parts.set(partTitle,part)}
+    const categoryKey=definition?.key||JSON.stringify([partTitle,categoryTitle]);
+    let category=categories.get(categoryKey);
+    if(!category){
+      const definition=categoryDefinitions.get(categoryKey);
+      category=nextGroup(categoryTitle);category.commentMotifs=[];
+      if(definition){category.id=definition.id;if(definition.coefficient!==null)config.coefficientsCategories[category.id]=definition.coefficient}
+      categories.set(categoryKey,category);elements.push(category);part.categories.push({nodeId:category.id,title:categoryTitle});
+    }
+    if(row.coefficient_categorie){
+      const coefficient=csvNumber(row.coefficient_categorie,`Le coefficient de la catégorie « ${categoryTitle} »`);
+      if(coefficient<=0)throw new Error(`le coefficient de la catégorie « ${categoryTitle} » doit être supérieur à zéro.`);
+      const previous=config.coefficientsCategories[category.id];
+      if(previous!==undefined&&previous!==coefficient)throw new Error(`le coefficient de la catégorie « ${categoryTitle} » doit être identique sur toutes ses lignes renseignées.`);
+      config.coefficientsCategories[category.id]=coefficient;
+    }
+    let parent=category;
+    if(subcategoryTitle){
+      const subcategoryKey=JSON.stringify([partTitle,categoryTitle,subcategoryTitle]);
+      let subcategory=subcategories.get(subcategoryKey);
+      if(!subcategory){subcategory=nextGroup(subcategoryTitle);subcategories.set(subcategoryKey,subcategory);category.enfants.push(subcategory)}
+      parent=subcategory;
+    }
+    parent.enfants.push({id:capacityId,titre:title,evaluable:true,commentaires:{NA:row.commentaire_NA,ECA:row.commentaire_ECA,A:row.commentaire_A,D:row.commentaire_D}});
+    config.ponderations[capacityId]=weight;
+  }
+  for(const [key,definition] of categoryDefinitions){
+    if(!categories.has(key))throw new Error(`la catégorie définie « ${definition.id} » ne contient aucune capacité.`);
+    if(capacityIds.has(definition.id))throw new Error(`l’identifiant de catégorie « ${definition.id} » est déjà utilisé par une capacité.`);
+  }
+  const categoriesById=new Map([...categories.values()].map(category=>[category.id,category])),seenMotives=new Set();
+  for(const row of motiveRows){
+    const category=categoriesById.get(row.categorie_id),id=row.id,label=row.titre;
+    if(!category||!id||!label)throw new Error(`motif de catégorie invalide : « ${id} ».`);
+    const key=JSON.stringify([category.id,id]);
+    if(seenMotives.has(key))throw new Error(`le motif « ${id} » est répété pour la catégorie « ${category.titre} ».`);
+    seenMotives.add(key);category.commentMotifs.push({id,label});
+  }
+  for(const category of categories.values())if(!Object.hasOwn(config.coefficientsCategories,category.id))throw new Error(`la catégorie « ${category.titre} » doit indiquer un coefficient_categorie.`);
+  const requiredParameters=["seuil.NA_max_exclusif","seuil.ECA_max_exclusif","seuil.A_max_exclusif","bonus.plafond_total","bonus.pas_saisie","typeDevoir","niveauDevoir"];
+  const metadata={typeDevoir:"",niveauDevoir:""};
+  const seenParameters=new Set();
+  for(const row of parameterRows){
+    const key=row.parametre;
+    if(!requiredParameters.includes(key)||seenParameters.has(key))throw new Error(`paramètre inconnu ou répété : « ${key} ».`);
+    if(key==="typeDevoir"||key==="niveauDevoir"){
+      if(!row.valeur)throw new Error(`le paramètre « ${key} » ne peut pas être vide.`);
+      metadata[key]=row.valeur;
+    }else{
+      const value=csvNumber(row.valeur,`Le paramètre « ${key} »`);const [section,name]=key.split(".");
+      if(section==="seuil")config.seuils[name]=value;
+      else config.bonus[name]=value;
+    }
+    seenParameters.add(key);
+  }
+  const missingParameters=requiredParameters.filter(key=>!seenParameters.has(key));
+  if(missingParameters.length)throw new Error(`paramètres manquants : ${missingParameters.join(", ")}.`);
+  const id=`csv-${fileName.replace(/\.csv$/i,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}`;
+  const grid={...structuredClone(DEFAULT_GRID),id,titre:`${metadata.typeDevoir} — ${metadata.niveauDevoir}`,typeDevoir:metadata.typeDevoir,niveauDevoir:metadata.niveauDevoir,elements};
+  config.grille=id;
+  return{grid,config,partLayout:[...parts.values()]};
+}
+function readJsonFile(file,callback){const reader=new FileReader();reader.onload=()=>{try{callback(JSON.parse(reader.result))}catch(error){setStatus("Impossible de lire ce JSON : "+error.message,"error")}};reader.onerror=()=>setStatus("La lecture du fichier a échoué.","error");reader.readAsText(file)}
+function resetChoices(){manualChoices={};manualCategoryPercent={};categoryEvaluations={};leafChoices={};bonusChoices={}}
+function activateLoadedGrid(title){document.getElementById("pageTitle").textContent=title;document.querySelector(".app").classList.add("grid-loaded");initializePartNav()}
+function applyCsvText(text,fileName){
+  const loaded=gridFromCsv(text,fileName);grid=loaded.grid;config=loaded.config;partLayout=loaded.partLayout;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
+  activateLoadedGrid(grid.titre);resetChoices();render();setStatus(`Grille CSV « ${fileName} » chargée. Les choix précédents ont été réinitialisés.`);
+}
+async function loadRepositoryGrid(entry,button){
+  button.disabled=true;setStatus(`Chargement de la grille « ${entry.titre} »…`);
+  try{
+    const url=new URL(entry.fichier,document.baseURI);
+    if(url.origin!==location.origin)throw new Error("le fichier doit être hébergé sur le même site.");
+    const response=await fetch(url,{cache:"no-store"});
+    if(!response.ok)throw new Error(`réponse HTTP ${response.status}.`);
+    applyCsvText(await response.text(),entry.fichier);
+  }catch(error){setStatus(`Impossible de charger « ${entry.titre} » : ${error.message}`,"error")}
+  finally{button.disabled=false;document.getElementById("importMenu").open=false}
+}
+async function loadGridCatalog(){
+  const catalogEl=document.getElementById("gridCatalog");
+  try{
+    const response=await fetch(new URL("grilles.json",document.baseURI),{cache:"no-cache"});
+    if(!response.ok)throw new Error(`réponse HTTP ${response.status}.`);
+    const catalog=await response.json();
+    if(!Array.isArray(catalog.grilles)||!catalog.grilles.length)throw new Error("aucune grille n'est déclarée.");
+    const buttons=catalog.grilles.map(entry=>{
+      if(!entry||typeof entry.titre!=="string"||typeof entry.fichier!=="string"||!entry.fichier.toLowerCase().endsWith(".csv"))throw new Error("une entrée du catalogue est invalide.");
+      const button=document.createElement("button");button.type="button";button.className="import-option import-catalog-button";button.textContent=entry.titre;
+      button.addEventListener("click",()=>loadRepositoryGrid(entry,button));return button;
+    });
+    catalogEl.replaceChildren(...buttons);
+  }catch(error){catalogEl.textContent="Catalogue indisponible.";setStatus(`Impossible de charger le catalogue des grilles : ${error.message}`,"error")}
+}
+function readCsvFile(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{applyCsvText(String(reader.result||""),file.name)}catch(error){setStatus("CSV invalide : "+error.message,"error")}
+  };
+  reader.onerror=()=>setStatus("La lecture du fichier CSV a échoué.","error");reader.readAsText(file,"UTF-8");
+}
+document.getElementById("gridCsvInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(file)readCsvFile(file)});
+document.getElementById("gridInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(!file)return;readJsonFile(file,data=>{if(!data.elements||!data.niveaux){setStatus("Ce fichier ne ressemble pas à une définition de grille valide.","error");return}grid=data;partLayout=PART_LAYOUT;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));activateLoadedGrid(grid.titre||"Grille de correction");resetChoices();render();setStatus("Grille JSON chargée. Les choix précédents ont été réinitialisés.")})});
+document.getElementById("configInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(!file)return;readJsonFile(file,data=>{if(!data.ponderations||!data.seuils){setStatus("Paramétrage invalide : pondérations ou seuils absents.","error");return}config=data;const cap=bonusCap();let left=cap;for(const id of Object.keys(bonusChoices)){const value=Math.min(bonusChoices[id],left);bonusChoices[id]=value;left-=value;if(value<=0)delete bonusChoices[id]}render();setStatus("Paramétrage JSON chargé. Pondérations, seuils et plafond de bonus actualisés.")})});
+document.getElementById("printBtn").addEventListener("click",()=>window.print());
+document.getElementById("resetBtn").addEventListener("click",()=>{resetChoices();render();setStatus("Tous les choix et bonus ont été réinitialisés.")});
+document.getElementById("settingsBtn").addEventListener("click",()=>document.getElementById("settingsDialog").showModal());
+document.getElementById("closeSettings").addEventListener("click",()=>document.getElementById("settingsDialog").close());
+document.getElementById("showMetrics").addEventListener("change",event=>document.querySelector(".app").classList.toggle("show-metrics",event.target.checked));
+window.addEventListener("beforeprint",renderPrintReport);
+window.addEventListener("afterprint",()=>document.getElementById("printReport").replaceChildren());
+window.addEventListener("beforeunload",event=>{
+  if(!document.querySelector(".app").classList.contains("grid-loaded"))return;
+  event.preventDefault();
+  event.returnValue="";
+});
+window.addEventListener("scroll",updateActivePart,{passive:true});
+loadGridCatalog();
+</script>
+</body></html>
