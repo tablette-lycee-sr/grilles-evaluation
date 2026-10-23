@@ -405,10 +405,13 @@ function makeCategoryFlagButton(node,key){
 function renderCategoryEvaluationControls(node){
   const evaluation=categoryEvaluations[node.id]||{},key=evaluation.activeMotifKind;
   if(!key||!evaluation[key])return null;
+  const hasTypedMotives=(node.commentMotifs||[]).some(motif=>motif.kind==="PROBLEME"||motif.kind==="VALORISATION");
+  const expectedKind=key==="warning"?"PROBLEME":"VALORISATION";
+  const motives=hasTypedMotives?node.commentMotifs.filter(motif=>motif.kind===expectedKind):CATEGORY_MOTIFS[key];
   const controls=document.createElement("div");controls.className="category-extra-controls";
   const select=document.createElement("select");select.setAttribute("aria-label",key==="warning"?`Motif d’avertissement pour ${node.titre}`:`Motif de dépassement pour ${node.titre}`);
   const empty=document.createElement("option");empty.value="";empty.textContent=key==="warning"?"Choisir un motif d’avertissement…":"Choisir un motif de dépassement…";select.appendChild(empty);
-  for(const motif of CATEGORY_MOTIFS[key]){const option=document.createElement("option");option.value=motif.id;option.textContent=motif.label;select.appendChild(option)}
+  for(const motif of motives){const option=document.createElement("option");option.value=motif.id;option.textContent=motif.label;select.appendChild(option)}
   select.value=evaluation.motifIds?.[key]||"";select.addEventListener("change",()=>updateCategoryMotif(node.id,key,select.value));controls.appendChild(select);
   return controls;
 }
@@ -480,7 +483,8 @@ function renderCategory(category,node=null){
     });
     updateSliderDisplay();
     const flagRow=document.createElement("div");flagRow.className="category-flag-row";
-    flagRow.append(makeCategoryFlagButton(node,"warning"),makeCategoryFlagButton(node,"exceeded"));
+    if(node.avertissementAutorise!==false)flagRow.appendChild(makeCategoryFlagButton(node,"warning"));
+    if(node.depasseAutorise!==false)flagRow.appendChild(makeCategoryFlagButton(node,"exceeded"));
     categoryControls.append(slider,flagRow);headingRow.appendChild(categoryControls);
     const comment=document.createElement("div");comment.className="category-comment empty";
     const commentLevel=effective||calculation.level;
@@ -683,7 +687,7 @@ function parseCsv(text){
   if(rows.length<2)throw new Error("le fichier ne contient aucune donnée.");
   const headers=rows.shift().map(value=>value.trim());
   if(new Set(headers).size!==headers.length)throw new Error("les noms de colonnes doivent être uniques.");
-  const required=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","commentaire_D","ponderation","parametre","valeur","coefficient_categorie"];
+  const required=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","ponderation","parametre","valeur","coefficient_categorie"];
   const missing=required.filter(header=>!headers.includes(header));
   if(missing.length)throw new Error(`colonnes manquantes : ${missing.join(", ")}.`);
   return rows.map((values,index)=>{
@@ -697,12 +701,14 @@ function csvNumber(value,label){
   return number;
 }
 function gridFromCsv(text,fileName){
-  const records=parseCsv(text);const capacityRows=[],categoryRows=[],motiveRows=[],parameterRows=[];
+  const records=parseCsv(text);const partRows=[],capacityRows=[],categoryRows=[],motiveRows=[],parameterRows=[];
   for(const record of records){
-    if(record.type==="capacite")capacityRows.push(record);
-    else if(record.type==="categorie")categoryRows.push(record);
-    else if(record.type==="motif")motiveRows.push(record);
-    else if(record.type==="parametre")parameterRows.push(record);
+    const type=String(record.type||"").trim().toLowerCase();
+    if(type==="partie")partRows.push(record);
+    else if(type==="capacite")capacityRows.push(record);
+    else if(type==="categorie")categoryRows.push(record);
+    else if(type==="motif")motiveRows.push(record);
+    else if(type==="parametre")parameterRows.push(record);
     else throw new Error(`type de ligne inconnu : « ${record.type} ».`);
   }
   if(!capacityRows.length)throw new Error("aucune ligne de capacité n'a été trouvée.");
@@ -710,21 +716,31 @@ function gridFromCsv(text,fileName){
   const elements=[],parts=new Map(),categories=new Map(),subcategories=new Map(),capacityIds=new Set();
   const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};config.coefficientsCategories={};
   const categoryDefinitions=new Map(),categoryDefinitionsById=new Map(),categoryIds=new Set();
+  const partDefinitions=new Map();
+  for(const row of partRows){
+    const id=String(row.partie||"").trim(),title=String(row.titre||"").trim();
+    if(!id||!title||partDefinitions.has(id))throw new Error(`définition de partie invalide ou répétée : « ${id} ».`);
+    partDefinitions.set(id,{id:String(row.id||id).trim(),title});
+    parts.set(id,{id:String(row.id||`csv-part-${parts.size+1}`).trim(),title,categories:[]});
+  }
   for(const row of categoryRows){
-    const partTitle=row.partie,categoryTitle=row.categorie,id=row.id;
-    if(!partTitle||!categoryTitle||!id||id.startsWith("__csv_node_")||categoryIds.has(id))throw new Error(`définition de catégorie invalide ou identifiant répété : « ${id} ».`);
-    const key=JSON.stringify([partTitle,categoryTitle]);
+    const partId=String(row.partie||"").trim(),categoryKey=String(row.categorie||"").trim(),categoryTitle=String(row.titre||"").trim(),id=String(row.id||"").trim();
+    if(!partId||!categoryKey||!categoryTitle||!id||id.startsWith("__csv_node_")||categoryIds.has(id))throw new Error(`définition de catégorie invalide ou identifiant répété : « ${id} ».`);
+    const key=JSON.stringify([partId,categoryKey]);
     if(categoryDefinitions.has(key))throw new Error(`la catégorie « ${categoryTitle} » est définie plusieurs fois.`);
     const coefficient=row.coefficient_categorie?csvNumber(row.coefficient_categorie,`Le coefficient de la catégorie « ${categoryTitle} »`):null;
     if(coefficient!==null&&coefficient<=0)throw new Error(`le coefficient de la catégorie « ${categoryTitle} » doit être supérieur à zéro.`);
+    const comments={NA:row.commentaire_NA||"",ECA:row.commentaire_ECA||"",A:row.commentaire_A||"",D:row.commentaire_D||""};
+    const allowed=value=>value===""||value===undefined?true:["true","1","oui","vrai"].includes(String(value).trim().toLowerCase());
     categoryIds.add(id);
-    const definition={id,key,partTitle,categoryTitle,coefficient};
+    const definition={id,key,partId,categoryKey,categoryTitle,coefficient,comments,warningAllowed:allowed(row.avertissement_autorise),exceededAllowed:allowed(row.depasse_autorise)};
     categoryDefinitions.set(key,definition);categoryDefinitionsById.set(id,definition);
   }
   for(const row of capacityRows){
-    const definition=row.categorie_id?categoryDefinitionsById.get(row.categorie_id):null;
+    const partId=String(row.partie||"").trim(),categoryKey=String(row.categorie||"").trim();
+    const definition=row.categorie_id?categoryDefinitionsById.get(row.categorie_id):categoryDefinitions.get(JSON.stringify([partId,categoryKey]));
     if(row.categorie_id&&!definition)throw new Error(`identifiant de catégorie inconnu : « ${row.categorie_id} ».`);
-    const partTitle=definition?.partTitle||row.partie,categoryTitle=definition?.categoryTitle||row.categorie,subcategoryTitle=row.sous_categorie==="_"?"":row.sous_categorie,capacityId=row.id,title=row.titre;
+    const partTitle=partDefinitions.get(partId)?.title||definition?.partTitle||partId,categoryTitle=definition?.categoryTitle||categoryKey,subcategoryTitle=row.sous_categorie==="_"?"":row.sous_categorie,capacityId=row.id,title=row.titre;
     if(!partTitle||!categoryTitle||!capacityId||!title)throw new Error("chaque capacité doit renseigner partie, catégorie, id et titre.");
     if(capacityId.startsWith("__csv_node_")||capacityIds.has(capacityId))throw new Error(`identifiant de capacité invalide ou répété : « ${capacityId} ».`);
     const evaluable=row.evaluable.toLowerCase();
@@ -732,15 +748,15 @@ function gridFromCsv(text,fileName){
     const weight=csvNumber(row.ponderation,`La pondération de « ${title} »`);
     if(weight<=0)throw new Error(`la pondération de « ${title} » doit être supérieure à zéro.`);
     capacityIds.add(capacityId);
-    let part=parts.get(partTitle);
-    if(!part){part={id:`csv-part-${parts.size+1}`,title:partTitle,categories:[]};parts.set(partTitle,part)}
-    const categoryKey=definition?.key||JSON.stringify([partTitle,categoryTitle]);
-    let category=categories.get(categoryKey);
+    let part=parts.get(partId);
+    if(!part){part={id:`csv-part-${parts.size+1}`,title:partTitle,categories:[]};parts.set(partId,part)}
+    const key=definition?.key||JSON.stringify([partId,categoryKey]);
+    let category=categories.get(key);
     if(!category){
-      const definition=categoryDefinitions.get(categoryKey);
-      category=nextGroup(categoryTitle);category.commentMotifs=[];
+      category=nextGroup(categoryTitle);category.commentMotifs=[];category.commentaires=definition?.comments||{};
+      category.avertissementAutorise=definition?.warningAllowed??true;category.depasseAutorise=definition?.exceededAllowed??true;
       if(definition){category.id=definition.id;if(definition.coefficient!==null)config.coefficientsCategories[category.id]=definition.coefficient}
-      categories.set(categoryKey,category);elements.push(category);part.categories.push({nodeId:category.id,title:categoryTitle});
+      categories.set(key,category);elements.push(category);part.categories.push({nodeId:category.id,title:categoryTitle});
     }
     if(row.coefficient_categorie){
       const coefficient=csvNumber(row.coefficient_categorie,`Le coefficient de la catégorie « ${categoryTitle} »`);
@@ -765,11 +781,11 @@ function gridFromCsv(text,fileName){
   }
   const categoriesById=new Map([...categories.values()].map(category=>[category.id,category])),seenMotives=new Set();
   for(const row of motiveRows){
-    const category=categoriesById.get(row.categorie_id),id=row.id,label=row.titre;
+    const category=categoriesById.get(row.categorie_id),id=row.id,label=row.titre,kind=String(row.sous_categorie||"").trim().toUpperCase();
     if(!category||!id||!label)throw new Error(`motif de catégorie invalide : « ${id} ».`);
     const key=JSON.stringify([category.id,id]);
     if(seenMotives.has(key))throw new Error(`le motif « ${id} » est répété pour la catégorie « ${category.titre} ».`);
-    seenMotives.add(key);category.commentMotifs.push({id,label});
+    seenMotives.add(key);category.commentMotifs.push({id,label,kind});
   }
   for(const category of categories.values())if(!Object.hasOwn(config.coefficientsCategories,category.id))throw new Error(`la catégorie « ${category.titre} » doit indiquer un coefficient_categorie.`);
   const requiredParameters=["seuil.NA_max_exclusif","seuil.ECA_max_exclusif","seuil.A_max_exclusif","bonus.plafond_total","bonus.pas_saisie","typeDevoir","niveauDevoir"];
