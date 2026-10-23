@@ -483,7 +483,7 @@ function renderCategory(category,node=null){
     });
     updateSliderDisplay();
     const flagRow=document.createElement("div");flagRow.className="category-flag-row";
-    if(node.avertissementAutorise!==false)flagRow.appendChild(makeCategoryFlagButton(node,"warning"));
+    flagRow.appendChild(makeCategoryFlagButton(node,"warning"));
     if(node.depasseAutorise!==false)flagRow.appendChild(makeCategoryFlagButton(node,"exceeded"));
     categoryControls.append(slider,flagRow);headingRow.appendChild(categoryControls);
     const comment=document.createElement("div");comment.className="category-comment empty";
