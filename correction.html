@@ -6,6 +6,7 @@
 <title>Moteur de correction — prototype</title>
 <link rel="preload" href="fonts/Satisfy.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/PermanentMarker.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="correction.css">
 <style>
 :root{color-scheme:dark;--bg:#242629;--panel:#2d3034;--muted:#44474c;--text:#f3f4f5;--sub:#bfc3c8;--line:#50545a;--red:#e45b60;--yellow:#e8c64a;--green:#49bd7b;--blue:#55a7ee;--accent:#554878;--accent-ink:#fff;--header-height:max(16.67vh,128px)}
 *{box-sizing:border-box}html{background:var(--bg);scrollbar-gutter:stable;overscroll-behavior-y:contain}
@@ -141,10 +142,20 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   .print-legend{display:flex;flex-wrap:wrap;gap:1mm 5mm;margin-top:1.5mm;padding-top:1mm;border-top:1px solid #666;font-size:6.5pt;break-inside:avoid}
   .print-legend-item{white-space:nowrap}
 }
-@page{size:A5 portrait;margin:5mm}
 </style>
 </head>
 <body>
+<nav class="app-navigation no-print" aria-label="Navigation principale">
+  <button type="button" data-view="devoir">Devoir</button>
+  <button type="button" data-view="eleves">Élèves</button>
+  <button type="button" data-view="correction" aria-current="page">Correction</button>
+  <button type="button" data-view="resultats">Résultats</button>
+  <button type="button" data-view="export">Export</button>
+</nav>
+<main class="app-view" id="otherView" hidden>
+  <h1 id="otherViewTitle"></h1>
+  <p>Cette partie sera disponible prochainement.</p>
+</main>
 <div class="app">
 <nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
 <header aria-label="En-tête">
@@ -868,5 +879,16 @@ window.addEventListener("beforeunload",event=>{
 });
 window.addEventListener("scroll",updateActivePart,{passive:true});
 loadGridCatalog();
+const navigationButtons=document.querySelectorAll(".app-navigation button");
+const correctionApp=document.querySelector(".app");
+const otherView=document.getElementById("otherView");
+navigationButtons.forEach(button=>button.addEventListener("click",()=>{
+  const isCorrection=button.dataset.view==="correction";
+  navigationButtons.forEach(item=>item.removeAttribute("aria-current"));
+  button.setAttribute("aria-current","page");
+  correctionApp.hidden=!isCorrection;
+  otherView.hidden=isCorrection;
+  if(!isCorrection)document.getElementById("otherViewTitle").textContent=button.textContent;
+}));
 </script>
 </body></html>
