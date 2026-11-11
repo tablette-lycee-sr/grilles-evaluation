@@ -152,6 +152,26 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <button type="button" data-view="resultats">Résultats</button>
   <button type="button" data-view="export">Export</button>
 </nav>
+<nav class="app-subnavigation no-print" aria-label="Actions de la vue">
+  <div class="submenu" data-submenu="devoir" hidden>
+    <button type="button" disabled title="À venir">Télécharger une grille de correction</button>
+    <button type="button" disabled title="À venir">Créer un nouveau devoir</button>
+    <button type="button" disabled title="À venir">Ouvrir un devoir</button>
+    <button type="button" disabled title="À venir">Sauvegarder le devoir</button>
+  </div>
+  <div class="submenu" data-submenu="eleves" hidden>
+    <button type="button" disabled title="À venir">Créer un nouveau groupe d’élèves</button>
+    <button type="button" disabled title="À venir">Charger un groupe d’élèves</button>
+    <button type="button" disabled title="À venir">Enregistrer le groupe d’élèves actif</button>
+    <button type="button" disabled title="À venir">Associer des photos</button>
+    <button type="button" disabled title="À venir">Réinitialiser la liste d’élèves</button>
+    <button type="button" disabled title="À venir">Supprimer un groupe d’élèves</button>
+  </div>
+  <div class="submenu" data-submenu="correction">
+    <button type="button" disabled title="À venir">Choisir le mode de correction</button>
+    <button type="button" id="submenuSettings">Préférences</button>
+  </div>
+</nav>
 <main class="app-view" id="otherView" hidden>
   <h1 id="otherViewTitle"></h1>
   <p>Cette partie sera disponible prochainement.</p>
@@ -352,7 +372,7 @@ function initializePartNav(){
     const label=document.createElement("span");label.className="part-tab-label";label.textContent=part.title;button.appendChild(label);
     button.addEventListener("click",()=>{
       const section=document.getElementById(`part-${part.id}`);
-      if(section){const headerHeight=document.querySelector("header").getBoundingClientRect().height;window.scrollTo({top:window.scrollY+section.getBoundingClientRect().top-headerHeight,behavior:"instant"})}
+      if(section){const headerBottom=document.querySelector(".app header").getBoundingClientRect().bottom;window.scrollTo({top:window.scrollY+section.getBoundingClientRect().top-headerBottom,behavior:"instant"})}
       setActivePart(part.id);
     });
     partNavEl.appendChild(button);
@@ -365,7 +385,7 @@ function setActivePart(id){
   }
 }
 function updateActivePart(){
-  const marker=window.innerHeight*.32;let active=partLayout[0].id;
+  const marker=Math.max(window.innerHeight*.32,document.querySelector(".app header").getBoundingClientRect().bottom+1);let active=partLayout[0].id;
   for(const part of partLayout){
     const section=document.getElementById(`part-${part.id}`);
     if(section&&section.getBoundingClientRect().top<=marker)active=part.id;
@@ -880,12 +900,15 @@ window.addEventListener("beforeunload",event=>{
 window.addEventListener("scroll",updateActivePart,{passive:true});
 loadGridCatalog();
 const navigationButtons=document.querySelectorAll(".app-navigation button");
+const submenus=document.querySelectorAll(".submenu");
 const correctionApp=document.querySelector(".app");
 const otherView=document.getElementById("otherView");
+document.getElementById("submenuSettings").addEventListener("click",()=>document.getElementById("settingsBtn").click());
 navigationButtons.forEach(button=>button.addEventListener("click",()=>{
   const isCorrection=button.dataset.view==="correction";
   navigationButtons.forEach(item=>item.removeAttribute("aria-current"));
   button.setAttribute("aria-current","page");
+  submenus.forEach(menu=>menu.hidden=menu.dataset.submenu!==button.dataset.view);
   correctionApp.hidden=!isCorrection;
   otherView.hidden=isCorrection;
   if(!isCorrection)document.getElementById("otherViewTitle").textContent=button.textContent;
