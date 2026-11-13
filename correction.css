@@ -7,6 +7,7 @@
 .app-navigation button[aria-current="page"]{border-bottom-color:var(--blue);color:var(--text)}
 .app-subnavigation{position:fixed;z-index:49;top:var(--app-nav-height);left:0;right:0;height:var(--submenu-height);overflow-x:auto;background:#2d3034;border-bottom:1px solid var(--line)}
 .submenu{display:flex;align-items:center;gap:4px;width:max-content;min-width:100%;height:100%;padding:0 12px}
+.submenu-spacer{flex:0 0 16px}
 .submenu-action{display:inline-flex;flex:none;cursor:not-allowed}
 .submenu button{display:grid;place-items:center;flex:none;width:36px;height:36px;padding:0;border:0;border-radius:4px;background:transparent;color:var(--text)}
 .menu-icon{display:inline-block;flex:none;width:16px;height:16px;background-color:currentColor;-webkit-mask:var(--icon) center / contain no-repeat;mask:var(--icon) center / contain no-repeat}

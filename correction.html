@@ -163,11 +163,13 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 </nav>
 <nav class="app-subnavigation no-print" aria-label="Actions de la vue">
   <div class="submenu" data-submenu="devoir">
-    <button type="button" id="resetAssignmentBtn" title="Effacer le devoir en cours" aria-label="Effacer le devoir en cours"><span class="menu-icon" style="--icon:url('icones/replay.svg')" aria-hidden="true"></span></button>
-    <span class="submenu-action" title="Télécharger une grille de correction (à venir)"><button type="button" disabled aria-label="Télécharger une grille de correction"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button></span>
     <button type="button" id="createAssignmentBtn" title="Créer un nouveau devoir" aria-label="Créer un nouveau devoir"><span class="menu-icon" style="--icon:url('icones/add.svg')" aria-hidden="true"></span></button>
     <span class="submenu-action" title="Ouvrir un devoir (à venir)"><button type="button" disabled aria-label="Ouvrir un devoir"><span class="menu-icon" style="--icon:url('icones/upload.svg')" aria-hidden="true"></span></button></span>
     <span class="submenu-action" title="Sauvegarder le devoir (à venir)"><button type="button" disabled aria-label="Sauvegarder le devoir"><span class="menu-icon" style="--icon:url('icones/save.svg')" aria-hidden="true"></span></button></span>
+    <span class="submenu-spacer" aria-hidden="true"></span>
+    <button type="button" id="resetAssignmentBtn" title="Effacer le devoir en cours" aria-label="Effacer le devoir en cours"><span class="menu-icon" style="--icon:url('icones/replay.svg')" aria-hidden="true"></span></button>
+    <span class="submenu-spacer" aria-hidden="true"></span>
+    <span class="submenu-action" title="Télécharger une grille de correction (à venir)"><button type="button" disabled aria-label="Télécharger une grille de correction"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button></span>
   </div>
   <div class="submenu" data-submenu="eleves" hidden>
     <span class="submenu-action" title="Créer un nouveau groupe d’élèves (à venir)"><button type="button" disabled aria-label="Créer un nouveau groupe d’élèves"><svg aria-hidden="true"><use href="#icon-user-plus"/></svg></button></span>
@@ -190,8 +192,8 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <p id="assignmentEmptyState" class="assignment-empty">Aucun devoir en cours. Utilisez « Créer un nouveau devoir » dans le sous-menu pour commencer.</p>
     <div class="assignment-layout" id="assignmentDetails" hidden>
       <form class="assignment-fields" id="assignmentForm">
-        <label>Nom du devoir<input name="name" type="text" placeholder="Ex. Étude critique — environnement"></label>
         <label>Type d’évaluation<input name="evaluationType" type="text" readonly></label>
+        <label>Nom du devoir<input name="name" type="text" placeholder="Ex. Étude critique — environnement"></label>
         <label>Date du devoir<input name="date" type="date"></label>
         <label>Période<input name="period" type="text" list="periodOptions" placeholder="Choisir ou saisir une période"><datalist id="periodOptions"><option value="Trimestre 1"></option><option value="Trimestre 2"></option><option value="Trimestre 3"></option><option value="Semestre 1"></option><option value="Semestre 2"></option><option value="Année"></option><option value="Bac"></option></datalist></label>
         <label>Note maximale<input name="maxScore" type="number" min="0" step="0.5" value="20"></label>
