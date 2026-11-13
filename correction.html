@@ -923,6 +923,7 @@ function renderAssignmentGrid(){
 function renderAssignmentNode(node,depth){
   const fragment=document.createDocumentFragment(),row=document.createElement("div");
   row.className=`assignment-node depth-${Math.min(depth,4)}`;
+  row.classList.toggle("has-children",Boolean(node.enfants?.length));
   const title=document.createElement("div");title.className="assignment-node-title";title.textContent=node.titre;row.appendChild(title);
   const isCategory=Object.hasOwn(config.coefficientsCategories,node.id);
   const coefficientKey=isCategory?"coefficientsCategories":isLeaf(node)&&Object.hasOwn(config.ponderations,node.id)?"ponderations":null;
