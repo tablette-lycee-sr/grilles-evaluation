@@ -187,16 +187,15 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <div class="assignment-layout">
       <form class="assignment-fields" id="assignmentForm">
         <label>Nom du devoir<input name="name" type="text" placeholder="Ex. Étude critique — environnement"></label>
-        <label>Grille de correction<input name="gridTitle" type="text" readonly></label>
         <label>Type d’évaluation<input name="evaluationType" type="text" readonly></label>
-        <label>Niveau de l’évaluation<input name="evaluationLevel" type="text" readonly></label>
         <label>Date du devoir<input name="date" type="date"></label>
-        <label>Période<input name="period" type="text" placeholder="Ex. Semestre 1"></label>
+        <label>Période<input name="period" type="text" list="periodOptions" placeholder="Choisir ou saisir une période"><datalist id="periodOptions"><option value="Trimestre 1"></option><option value="Trimestre 2"></option><option value="Trimestre 3"></option><option value="Semestre 1"></option><option value="Semestre 2"></option><option value="Annuel"></option><option value="Bac"></option></datalist></label>
         <label>Note maximale<input name="maxScore" type="number" min="0" step="0.5" value="20"></label>
         <label class="assignment-comment">Commentaire<textarea name="comment" rows="4"></textarea></label>
       </form>
       <section class="assignment-grid" aria-labelledby="assignmentGridHeading">
         <h2 id="assignmentGridHeading">Structure de la grille de correction</h2>
+        <p class="assignment-grid-help">Les coefficients des capacités pondèrent leur catégorie ; ceux des catégories pondèrent la note globale.</p>
         <div id="assignmentGridTree"><p>Choisissez une grille pour afficher sa structure.</p></div>
       </section>
     </div>
@@ -885,7 +884,7 @@ function resetChoices(){manualChoices={};manualCategoryPercent={};categoryEvalua
 function activateLoadedGrid(title){document.getElementById("pageTitle").textContent=title;document.querySelector(".app").classList.add("grid-loaded");initializePartNav()}
 function initializeAssignment(){
   const today=new Date(),date=[today.getFullYear(),String(today.getMonth()+1).padStart(2,"0"),String(today.getDate()).padStart(2,"0")].join("-");
-  assignment={name:"",gridTitle:grid.titre||"",evaluationType:grid.typeDevoir||"",evaluationLevel:grid.niveauDevoir||"",date,period:"",maxScore:20,comment:""};
+  assignment={name:"",evaluationType:grid.typeDevoir||"",date,period:"",maxScore:20,comment:""};
   const form=document.getElementById("assignmentForm");
   for(const [name,value] of Object.entries(assignment))form.elements.namedItem(name).value=value;
   renderAssignmentGrid();
@@ -903,10 +902,12 @@ function renderAssignmentNode(node,depth){
   const fragment=document.createDocumentFragment(),row=document.createElement("div");
   row.className=`assignment-node depth-${Math.min(depth,4)}`;
   const title=document.createElement("div");title.className="assignment-node-title";title.textContent=node.titre;row.appendChild(title);
-  const coefficientKey=Object.hasOwn(config.coefficientsCategories,node.id)?"coefficientsCategories":isLeaf(node)&&Object.hasOwn(config.ponderations,node.id)?"ponderations":null;
+  const isCategory=Object.hasOwn(config.coefficientsCategories,node.id);
+  const coefficientKey=isCategory?"coefficientsCategories":isLeaf(node)&&Object.hasOwn(config.ponderations,node.id)?"ponderations":null;
   if(coefficientKey){
-    const control=document.createElement("label");control.className="coefficient-control";control.textContent=coefficientKey==="coefficientsCategories"?"Coefficient":"Poids";
-    const input=document.createElement("input");input.className="coefficient-input";input.type="number";input.min="0.01";input.step="0.25";input.value=config[coefficientKey][node.id];input.setAttribute("aria-label",`${coefficientKey==="coefficientsCategories"?"Coefficient":"Poids"} : ${node.titre}`);
+    row.classList.toggle("has-category-coefficient",isCategory);
+    const control=document.createElement("label");control.className="coefficient-control";control.textContent="Coeff.";
+    const input=document.createElement("input");input.className="coefficient-input";input.type="number";input.min="0.01";input.step="0.25";input.value=config[coefficientKey][node.id];input.setAttribute("aria-label",`${isCategory?"Coefficient de catégorie, appliqué à la note globale":"Coefficient de capacité, appliqué à sa catégorie"} : ${node.titre}`);
     input.addEventListener("change",()=>{const value=Number(input.value);if(!Number.isFinite(value)||value<=0){input.value=config[coefficientKey][node.id];return}config[coefficientKey][node.id]=value;updateFinalScore()});
     control.appendChild(input);row.appendChild(control);
   }else row.appendChild(document.createElement("span"));
