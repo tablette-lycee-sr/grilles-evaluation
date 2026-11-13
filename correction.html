@@ -155,14 +155,14 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <symbol id="icon-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
 </svg>
 <nav class="app-navigation no-print" aria-label="Navigation principale">
-  <button type="button" data-view="devoir"><span class="menu-icon" style="--icon:url('icones/description.svg')" aria-hidden="true"></span>Devoir</button>
+  <button type="button" data-view="devoir" aria-current="page"><span class="menu-icon" style="--icon:url('icones/description.svg')" aria-hidden="true"></span>Devoir</button>
   <button type="button" data-view="eleves"><span class="menu-icon" style="--icon:url('icones/group.svg')" aria-hidden="true"></span>Élèves</button>
-  <button type="button" data-view="correction" aria-current="page"><span class="menu-icon" style="--icon:url('icones/check.svg')" aria-hidden="true"></span>Correction</button>
+  <button type="button" data-view="correction"><span class="menu-icon" style="--icon:url('icones/check.svg')" aria-hidden="true"></span>Correction</button>
   <button type="button" data-view="resultats"><span class="menu-icon" style="--icon:url('icones/finance.svg')" aria-hidden="true"></span>Résultats</button>
   <button type="button" data-view="export"><span class="menu-icon" style="--icon:url('icones/file.svg')" aria-hidden="true"></span>Export</button>
 </nav>
 <nav class="app-subnavigation no-print" aria-label="Actions de la vue">
-  <div class="submenu" data-submenu="devoir" hidden>
+  <div class="submenu" data-submenu="devoir">
     <button type="button" id="resetAssignmentBtn" title="Effacer le devoir en cours" aria-label="Effacer le devoir en cours"><span class="menu-icon" style="--icon:url('icones/replay.svg')" aria-hidden="true"></span></button>
     <span class="submenu-action" title="Télécharger une grille de correction (à venir)"><button type="button" disabled aria-label="Télécharger une grille de correction"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button></span>
     <button type="button" id="createAssignmentBtn" title="Créer un nouveau devoir" aria-label="Créer un nouveau devoir"><span class="menu-icon" style="--icon:url('icones/add.svg')" aria-hidden="true"></span></button>
@@ -181,9 +181,12 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <span class="submenu-action" title="Choisir le mode de correction (à venir)"><button type="button" disabled aria-label="Choisir le mode de correction"><svg aria-hidden="true"><use href="#icon-sliders"/></svg></button></span>
     <button type="button" id="submenuSettings" title="Préférences" aria-label="Préférences"><span class="menu-icon" style="--icon:url('icones/settings.svg')" aria-hidden="true"></span></button>
   </div>
+  <div class="submenu" data-submenu="export" hidden>
+    <button type="button" id="exportPrintBtn" title="Imprimer / PDF" aria-label="Imprimer / PDF"><span class="menu-icon" style="--icon:url('icones/print.svg')" aria-hidden="true"></span></button>
+  </div>
 </nav>
-<main class="app-view" id="otherView" hidden>
-  <section id="assignmentPanel" hidden>
+<main class="app-view" id="otherView">
+  <section id="assignmentPanel">
     <p id="assignmentEmptyState" class="assignment-empty">Aucun devoir en cours. Utilisez « Créer un nouveau devoir » dans le sous-menu pour commencer.</p>
     <div class="assignment-layout" id="assignmentDetails" hidden>
       <form class="assignment-fields" id="assignmentForm">
@@ -201,24 +204,24 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
       </section>
     </div>
   </section>
-  <section id="otherViewPlaceholder">
+  <section id="otherViewPlaceholder" hidden>
     <h1 id="otherViewTitle"></h1>
     <p>Cette partie sera disponible prochainement.</p>
   </section>
 </main>
 <dialog id="gridCatalogDialog">
-  <div class="dialog-heading"><h2>Choisir une grille de correction</h2><button id="closeGridCatalog" class="icon-button" type="button" aria-label="Fermer">×</button></div>
+  <div class="dialog-heading"><h2>Choisir une grille de correction</h2></div>
   <p class="catalog-description">Grille disponible</p>
   <p id="gridCatalogStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
   <div id="gridModalCatalog" class="grid-modal-catalog">Chargement du catalogue…</div>
   <div class="dialog-actions"><button id="cancelGridCatalog" class="secondary" type="button">Annuler</button></div>
 </dialog>
 <dialog id="resetAssignmentDialog">
-  <div class="dialog-heading"><h2>Effacer le devoir en cours ?</h2><button id="closeResetAssignment" class="icon-button" type="button" aria-label="Fermer">×</button></div>
+  <div class="dialog-heading"><h2>Effacer le devoir en cours ?</h2></div>
   <p>Cette action effacera les informations du devoir, la grille chargée, les coefficients modifiés et toutes les saisies de correction non sauvegardées. Elle ne supprimera aucun fichier déjà enregistré et ne pourra pas être annulée.</p>
   <div class="dialog-actions"><button id="cancelResetAssignment" class="secondary" type="button">Annuler</button><button id="confirmResetAssignment" type="button">Effacer le devoir</button></div>
 </dialog>
-<div class="app">
+<div class="app" hidden>
 <nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
 <header aria-label="En-tête">
   <div class="header-left">
@@ -229,17 +232,11 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     </div>
   </div>
   <div class="header-actions no-print" aria-label="Actions">
-    <details class="import-menu" id="importMenu"><summary class="icon-button" title="Importer des données" aria-label="Importer des données"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></summary><div class="import-options"><p class="import-heading">Depuis l’appareil</p><label class="import-option" for="gridCsvInput">Grille CSV…</label><label class="import-option" for="gridInput">Grille JSON…</label><label class="import-option" for="configInput">Paramètres JSON…</label></div></details>
     <button id="resetBtn" class="icon-button" type="button" title="Réinitialiser les choix" aria-label="Réinitialiser les choix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1-6.2 10.2"/></svg></button>
-    <button id="printBtn" class="icon-button" type="button" title="Imprimer / PDF" aria-label="Imprimer / PDF"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H4a2 2 0 0 0-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/></svg></button>
-    <button id="settingsBtn" class="icon-button" type="button" title="Configuration" aria-label="Configuration"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-1.99 1.8l-.17 1.43c-.34.14-.66.32-.97.52l-1.35-.49a2 2 0 0 0-2.44.91l-.22.38a2 2 0 0 0 .44 2.56l1.1.93a7 7 0 0 0 0 1.12l-1.1.93a2 2 0 0 0-.44 2.56l.22.38a2 2 0 0 0 2.44.91l1.35-.49c.31.2.63.38.97.52l.17 1.43a2 2 0 0 0 1.99 1.8h.44a2 2 0 0 0 1.99-1.8l.17-1.43c.34-.14.66-.32.97-.52l1.35.49a2 2 0 0 0 2.44-.91l.22-.38a2 2 0 0 0-.44-2.56l-1.1-.93a7 7 0 0 0 0-1.12l1.1-.93a2 2 0 0 0 .44-2.56l-.22-.38a2 2 0 0 0-2.44-.91l-1.35.49a7 7 0 0 0-.97-.52l-.17-1.43a2 2 0 0 0-1.99-1.8z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
 </header>
-<input id="gridInput" type="file" accept=".json,application/json" aria-label="Charger la grille JSON">
-<input id="configInput" type="file" accept=".json,application/json" aria-label="Charger les paramètres JSON">
-<input id="gridCsvInput" type="file" accept=".csv,text/csv" aria-label="Charger une grille CSV complète">
 <div id="status" class="sr-only" role="status" aria-live="polite"></div>
-<dialog id="settingsDialog"><div class="dialog-heading"><h2>Configuration</h2><button id="closeSettings" class="icon-button" type="button" aria-label="Fermer la configuration">×</button></div><label class="settings-option"><input id="showMetrics" type="checkbox">Métriques de calcul</label></dialog>
+<dialog id="settingsDialog"><div class="dialog-heading"><h2>Préférences</h2></div><label class="settings-option"><input id="showMetrics" type="checkbox">Métriques de calcul</label><div class="dialog-actions"><button id="cancelSettings" class="secondary" type="button">Annuler</button><button id="confirmSettings" type="button">Confirmer</button></div></dialog>
 <div id="initialState" class="initial-state">Choisissez une grille de correction...</div>
 <main id="content"></main>
 <div id="printReport" aria-hidden="true"></div>
@@ -885,7 +882,6 @@ function gridFromCsv(text,fileName){
   config.grille=id;
   return{grid,config,partLayout:[...parts.values()]};
 }
-function readJsonFile(file,callback){const reader=new FileReader();reader.onload=()=>{try{callback(JSON.parse(reader.result))}catch(error){setStatus("Impossible de lire ce JSON : "+error.message,"error")}};reader.onerror=()=>setStatus("La lecture du fichier a échoué.","error");reader.readAsText(file)}
 function resetChoices(){manualChoices={};manualCategoryPercent={};categoryEvaluations={};leafChoices={};bonusChoices={}}
 function activateLoadedGrid(title){document.getElementById("pageTitle").textContent=title;document.querySelector(".app").classList.add("grid-loaded");initializePartNav()}
 function initializeAssignment(){
@@ -977,21 +973,21 @@ async function loadGridCatalog(){
     catalogEl.replaceChildren(...buttons);
   }catch(error){catalogEl.textContent="Catalogue indisponible.";const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=false;modalStatus.textContent=`Impossible de charger le catalogue des grilles : ${error.message}`}
 }
-function readCsvFile(file){
-  const reader=new FileReader();
-  reader.onload=()=>{
-    try{applyCsvText(String(reader.result||""),file.name)}catch(error){setStatus("CSV invalide : "+error.message,"error")}
-  };
-  reader.onerror=()=>setStatus("La lecture du fichier CSV a échoué.","error");reader.readAsText(file,"UTF-8");
-}
-document.getElementById("gridCsvInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(file)readCsvFile(file)});
-document.getElementById("gridInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(!file)return;readJsonFile(file,data=>{if(!data.elements||!data.niveaux){setStatus("Ce fichier ne ressemble pas à une définition de grille valide.","error");return}grid=data;partLayout=PART_LAYOUT;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));activateLoadedGrid(grid.titre||"Grille de correction");resetChoices();render();setStatus("Grille JSON chargée. Les choix précédents ont été réinitialisés.")})});
-document.getElementById("configInput").addEventListener("change",event=>{const file=event.target.files?.[0];event.target.value="";document.getElementById("importMenu").open=false;if(!file)return;readJsonFile(file,data=>{if(!data.ponderations||!data.seuils){setStatus("Paramétrage invalide : pondérations ou seuils absents.","error");return}config=data;const cap=bonusCap();let left=cap;for(const id of Object.keys(bonusChoices)){const value=Math.min(bonusChoices[id],left);bonusChoices[id]=value;left-=value;if(value<=0)delete bonusChoices[id]}render();setStatus("Paramétrage JSON chargé. Pondérations, seuils et plafond de bonus actualisés.")})});
-document.getElementById("printBtn").addEventListener("click",()=>window.print());
+document.getElementById("exportPrintBtn").addEventListener("click",()=>window.print());
 document.getElementById("resetBtn").addEventListener("click",()=>{resetChoices();render();setStatus("Tous les choix et bonus ont été réinitialisés.")});
-document.getElementById("settingsBtn").addEventListener("click",()=>document.getElementById("settingsDialog").showModal());
-document.getElementById("closeSettings").addEventListener("click",()=>document.getElementById("settingsDialog").close());
+let showMetricsBeforeSettings=false;
 document.getElementById("showMetrics").addEventListener("change",event=>document.querySelector(".app").classList.toggle("show-metrics",event.target.checked));
+document.getElementById("submenuSettings").addEventListener("click",()=>{
+  showMetricsBeforeSettings=document.querySelector(".app").classList.contains("show-metrics");
+  document.getElementById("showMetrics").checked=showMetricsBeforeSettings;
+  document.getElementById("settingsDialog").showModal();
+});
+document.getElementById("cancelSettings").addEventListener("click",()=>{
+  document.getElementById("showMetrics").checked=showMetricsBeforeSettings;
+  document.querySelector(".app").classList.toggle("show-metrics",showMetricsBeforeSettings);
+  document.getElementById("settingsDialog").close();
+});
+document.getElementById("confirmSettings").addEventListener("click",()=>document.getElementById("settingsDialog").close());
 window.addEventListener("beforeprint",renderPrintReport);
 window.addEventListener("afterprint",()=>document.getElementById("printReport").replaceChildren());
 window.addEventListener("beforeunload",event=>{
@@ -1024,10 +1020,8 @@ document.getElementById("createAssignmentBtn").addEventListener("click",()=>{
   const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=true;modalStatus.textContent="";
   document.getElementById("gridCatalogDialog").showModal();
 });
-document.getElementById("closeGridCatalog").addEventListener("click",()=>document.getElementById("gridCatalogDialog").close());
 document.getElementById("cancelGridCatalog").addEventListener("click",()=>document.getElementById("gridCatalogDialog").close());
 document.getElementById("resetAssignmentBtn").addEventListener("click",()=>document.getElementById("resetAssignmentDialog").showModal());
-document.getElementById("closeResetAssignment").addEventListener("click",()=>document.getElementById("resetAssignmentDialog").close());
 document.getElementById("cancelResetAssignment").addEventListener("click",()=>document.getElementById("resetAssignmentDialog").close());
 document.getElementById("confirmResetAssignment").addEventListener("click",()=>{
   document.getElementById("resetAssignmentDialog").close();resetAssignment();
@@ -1036,7 +1030,7 @@ document.getElementById("assignmentForm").addEventListener("input",event=>{
   const field=event.target;
   if(field.name)assignment[field.name]=field.name==="maxScore"?Number(field.value):field.value;
 });
-document.getElementById("submenuSettings").addEventListener("click",()=>document.getElementById("settingsBtn").click());
 navigationButtons.forEach(button=>button.addEventListener("click",()=>setActiveView(button.dataset.view)));
+setActiveView("devoir");
 </script>
 </body></html>
