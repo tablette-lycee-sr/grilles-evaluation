@@ -10,6 +10,7 @@
 .submenu-action{display:inline-flex;flex:none;cursor:not-allowed}
 .submenu button{display:grid;place-items:center;flex:none;width:36px;height:36px;padding:0;border:0;border-radius:4px;background:transparent;color:var(--text)}
 .menu-icon{display:inline-block;flex:none;width:16px;height:16px;background-color:currentColor;-webkit-mask:var(--icon) center / contain no-repeat;mask:var(--icon) center / contain no-repeat}
+.submenu .menu-icon{width:20px;height:20px}
 .submenu button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .submenu button:not(:disabled):hover{background:#44474c}
 .submenu button:disabled{color:#92979d;pointer-events:none}
@@ -22,6 +23,33 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .app-view{max-width:1080px;margin:var(--navigation-height) auto 0;padding:28px 20px;color:var(--text)}
 .app-view h1{margin:0 0 12px;font-size:1.55rem}
 .app-view p{color:var(--sub)}
+.assignment-layout{display:grid;grid-template-columns:minmax(230px,320px) minmax(0,1fr);gap:28px;align-items:start}
+.assignment-fields{display:grid;gap:12px;min-width:0}
+.assignment-fields label{display:grid;gap:5px;color:var(--sub);font-size:.82rem;font-weight:600}
+.assignment-fields input,.assignment-fields textarea,.coefficient-input{width:100%;min-width:0;border:1px solid var(--line);border-radius:5px;background:#1b1d20;color:var(--text);font:inherit;font-size:.92rem;padding:8px 9px}
+.assignment-fields input[readonly]{color:#aeb3b9;background:#292c30}
+.assignment-fields textarea{resize:vertical}
+.assignment-fields .assignment-comment{grid-column:1/-1}
+.assignment-grid{min-width:0;border-left:1px solid var(--line);padding-left:22px}
+.assignment-grid h2{margin:2px 0 14px;font-size:1.12rem}
+.assignment-part{margin:0 0 18px}
+.assignment-part-title{margin:0 0 6px;padding:0 0 5px;border-bottom:1px solid var(--line);color:var(--text);font-size:1rem}
+.assignment-node{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:12px;align-items:center;padding:6px 0 6px 12px;border-bottom:1px solid #3c3f44}
+.assignment-node.depth-2{margin-left:10px}
+.assignment-node.depth-3{margin-left:20px}
+.assignment-node.depth-4{margin-left:30px}
+.assignment-node-title{min-width:0;color:var(--sub);font-size:.86rem}
+.assignment-node.depth-1>.assignment-node-title{color:var(--text);font-weight:650}
+.coefficient-control{display:flex;align-items:center;gap:6px;color:var(--sub);font-size:.74rem;white-space:nowrap}
+.coefficient-input{width:68px;padding:5px 6px;text-align:right;font-size:.84rem}
+.catalog-description{margin:0 0 12px;color:var(--sub)}
+.catalog-status{margin:0 0 10px;color:var(--yellow)}
+.grid-modal-catalog{display:grid;gap:8px}
+.grid-modal-choice{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;width:100%;text-align:left}
+.grid-modal-choice small{display:block;color:var(--sub);font-size:.78rem}
+.dialog-actions{display:flex;justify-content:flex-end;margin-top:16px}
+#gridCatalogDialog{width:min(560px,calc(100vw - 32px))}
+@media(max-width:760px){.assignment-layout{grid-template-columns:minmax(0,1fr);gap:24px}.assignment-grid{border-left:0;border-top:1px solid var(--line);padding:20px 0 0}}
 [hidden]{display:none!important}
 @media(max-width:699px){
 	.app-navigation{padding:0 4px}
