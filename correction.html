@@ -929,7 +929,7 @@ function renderAssignmentNode(node,depth){
   if(coefficientKey){
     row.classList.toggle("has-category-coefficient",isCategory);
     row.classList.toggle("has-capacity-coefficient",coefficientKey==="ponderations");
-    const control=document.createElement("label");control.className="coefficient-control";control.textContent="Coeff.";
+    const control=document.createElement("label");control.className="coefficient-control";if(coefficientKey==="ponderations")control.classList.add("capacity-coefficient-control");control.textContent="Coeff.";
     const input=document.createElement("input");input.className="coefficient-input";input.type="number";input.min="0.01";input.step="0.25";input.value=config[coefficientKey][node.id];input.setAttribute("aria-label",`${isCategory?"Coefficient de catégorie, appliqué à la note globale":"Coefficient de capacité, appliqué à sa catégorie"} : ${node.titre}`);
     input.addEventListener("change",()=>{const value=Number(input.value);if(!Number.isFinite(value)||value<=0){input.value=config[coefficientKey][node.id];return}config[coefficientKey][node.id]=value;updateFinalScore()});
     control.appendChild(input);row.appendChild(control);
