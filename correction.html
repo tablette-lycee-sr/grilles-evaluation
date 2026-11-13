@@ -163,6 +163,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 </nav>
 <nav class="app-subnavigation no-print" aria-label="Actions de la vue">
   <div class="submenu" data-submenu="devoir" hidden>
+    <button type="button" id="resetAssignmentBtn" title="Effacer le devoir en cours" aria-label="Effacer le devoir en cours"><span class="menu-icon" style="--icon:url('icones/replay.svg')" aria-hidden="true"></span></button>
     <span class="submenu-action" title="Télécharger une grille de correction (à venir)"><button type="button" disabled aria-label="Télécharger une grille de correction"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button></span>
     <button type="button" id="createAssignmentBtn" title="Créer un nouveau devoir" aria-label="Créer un nouveau devoir"><span class="menu-icon" style="--icon:url('icones/add.svg')" aria-hidden="true"></span></button>
     <span class="submenu-action" title="Ouvrir un devoir (à venir)"><button type="button" disabled aria-label="Ouvrir un devoir"><span class="menu-icon" style="--icon:url('icones/upload.svg')" aria-hidden="true"></span></button></span>
@@ -183,13 +184,13 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 </nav>
 <main class="app-view" id="otherView" hidden>
   <section id="assignmentPanel" hidden>
-    <h1>Devoir</h1>
-    <div class="assignment-layout">
+    <p id="assignmentEmptyState" class="assignment-empty">Aucun devoir en cours. Utilisez « Créer un nouveau devoir » dans le sous-menu pour commencer.</p>
+    <div class="assignment-layout" id="assignmentDetails" hidden>
       <form class="assignment-fields" id="assignmentForm">
         <label>Nom du devoir<input name="name" type="text" placeholder="Ex. Étude critique — environnement"></label>
         <label>Type d’évaluation<input name="evaluationType" type="text" readonly></label>
         <label>Date du devoir<input name="date" type="date"></label>
-        <label>Période<input name="period" type="text" list="periodOptions" placeholder="Choisir ou saisir une période"><datalist id="periodOptions"><option value="Trimestre 1"></option><option value="Trimestre 2"></option><option value="Trimestre 3"></option><option value="Semestre 1"></option><option value="Semestre 2"></option><option value="Annuel"></option><option value="Bac"></option></datalist></label>
+        <label>Période<input name="period" type="text" list="periodOptions" placeholder="Choisir ou saisir une période"><datalist id="periodOptions"><option value="Trimestre 1"></option><option value="Trimestre 2"></option><option value="Trimestre 3"></option><option value="Semestre 1"></option><option value="Semestre 2"></option><option value="Année"></option><option value="Bac"></option></datalist></label>
         <label>Note maximale<input name="maxScore" type="number" min="0" step="0.5" value="20"></label>
         <label class="assignment-comment">Commentaire<textarea name="comment" rows="4"></textarea></label>
       </form>
@@ -211,6 +212,11 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <p id="gridCatalogStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
   <div id="gridModalCatalog" class="grid-modal-catalog">Chargement du catalogue…</div>
   <div class="dialog-actions"><button id="cancelGridCatalog" class="secondary" type="button">Annuler</button></div>
+</dialog>
+<dialog id="resetAssignmentDialog">
+  <div class="dialog-heading"><h2>Effacer le devoir en cours ?</h2><button id="closeResetAssignment" class="icon-button" type="button" aria-label="Fermer">×</button></div>
+  <p>Cette action effacera les informations du devoir, la grille chargée, les coefficients modifiés et toutes les saisies de correction non sauvegardées. Elle ne supprimera aucun fichier déjà enregistré et ne pourra pas être annulée.</p>
+  <div class="dialog-actions"><button id="cancelResetAssignment" class="secondary" type="button">Annuler</button><button id="confirmResetAssignment" type="button">Effacer le devoir</button></div>
 </dialog>
 <div class="app">
 <nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
@@ -887,14 +893,34 @@ function initializeAssignment(){
   assignment={name:"",evaluationType:grid.typeDevoir||"",date,period:"",maxScore:20,comment:""};
   const form=document.getElementById("assignmentForm");
   for(const [name,value] of Object.entries(assignment))form.elements.namedItem(name).value=value;
+  document.getElementById("assignmentEmptyState").hidden=true;
+  document.getElementById("assignmentDetails").hidden=false;
   renderAssignmentGrid();
 }
+function resetAssignment(){
+  grid=structuredClone(DEFAULT_GRID);config=structuredClone(DEFAULT_CONFIG);partLayout=PART_LAYOUT;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
+  resetChoices();assignment={};
+  document.querySelector(".app").classList.remove("grid-loaded");
+  document.getElementById("pageTitle").textContent="";partNavEl.replaceChildren();contentEl.replaceChildren();
+  document.getElementById("studentName").value="";document.getElementById("finalGrade").value="";document.getElementById("finalScore").textContent="—/20";
+  document.getElementById("assignmentForm").reset();document.getElementById("assignmentGridTree").replaceChildren();
+  document.getElementById("assignmentEmptyState").hidden=false;document.getElementById("assignmentDetails").hidden=true;
+  setStatus("");setActiveView("devoir");
+}
 function renderAssignmentGrid(){
-  const tree=document.getElementById("assignmentGridTree");tree.replaceChildren();
-  for(const part of grid.elements||[]){
+  const tree=document.getElementById("assignmentGridTree"),roots=grid.elements||[];tree.replaceChildren();
+  const mappedIds=new Set(partLayout.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
+  for(const part of partLayout){
     const section=document.createElement("section");section.className="assignment-part";
-    const title=document.createElement("h3");title.className="assignment-part-title";title.textContent=part.titre;section.appendChild(title);
-    for(const node of part.enfants||[])section.appendChild(renderAssignmentNode(node,1));
+    const title=document.createElement("h3");title.className="assignment-part-title";title.textContent=part.title;section.appendChild(title);
+    for(const category of part.categories){
+      const node=category.nodeId?roots.find(root=>root.id===category.nodeId):null;
+      if(node)section.appendChild(renderAssignmentNode(node,1));
+      else if(!category.nodeId){const placeholder=document.createElement("div");placeholder.className="assignment-node depth-1";const categoryTitle=document.createElement("div");categoryTitle.className="assignment-node-title";categoryTitle.textContent=category.title;placeholder.appendChild(categoryTitle);placeholder.appendChild(document.createElement("span"));section.appendChild(placeholder)}
+    }
+    if(part.id===partLayout[0]?.id){
+      for(const node of roots.filter(root=>!mappedIds.has(root.id)))section.appendChild(renderAssignmentNode(node,1));
+    }
     tree.appendChild(section);
   }
 }
@@ -981,6 +1007,7 @@ const correctionApp=document.querySelector(".app");
 const otherView=document.getElementById("otherView");
 function setActiveView(viewId){
   const isCorrection=viewId==="correction",isAssignment=viewId==="devoir";
+  const hasActiveAssignment=correctionApp.classList.contains("grid-loaded");
   navigationButtons.forEach(item=>{
     if(item.dataset.view===viewId)item.setAttribute("aria-current","page");
     else item.removeAttribute("aria-current");
@@ -988,6 +1015,8 @@ function setActiveView(viewId){
   submenus.forEach(menu=>menu.hidden=menu.dataset.submenu!==viewId);
   correctionApp.hidden=!isCorrection;otherView.hidden=isCorrection;
   document.getElementById("assignmentPanel").hidden=!isAssignment;
+  document.getElementById("assignmentEmptyState").hidden=!isAssignment||hasActiveAssignment;
+  document.getElementById("assignmentDetails").hidden=!isAssignment||!hasActiveAssignment;
   document.getElementById("otherViewPlaceholder").hidden=isAssignment;
   if(!isCorrection&&!isAssignment)document.getElementById("otherViewTitle").textContent=navigationButtons.find(button=>button.dataset.view===viewId)?.textContent||"";
 }
@@ -997,6 +1026,12 @@ document.getElementById("createAssignmentBtn").addEventListener("click",()=>{
 });
 document.getElementById("closeGridCatalog").addEventListener("click",()=>document.getElementById("gridCatalogDialog").close());
 document.getElementById("cancelGridCatalog").addEventListener("click",()=>document.getElementById("gridCatalogDialog").close());
+document.getElementById("resetAssignmentBtn").addEventListener("click",()=>document.getElementById("resetAssignmentDialog").showModal());
+document.getElementById("closeResetAssignment").addEventListener("click",()=>document.getElementById("resetAssignmentDialog").close());
+document.getElementById("cancelResetAssignment").addEventListener("click",()=>document.getElementById("resetAssignmentDialog").close());
+document.getElementById("confirmResetAssignment").addEventListener("click",()=>{
+  document.getElementById("resetAssignmentDialog").close();resetAssignment();
+});
 document.getElementById("assignmentForm").addEventListener("input",event=>{
   const field=event.target;
   if(field.name)assignment[field.name]=field.name==="maxScore"?Number(field.value):field.value;

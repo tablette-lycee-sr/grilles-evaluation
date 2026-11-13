@@ -14,6 +14,7 @@
 .submenu button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .submenu button:not(:disabled):hover{background:#44474c}
 .submenu button:disabled{color:#92979d;pointer-events:none}
+.submenu button:disabled .menu-icon{opacity:.55}
 body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20px)}
 .app header{top:var(--navigation-height)}
 .app .part-nav{top:calc(var(--header-height) + var(--navigation-height))}
@@ -23,6 +24,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .app-view{max-width:1080px;margin:var(--navigation-height) auto 0;padding:28px 20px;color:var(--text)}
 .app-view h1{margin:0 0 12px;font-size:1.55rem}
 .app-view p{color:var(--sub)}
+.assignment-empty{padding:8px 0}
 .assignment-layout{display:grid;grid-template-columns:minmax(230px,320px) minmax(0,1fr);gap:28px;align-items:start}
 .assignment-fields{display:grid;gap:12px;min-width:0}
 .assignment-fields label{display:grid;gap:5px;color:var(--sub);font-size:.82rem;font-weight:600}
@@ -35,7 +37,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .assignment-grid-help{margin:0 0 14px;font-size:.78rem}
 .assignment-part{margin:0 0 18px}
 .assignment-part-title{margin:0 0 6px;padding:0 0 5px;border-bottom:1px solid var(--line);color:var(--text);font-size:1rem}
-.assignment-node{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:12px;align-items:center;padding:6px 0 6px 12px}
+.assignment-node{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:12px;align-items:center;padding:2px 0 2px 12px}
 .assignment-node.has-category-coefficient{margin-top:8px;padding-top:8px;padding-bottom:8px;border-left:2px solid var(--blue);background:#2d3034}
 .assignment-node.depth-2{margin-left:10px}
 .assignment-node.depth-3{margin-left:20px}
@@ -51,6 +53,10 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .grid-modal-choice small{display:block;color:var(--sub);font-size:.78rem}
 .dialog-actions{display:flex;justify-content:flex-end;margin-top:16px}
 #gridCatalogDialog{width:min(560px,calc(100vw - 32px))}
+#resetAssignmentDialog{width:min(480px,calc(100vw - 32px))}
+#resetAssignmentDialog p{color:var(--sub)}
+#resetAssignmentDialog .dialog-actions{gap:8px}
+#resetAssignmentDialog #confirmResetAssignment{border-color:var(--red);background:var(--red);color:#17191c;font-weight:650}
 @media(max-width:760px){.assignment-layout{grid-template-columns:minmax(0,1fr);gap:24px}.assignment-grid{border-left:0;border-top:1px solid var(--line);padding:20px 0 0}}
 [hidden]{display:none!important}
 @media(max-width:699px){
