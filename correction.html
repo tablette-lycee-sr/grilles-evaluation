@@ -280,9 +280,9 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <div class="app" hidden>
 <section id="correctionTrombiView" class="correction-trombi-view" hidden aria-labelledby="correctionTrombiHeading">
   <div class="correction-trombi-toolbar">
-    <div><p class="correction-trombi-kicker">Correction</p><h1 id="correctionTrombiHeading">Trombinoscope</h1><p id="correctionTrombiSummary" class="correction-trombi-summary"></p></div>
+    <div class="correction-trombi-title"><h1 id="correctionTrombiHeading"></h1><p id="correctionTrombiSummary" class="correction-trombi-summary"></p></div>
     <div class="correction-trombi-actions">
-      <button id="toggleCorrectionTrombiLayout" class="icon-button correction-trombi-layout-toggle" type="button" title="Pleine page" aria-label="Passer à l’affichage pleine page" aria-pressed="false"><span class="menu-icon" style="--icon:url('icones/grid_view.svg')" aria-hidden="true"></span></button>
+      <button id="toggleCorrectionTrombiLayout" class="icon-button correction-trombi-layout-toggle" type="button" title="Afficher en rang" aria-label="Passer à l’affichage en rang" aria-pressed="true"><span class="menu-icon" style="--icon:url('icones/view_list.svg')" aria-hidden="true"></span></button>
       <button id="showIndividualCorrection" type="button">Grille individuelle</button>
     </div>
   </div>
@@ -291,10 +291,10 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <button id="correctionTrombiGoStudents" type="button">Ouvrir Élèves</button>
   </div>
   <div id="correctionTrombiMatrix" class="correction-trombi-matrix" hidden>
-    <table class="correction-trombi-table">
-      <thead><tr id="correctionTrombiHead"><th scope="col">Critères / élèves</th></tr></thead>
-      <tbody id="correctionTrombiBody"></tbody>
-    </table>
+    <div id="correctionTrombiCriteria" class="correction-trombi-criteria" aria-label="Critères d’évaluation"></div>
+    <div class="correction-trombi-carousel" role="region" aria-label="Cartes des élèves, défilement horizontal" tabindex="0">
+      <div id="correctionTrombiTrack" class="correction-trombi-track" role="list"></div>
+    </div>
   </div>
   <div id="correctionTrombiCards" class="correction-trombi-cards" role="list" aria-label="Élèves du groupe" hidden></div>
 </section>
@@ -343,7 +343,7 @@ let assignment = {};
 let activeStudentGroup = null;
 let assignmentStudentDetails = {};
 let selectedStudentIds = new Set();
-let correctionTrombiMode = "rows";
+let correctionTrombiMode = "full";
 let pendingStudentImport = null;
 let studentFilters = {};
 const EMPTY_STUDENT_FILTER = Symbol("empty student filter");
@@ -1113,18 +1113,22 @@ function createTrombiLevelScale(){
   return scale;
 }
 function renderCorrectionTrombi(){
-  const head=document.getElementById("correctionTrombiHead"),body=document.getElementById("correctionTrombiBody");
+  const criteria=document.getElementById("correctionTrombiCriteria"),track=document.getElementById("correctionTrombiTrack");
   const empty=document.getElementById("correctionTrombiEmpty"),matrix=document.getElementById("correctionTrombiMatrix"),cards=document.getElementById("correctionTrombiCards");
   const students=activeStudentGroup?.students||[];
-  document.getElementById("correctionTrombiSummary").textContent=activeStudentGroup?`${activeStudentGroup.name} · ${students.length} élève(s)`:"";
+  const categories=getCorrectionTrombiCategories(),criterionLabels=["Appréciation générale",...categories,"Groupe","Sujet","Note"];
+  document.getElementById("correctionTrombiHeading").textContent=activeStudentGroup?.name||"";
+  document.getElementById("correctionTrombiSummary").textContent=activeStudentGroup?`${students.length} ${students.length===1?"élève":"élèves"}`:"";
   empty.hidden=students.length>0;matrix.hidden=students.length===0||correctionTrombiMode==="full";cards.hidden=students.length===0||correctionTrombiMode!=="full";
   document.getElementById("correctionTrombiView").dataset.layout=correctionTrombiMode;
   updateCorrectionTrombiToggle();
-  cards.replaceChildren();
+  cards.replaceChildren();criteria.replaceChildren();track.replaceChildren();
   if(!activeStudentGroup)empty.querySelector("p").textContent="Aucun groupe d’élèves actif. Ouvrez l’onglet Élèves pour créer ou charger un groupe.";
   else empty.querySelector("p").textContent="Ce groupe ne contient aucun élève.";
-  head.replaceChildren();body.replaceChildren();
-  const criterionHeading=document.createElement("th");criterionHeading.scope="col";criterionHeading.textContent="Critères";head.append(criterionHeading);
+  criteria.style.setProperty("--trombi-criterion-count",String(criterionLabels.length));
+  track.style.setProperty("--trombi-criterion-count",String(criterionLabels.length));
+  const criterionHeading=document.createElement("div");criterionHeading.className="correction-trombi-criterion-heading";criterionHeading.textContent="Critères";criteria.append(criterionHeading);
+  for(const label of criterionLabels){const criterion=document.createElement("div");criterion.className="correction-trombi-criterion";criterion.textContent=label;criteria.append(criterion)}
   for(const [index,student] of students.entries()){
     const card=document.createElement("article");card.className="correction-trombi-card";card.setAttribute("role","listitem");
     const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(index+1);
@@ -1134,7 +1138,7 @@ function renderCorrectionTrombi(){
     const cardNote=document.createElement("span"),note=assignmentStudentDetails[student.id]?.note;
     cardNote.className="correction-trombi-card-note";cardNote.textContent=`Note : ${note===null||note===undefined||note===""?"—":String(note)}`;
     card.append(cardNumber,cardPortrait,cardName,cardClass,cardNote);cards.append(card);
-    const column=document.createElement("th");column.scope="col";
+    const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-student-header";
     const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(index+1);
     const identity=document.createElement("div");identity.className="correction-trombi-identity";identity.append(createTrombiPortrait());
@@ -1142,22 +1146,14 @@ function renderCorrectionTrombi(){
     const metadata=document.createElement("span");metadata.className="correction-trombi-student-metadata";metadata.textContent=student.classe||"Classe non renseignée";
     identity.append(name,metadata);header.append(number,identity);
     if(student.pap){const pap=document.createElement("span");pap.className="correction-trombi-pap";pap.textContent="PAP";header.append(pap)}
-    column.append(header);head.append(column);
-  }
-  const appendRow=(label,contentForStudent,{category=false}={})=>{
-    const row=document.createElement("tr"),heading=document.createElement("th");heading.scope="row";heading.textContent=label;row.append(heading);
-    for(const student of students){
-      const cell=document.createElement("td"),content=contentForStudent(student);
-      if(category)cell.append(createTrombiLevelScale());else cell.textContent=content===null||content===undefined||content===""?"—":String(content);
-      row.append(cell);
+    column.append(header,createTrombiLevelScale());
+    for(const category of categories)column.append(createTrombiLevelScale());
+    const details=assignmentStudentDetails[student.id]||{};
+    for(const value of [details.sousGroupe,details.sujet,details.note]){
+      const cell=document.createElement("div");cell.className="correction-trombi-row-value";cell.textContent=value===null||value===undefined||value===""?"—":String(value);column.append(cell);
     }
-    body.append(row);
-  };
-  appendRow("Appréciation générale",()=>"",{category:true});
-  for(const category of getCorrectionTrombiCategories())appendRow(category,()=>"",{category:true});
-  appendRow("Groupe",student=>assignmentStudentDetails[student.id]?.sousGroupe);
-  appendRow("Sujet",student=>assignmentStudentDetails[student.id]?.sujet);
-  appendRow("Note",student=>assignmentStudentDetails[student.id]?.note);
+    track.append(column);
+  }
 }
 function updateCorrectionTrombiToggle(){
   const button=document.getElementById("toggleCorrectionTrombiLayout"),icon=button.querySelector(".menu-icon"),isFullPage=correctionTrombiMode==="full";

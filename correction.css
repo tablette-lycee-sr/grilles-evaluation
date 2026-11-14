@@ -29,21 +29,24 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .app.trombi-view>:not(#correctionTrombiView):not(#printReport){display:none!important}
 .correction-trombi-view{display:grid;gap:14px;min-width:0;color:var(--text)}
 .correction-trombi-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.correction-trombi-toolbar h1{margin:0;font-size:1.4rem}
+.correction-trombi-title{display:flex;align-items:baseline;gap:8px;min-width:0}
+.correction-trombi-title h1{min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.15rem}
 .correction-trombi-actions{display:flex;align-items:center;gap:8px}
 .correction-trombi-layout-toggle .menu-icon{width:21px;height:21px}
-.correction-trombi-kicker{margin:0;color:var(--accent)!important;font-size:.72rem;font-weight:700;text-transform:uppercase}
-.correction-trombi-summary{margin:3px 0 0;font-size:.82rem}
+.correction-trombi-summary{flex:none;margin:0;color:var(--sub);font-size:.78rem;white-space:nowrap}
 .correction-trombi-empty{padding:24px 0;border-top:1px solid var(--line)}
 .correction-trombi-empty p{margin:0 0 12px}
-.correction-trombi-matrix{max-height:calc(100vh - var(--navigation-height) - 154px);overflow:auto;border:1px solid var(--line);background:var(--bg)}
-.correction-trombi-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
-.correction-trombi-table th,.correction-trombi-table td{box-sizing:border-box;padding:8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:middle}
-.correction-trombi-table thead th{position:sticky;top:0;z-index:2;background:#2d3034;text-align:center}
-.correction-trombi-table thead th:first-child,.correction-trombi-table tbody th{position:sticky;left:0;z-index:3;width:210px;min-width:210px;background:#2d3034;text-align:left}
-.correction-trombi-table thead th:first-child{z-index:4}
-.correction-trombi-table th:not(:first-child),.correction-trombi-table td:not(:first-child){width:148px;min-width:148px}
-.correction-trombi-table tbody th{font-size:.82rem;font-weight:600}
+.correction-trombi-matrix{display:grid;grid-template-columns:190px minmax(0,1fr);max-height:calc(100vh - var(--navigation-height) - 154px);overflow-x:hidden;overflow-y:auto;border:1px solid var(--line);background:var(--bg)}
+.correction-trombi-criteria{position:sticky;left:0;z-index:2;display:grid;grid-template-rows:130px repeat(var(--trombi-criterion-count),48px);align-content:start;background:#2d3034;border-right:1px solid var(--line)}
+.correction-trombi-criterion-heading,.correction-trombi-criterion{display:flex;align-items:center;box-sizing:border-box;padding:6px 10px;border-bottom:1px solid var(--line);font-size:.78rem}
+.correction-trombi-criterion-heading{font-weight:700}
+.correction-trombi-criterion{overflow:hidden;line-height:1.15}
+.correction-trombi-carousel{min-width:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+.correction-trombi-track{display:flex;align-items:start;gap:8px;width:max-content;min-width:100%;padding:0 8px 8px}
+.correction-trombi-row-card{display:grid;grid-template-rows:130px repeat(var(--trombi-criterion-count),48px);flex:0 0 220px;width:220px;overflow:hidden;border:1px solid var(--line);border-radius:5px;background:var(--panel);scroll-snap-align:start}
+.correction-trombi-row-value{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:0;padding:4px 8px;border-bottom:1px solid var(--line);color:var(--text);font-size:.78rem;text-align:center}
+.correction-trombi-row-card>.correction-trombi-level-scale{align-items:center;box-sizing:border-box;height:48px;padding:0 8px;border-bottom:1px solid var(--line)}
+.correction-trombi-row-card>.correction-trombi-level-scale span{min-height:26px}
 .correction-trombi-student-header{position:relative;display:grid;justify-items:center;gap:5px;min-height:130px}
 .correction-trombi-student-number{align-self:start;justify-self:start;color:var(--sub);font-size:.72rem}
 .correction-trombi-identity{display:grid;justify-items:center;gap:4px;min-width:0}
@@ -51,23 +54,26 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-trombi-student-name{max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.2;text-align:center}
 .correction-trombi-student-metadata{color:var(--sub);font-size:.7rem;font-weight:400}
 .correction-trombi-pap{position:absolute;top:0;right:0;padding:2px 4px;border-radius:3px;background:#44474c;color:var(--text);font-size:.62rem}
-.correction-trombi-cards{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:minmax(144px,auto);gap:7px;width:100%;min-width:0;max-height:calc(100vh - var(--navigation-height) - 154px);align-content:start;overflow:auto;padding:2px}
-.correction-trombi-card{position:relative;display:grid;grid-template-rows:auto 50px minmax(0,1fr) auto auto;justify-items:center;gap:3px;box-sizing:border-box;min-width:0;padding:6px 4px;border:1px solid var(--line);border-radius:5px;background:var(--panel);text-align:center}
+.correction-trombi-cards{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(4,140px);grid-auto-rows:140px;gap:7px;width:100%;min-width:0;max-height:calc(100vh - var(--navigation-height) - 84px);align-content:start;overflow:auto;padding:2px}
+.correction-trombi-card{position:relative;display:grid;grid-template-rows:10px 64px minmax(0,1fr) auto auto;justify-items:center;gap:2px;box-sizing:border-box;min-width:0;min-height:140px;padding:4px 3px;border:1px solid var(--line);border-radius:5px;background:var(--panel);text-align:center}
 .correction-trombi-card-number{justify-self:start;color:var(--sub);font-size:.66rem;line-height:1}
-.correction-trombi-card-portrait{width:38px;height:48px}
-.correction-trombi-card-name{align-self:end;max-width:100%;overflow:hidden;overflow-wrap:anywhere;font-size:.68rem;line-height:1.1}
+.correction-trombi-card-portrait{width:54px;height:64px}
+.correction-trombi-card-name{align-self:end;display:-webkit-box;max-width:100%;overflow:hidden;overflow-wrap:anywhere;font-size:.68rem;line-height:1.05;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .correction-trombi-card-class{max-width:100%;overflow:hidden;color:var(--sub);font-size:.62rem;line-height:1.1;text-overflow:ellipsis;white-space:nowrap}
 .correction-trombi-card-note{color:var(--text);font-size:.72rem;font-weight:700;line-height:1}
 .correction-trombi-level-scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
 .correction-trombi-level-scale span{display:grid;place-items:center;min-height:24px;border:1px solid #62666d;border-radius:3px;color:var(--sub);font-size:.62rem}
-.correction-trombi-table tbody tr:last-child th,.correction-trombi-table tbody tr:last-child td{border-bottom:0}
 @media(max-width:600px){
 	.app.trombi-view{padding:16px 10px}
-	.correction-trombi-toolbar{align-items:flex-start;flex-direction:column}
-	.correction-trombi-matrix{max-height:70vh}
-	.correction-trombi-cards{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(152px,auto);max-height:70vh}
-	.correction-trombi-table thead th:first-child,.correction-trombi-table tbody th{width:160px;min-width:160px}
-	.correction-trombi-table th:not(:first-child),.correction-trombi-table td:not(:first-child){width:136px;min-width:136px}
+	.correction-trombi-toolbar{align-items:center}
+	.correction-trombi-title{flex-wrap:wrap;gap:2px 6px}
+	.correction-trombi-matrix{grid-template-columns:132px minmax(0,1fr);max-height:70vh}
+	.correction-trombi-criteria{grid-template-rows:130px repeat(var(--trombi-criterion-count),48px)}
+	.correction-trombi-criterion-heading,.correction-trombi-criterion{padding-right:7px;padding-left:7px;font-size:.7rem}
+	.correction-trombi-row-card{flex-basis:198px;width:198px}
+	.correction-trombi-cards{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:152px;max-height:70vh}
+	.correction-trombi-card{grid-template-rows:10px 74px minmax(0,1fr) auto auto;gap:2px;min-height:152px;padding:4px 3px}
+	.correction-trombi-card-portrait{width:62px;height:74px}
 }
 @media print{.app.trombi-view{width:auto;max-width:none;margin:0;padding:0}}
 .assignment-empty{padding:8px 0}
