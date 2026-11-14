@@ -1132,11 +1132,11 @@ function createTrombiPortrait(student,fullBleed=false){
     const photo=document.createElement("img");photo.className="correction-trombi-portrait";photo.src=photoUrl;photo.alt=`Portrait de ${[student.nom,student.prenom].filter(Boolean).join(" ")}`;photo.loading="lazy";photo.draggable=false;return photo;
   }
   const namespace="http://www.w3.org/2000/svg",portrait=document.createElementNS(namespace,"svg");
-  const width=fullBleed?180:72,height=fullBleed?120:88;
+  const width=fullBleed?100:72,height=fullBleed?150:88;
   portrait.setAttribute("viewBox",`0 0 ${width} ${height}`);portrait.setAttribute("aria-hidden","true");portrait.classList.add("correction-trombi-portrait");
   const background=document.createElementNS(namespace,"rect");background.setAttribute("width",String(width));background.setAttribute("height",String(height));if(!fullBleed)background.setAttribute("rx","6");background.setAttribute("fill","#34373b");
-  const head=document.createElementNS(namespace,"circle");head.setAttribute("cx",fullBleed?"90":"36");head.setAttribute("cy",fullBleed?"42":"28");head.setAttribute("r",fullBleed?"21":"13");head.setAttribute("fill","#aeb3b9");
-  const shoulders=document.createElementNS(namespace,"path");shoulders.setAttribute("d",fullBleed?"M28 120c3-34 25-52 62-52s59 18 62 52z":"M10 88c1-20 10-31 26-31s25 11 26 31z");shoulders.setAttribute("fill","#777d85");
+  const head=document.createElementNS(namespace,"circle");head.setAttribute("cx",fullBleed?"50":"36");head.setAttribute("cy",fullBleed?"42":"28");head.setAttribute("r",fullBleed?"20":"13");head.setAttribute("fill","#aeb3b9");
+  const shoulders=document.createElementNS(namespace,"path");shoulders.setAttribute("d",fullBleed?"M7 150c2-33 19-51 43-51s41 18 43 51z":"M10 88c1-20 10-31 26-31s25 11 26 31z");shoulders.setAttribute("fill","#777d85");
   portrait.append(background,shoulders,head);return portrait;
 }
 function createTrombiLevelScale(){
