@@ -282,7 +282,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <div class="app" hidden>
 <section id="correctionTrombiView" class="correction-trombi-view" hidden aria-labelledby="correctionTrombiHeading">
   <div class="correction-trombi-toolbar">
-    <div class="correction-trombi-title"><h1 id="correctionTrombiHeading"></h1><div class="correction-trombi-count"><p id="correctionTrombiSummary" class="correction-trombi-summary"></p><details class="correction-trombi-sort" id="correctionTrombiSort"><summary class="icon-button" title="Trier les élèves" aria-label="Trier les élèves"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></summary><div class="correction-trombi-sort-menu" aria-label="Tri des élèves"><button type="button" data-trombi-sort="name-asc" aria-pressed="true">Nom : ordre croissant</button><button type="button" data-trombi-sort="name-desc" aria-pressed="false">Nom : ordre décroissant</button><button type="button" data-trombi-sort="sousGroupe" aria-pressed="false">Sous-groupe</button><button type="button" data-trombi-sort="classe" aria-pressed="false">Classe</button></div></details></div></div>
+    <div class="correction-trombi-title"><h1 id="correctionTrombiHeading"></h1><div class="correction-trombi-count"><p id="correctionTrombiSummary" class="correction-trombi-summary"></p><details class="correction-trombi-sort" id="correctionTrombiSort"><summary class="icon-button" title="Trier les élèves" aria-label="Trier les élèves"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></summary><div class="correction-trombi-sort-menu" aria-label="Tri des élèves"><button type="button" data-trombi-sort="name-asc" aria-pressed="true">Ordre alphabétique</button><button type="button" data-trombi-sort="note" aria-pressed="false">Note</button><button type="button" data-trombi-sort="sousGroupe" aria-pressed="false">Sous-groupe</button><button type="button" data-trombi-sort="classe" aria-pressed="false">Classe</button></div></details></div></div>
     <div class="correction-trombi-actions">
       <button id="toggleCorrectionTrombiLayout" class="icon-button correction-trombi-layout-toggle" type="button" title="Afficher en rang" aria-label="Passer à l’affichage en rang" aria-pressed="true"><span class="menu-icon" style="--icon:url('icones/view_list.svg')" aria-hidden="true"></span></button>
     </div>
@@ -1163,11 +1163,17 @@ function updateStudentGroupColors(){
     input.style.backgroundColor=color||"";input.style.color=color?"#111":"";
   });
 }
-function getTrombiNoteColor(note){
+function parseTrombiNote(note){
   const noteText=String(note??"").trim();
-  if(!noteText||/^[\s\-–—−]+$/u.test(noteText))return "#b9b9b9";
-  const score=Number(noteText.replace(/\s*\/\s*20\s*$/,"" ).replace(",","."));
-  if(!Number.isFinite(score)||score<0||score>20)return "#b9b9b9";
+  if(!noteText||/^[\s\-–—−]+$/u.test(noteText))return null;
+  const scoreText=noteText.replace(/\s*\/\s*20\s*$/,"" ).replace(",",".").trim();
+  if(!scoreText)return null;
+  const score=Number(scoreText);
+  return Number.isFinite(score)&&score>=0&&score<=20?score:null;
+}
+function getTrombiNoteColor(note){
+  const score=parseTrombiNote(note);
+  if(score===null)return "#b9b9b9";
   if(score<7)return "#A33B40";
   if(score<12)return "#8A7000";
   if(score<18)return "#286B43";
@@ -1196,8 +1202,12 @@ function compareTrombiStudentNames(first,second){
 }
 function getSortedTrombiStudents(students){
   return students.slice().sort((first,second)=>{
-    if(correctionTrombiSort==="name-desc")return compareTrombiStudentNames(second,first);
     if(correctionTrombiSort==="name-asc")return compareTrombiStudentNames(first,second);
+    if(correctionTrombiSort==="note"){
+      const firstNote=parseTrombiNote(assignmentStudentDetails[first.id]?.note),secondNote=parseTrombiNote(assignmentStudentDetails[second.id]?.note);
+      if(firstNote===null||secondNote===null)return Number(firstNote===null)-Number(secondNote===null)||compareTrombiStudentNames(first,second);
+      return secondNote-firstNote||compareTrombiStudentNames(first,second);
+    }
     const firstValue=String(studentFieldValue(first,correctionTrombiSort)).trim(),secondValue=String(studentFieldValue(second,correctionTrombiSort)).trim();
     if(!firstValue||!secondValue)return Number(!firstValue)-Number(!secondValue)||compareTrombiStudentNames(first,second);
     return firstValue.localeCompare(secondValue,"fr",{numeric:true,sensitivity:"base"})||compareTrombiStudentNames(first,second);
