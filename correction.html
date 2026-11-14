@@ -1111,10 +1111,19 @@ function trombiPhotoKey(student){
 function getStudentTrombiPhotoCount(){
   return (activeStudentGroup?.students||[]).filter(student=>trombiPhotoUrls.has(trombiPhotoKey(student))).length;
 }
-const TROMBI_GROUP_COLORS=["#D8C1AF","#D1C0AD","#C9BBAA","#D2C7B5","#C9C5AD","#BEC6B0","#B9C8BB","#B2C7C2","#B5C5C9","#B6C3CC","#C2C1C7","#CABEC5"];
+const TROMBI_GROUP_ROWS=[
+  [["","#999999"],["A","#A3B68D"],["B","#9B879E"],["C","#BEB597"],["D","#88A5A4"],["E","#B29B85"]],
+  [["1","#A3B68D"],["2","#9B879E"],["3","#BEB597"],["4","#88A5A4"],["5","#B29B85"],["6","#728AA9"]],
+  [["7","#AC7D7D"],["8","#E1DAC0"],["9","#C3B3C4"],["10","#C8B2A0"],["11","#BAD1D0"],["12","#BEB597"]],
+  [["1A","#A3B68D"],["2A","#9B879E"],["3A","#B29B85"],["4A","#AC7D7D"],["OUI","#728AA9"]],
+  [["1B","#BEB597"],["2B","#88A5A4"],["3B","#728AA9"],["4B","#D1DFB9"],["NON","#AC7D7D"]]
+];
+const TROMBI_GROUP_COLORS=new Map(TROMBI_GROUP_ROWS.flat().filter(([label])=>label).map(([label,color])=>[normalizeTrombiPhotoName(label),color]));
+const TROMBI_CUSTOM_GROUP_COLORS=["#D8C1AF","#D1C0AD","#C9BBAA","#D2C7B5","#C9C5AD","#BEC6B0","#B9C8BB","#B2C7C2","#B5C5C9","#B6C3CC","#C2C1C7","#CABEC5"];
 function getTrombiGroupColorMap(students){
   const groups=[...new Set(students.map(student=>assignmentStudentDetails[student.id]?.sousGroupe?.trim()).filter(Boolean).map(normalizeTrombiPhotoName))].sort((first,second)=>first.localeCompare(second,"fr",{sensitivity:"base"}));
-  return new Map(groups.map((group,index)=>[group,TROMBI_GROUP_COLORS[index%TROMBI_GROUP_COLORS.length]]));
+  let customIndex=0;
+  return new Map(groups.map(group=>[group,TROMBI_GROUP_COLORS.get(group)||TROMBI_CUSTOM_GROUP_COLORS[customIndex++%TROMBI_CUSTOM_GROUP_COLORS.length]]));
 }
 function getTrombiNoteColor(note){
   const noteText=String(note??"").trim();
@@ -1243,22 +1252,34 @@ function openStudentColumnMenu(button){
     assignClassAction.disabled=selectedStudentIds.size===0;
   }else if(["sousGroupe","sujet","remarque"].includes(field)){
     const bulkDivider=document.createElement("div");bulkDivider.className="student-column-menu-divider";menu.append(bulkDivider);
-    const bulkLabel=document.createElement("label");bulkLabel.className="student-column-filter";bulkLabel.textContent="Valeur commune pour la sélection";
-    const bulkInput=document.createElement("input");bulkInput.type="text";bulkInput.autocomplete="off";bulkInput.placeholder="Saisir le texte";bulkInput.setAttribute("aria-label",`Valeur à appliquer à la colonne ${label} pour les élèves sélectionnés`);
-    bulkLabel.append(bulkInput);menu.append(bulkLabel);
-    const bulkActions=document.createElement("div");bulkActions.className="student-column-filter-actions";
-    const bulkApply=document.createElement("button");bulkApply.type="button";bulkApply.textContent=`Appliquer à la sélection (${selectedStudentIds.size})`;bulkApply.disabled=selectedStudentIds.size===0;
-    bulkApply.addEventListener("click",()=>{
-      const value=bulkInput.value.trim();
+    const applyBulkValue=value=>{
       for(const student of activeStudentGroup?.students||[]){
         if(!selectedStudentIds.has(student.id))continue;
         const details=assignmentStudentDetails[student.id]||(assignmentStudentDetails[student.id]={sousGroupe:"",sujet:"",remarque:""});
         details[field]=value;
       }
       closeStudentColumnMenu();renderStudentTable();
-    });
-    bulkInput.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();bulkApply.click()}});
-    bulkActions.append(bulkApply);menu.append(bulkActions);
+    };
+    if(field==="sousGroupe"){
+      const bulkLabel=document.createElement("div");bulkLabel.className="student-column-filter";bulkLabel.textContent=`Valeur commune pour la sélection (${selectedStudentIds.size})`;menu.append(bulkLabel);
+      const groupGrid=document.createElement("div");groupGrid.className="student-group-grid";groupGrid.setAttribute("aria-label","Sous-groupe pour les élèves sélectionnés");
+      for(const row of TROMBI_GROUP_ROWS)for(const [value,color] of row){
+        const groupButton=document.createElement("button");groupButton.type="button";groupButton.textContent=value;groupButton.style.backgroundColor=color;groupButton.disabled=selectedStudentIds.size===0;
+        groupButton.setAttribute("aria-label",value?`Attribuer ${value} à la sélection`:"Effacer le sous-groupe de la sélection");
+        if(value==="OUI"||value==="NON")groupButton.classList.add("student-group-grid-wide");
+        groupButton.addEventListener("click",()=>applyBulkValue(value));groupGrid.append(groupButton);
+      }
+      menu.append(groupGrid);
+    }else{
+      const bulkLabel=document.createElement("label");bulkLabel.className="student-column-filter";bulkLabel.textContent="Valeur commune pour la sélection";
+      const bulkInput=document.createElement("input");bulkInput.type="text";bulkInput.autocomplete="off";bulkInput.placeholder="Saisir le texte";bulkInput.setAttribute("aria-label",`Valeur à appliquer à la colonne ${label} pour les élèves sélectionnés`);
+      bulkLabel.append(bulkInput);menu.append(bulkLabel);
+      const bulkActions=document.createElement("div");bulkActions.className="student-column-filter-actions";
+      const bulkApply=document.createElement("button");bulkApply.type="button";bulkApply.textContent=`Appliquer à la sélection (${selectedStudentIds.size})`;bulkApply.disabled=selectedStudentIds.size===0;
+      bulkApply.addEventListener("click",()=>applyBulkValue(bulkInput.value.trim()));
+      bulkInput.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();bulkApply.click()}});
+      bulkActions.append(bulkApply);menu.append(bulkActions);
+    }
   }
   const buttonRect=button.getBoundingClientRect();menu.hidden=false;studentColumnMenuButton=button;button.setAttribute("aria-expanded","true");
   const menuRect=menu.getBoundingClientRect(),left=Math.max(8,Math.min(buttonRect.left,window.innerWidth-menuRect.width-8));
