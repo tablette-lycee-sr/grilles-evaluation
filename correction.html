@@ -323,6 +323,7 @@ let assignmentStudentDetails = {};
 let selectedStudentIds = new Set();
 let pendingStudentImport = null;
 let studentFilters = {};
+const EMPTY_STUDENT_FILTER = Symbol("empty student filter");
 let studentSort = {field:"",direction:1};
 let studentColumnMenuButton = null;
 let manualChoices = {};
@@ -1009,17 +1010,21 @@ function studentFieldValue(student,field){
 function capitalizeStudentFirstNames(value){
   return value.replace(/(^|[\s'’\-])(\p{Ll})/gu,(_,separator,letter)=>separator+letter.toLocaleUpperCase("fr-FR"));
 }
-function refreshStudentTableForField(field){if(studentSort.field===field||studentFilters[field])renderStudentTable()}
+function matchesStudentFilter(student,field,filter){
+  const value=String(studentFieldValue(student,field));
+  return filter===EMPTY_STUDENT_FILTER?value.trim()==="":value.toLocaleLowerCase().includes(filter.toLocaleLowerCase());
+}
+function refreshStudentTableForField(field){if(studentSort.field===field||Object.hasOwn(studentFilters,field))renderStudentTable()}
 function renderStudentTable(){
   const body=document.getElementById("studentTableBody"),allStudents=activeStudentGroup?.students||[];body.replaceChildren();
   document.getElementById("studentGroupCount").textContent=`(${allStudents.length} ${allStudents.length===1?"élève":"élèves"})`;
-  let visibleStudents=allStudents.filter(student=>Object.entries(studentFilters).every(([field,filter])=>String(studentFieldValue(student,field)).toLocaleLowerCase().includes(filter.toLocaleLowerCase())));
+  let visibleStudents=allStudents.filter(student=>Object.entries(studentFilters).every(([field,filter])=>matchesStudentFilter(student,field,filter)));
   if(studentSort.field)visibleStudents.sort((first,second)=>String(studentFieldValue(first,studentSort.field)).localeCompare(String(studentFieldValue(second,studentSort.field)),"fr",{numeric:true,sensitivity:"base"})*studentSort.direction);
   document.querySelectorAll("[data-student-header]").forEach(header=>{
     const field=header.dataset.studentHeader,menuButton=header.querySelector("[data-column-menu]");
     header.setAttribute("aria-sort",studentSort.field===field?(studentSort.direction===1?"ascending":"descending"):"none");
     if(menuButton){
-      const filterActive=Boolean(studentFilters[field]);
+      const filterActive=Object.hasOwn(studentFilters,field);
       menuButton.setAttribute("aria-expanded",String(menuButton===studentColumnMenuButton));
       menuButton.setAttribute("aria-pressed",String(filterActive));
       menuButton.dataset.filterActive=String(filterActive);
@@ -1030,7 +1035,7 @@ function renderStudentTable(){
   selectAll.checked=visibleStudents.length>0&&selectedVisibleCount===visibleStudents.length;
   selectAll.indeterminate=selectedVisibleCount>0&&selectedVisibleCount<visibleStudents.length;
   document.getElementById("deleteSelectedStudents").disabled=selectedStudentIds.size===0;
-  const tableStatus=document.getElementById("studentTableStatus"),activeFilterCount=Object.values(studentFilters).filter(Boolean).length;
+  const tableStatus=document.getElementById("studentTableStatus"),activeFilterCount=Object.keys(studentFilters).length;
   tableStatus.hidden=activeFilterCount===0;
   tableStatus.textContent=activeFilterCount?`${visibleStudents.length} élève(s) affiché(s) sur ${allStudents.length}.`:"";
   for(const student of visibleStudents){
@@ -1085,13 +1090,13 @@ function openStudentColumnMenu(button){
     const divider=document.createElement("div");divider.className="student-column-menu-divider";menu.append(divider);
   }
   const filter=document.createElement("label");filter.className="student-column-filter";filter.textContent="Filtrer cette colonne";
-  const input=document.createElement("input");input.type="search";input.autocomplete="off";input.placeholder=field==="pap"?"Oui ou Non":"Saisir une valeur";input.value=studentFilters[field]||"";
+  const input=document.createElement("input");input.type="search";input.autocomplete="off";input.placeholder=field==="pap"?"Oui ou Non":"Saisir une valeur";input.value=studentFilters[field]===EMPTY_STUDENT_FILTER?"":studentFilters[field]||"";
   filter.append(input);menu.append(filter);
   const filterActions=document.createElement("div");filterActions.className="student-column-filter-actions";
-  const clear=document.createElement("button");clear.type="button";clear.className="secondary";clear.textContent="Effacer";clear.disabled=!studentFilters[field];
+  const clear=document.createElement("button");clear.type="button";clear.className="secondary";clear.textContent="Effacer";clear.disabled=!Object.hasOwn(studentFilters,field);
   clear.addEventListener("click",()=>{delete studentFilters[field];closeStudentColumnMenu();renderStudentTable()});
   const apply=document.createElement("button");apply.type="button";apply.textContent="Appliquer";
-  apply.addEventListener("click",()=>{const value=input.value.trim();if(value)studentFilters[field]=value;else delete studentFilters[field];closeStudentColumnMenu();renderStudentTable()});
+  apply.addEventListener("click",()=>{const value=input.value.trim();studentFilters[field]=value||EMPTY_STUDENT_FILTER;closeStudentColumnMenu();renderStudentTable()});
   input.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();apply.click()}});
   filterActions.append(clear,apply);menu.append(filterActions);
   if(field==="classe"){
