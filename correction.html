@@ -285,7 +285,6 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <div class="correction-trombi-title"><h1 id="correctionTrombiHeading"></h1><p id="correctionTrombiSummary" class="correction-trombi-summary"></p></div>
     <div class="correction-trombi-actions">
       <button id="toggleCorrectionTrombiLayout" class="icon-button correction-trombi-layout-toggle" type="button" title="Afficher en rang" aria-label="Passer à l’affichage en rang" aria-pressed="true"><span class="menu-icon" style="--icon:url('icones/view_list.svg')" aria-hidden="true"></span></button>
-      <button id="showIndividualCorrection" type="button">Grille individuelle</button>
     </div>
   </div>
   <div id="correctionTrombiEmpty" class="correction-trombi-empty" hidden>
@@ -1195,7 +1194,7 @@ function renderCorrectionTrombi(){
   const criteria=document.getElementById("correctionTrombiCriteria"),track=document.getElementById("correctionTrombiTrack");
   const empty=document.getElementById("correctionTrombiEmpty"),matrix=document.getElementById("correctionTrombiMatrix"),cards=document.getElementById("correctionTrombiCards");
   const students=activeStudentGroup?.students||[];
-  const categories=getCorrectionTrombiCategories(),criterionLabels=["Appréciation générale",...categories.map(category=>category.titre),"Groupe","Sujet","Note"];
+  const categories=getCorrectionTrombiCategories(),criterionLabels=["Note",...categories.map(category=>category.titre),"Groupe","Sujet"];
   document.getElementById("correctionTrombiHeading").textContent=activeStudentGroup?.name||"";
   document.getElementById("correctionTrombiSummary").textContent=activeStudentGroup?`${students.length} ${students.length===1?"élève":"élèves"}`:"";
   empty.hidden=students.length>0;matrix.hidden=students.length===0||correctionTrombiMode==="full";cards.hidden=students.length===0||correctionTrombiMode!=="full";
@@ -1227,7 +1226,7 @@ function renderCorrectionTrombi(){
     const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
     card.append(header,photoArea,cardName);cardRow.append(card);
   }
-  for(const [index,student] of students.entries()){
+  for(const [index,student] of alphabeticalStudents.entries()){
     const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-student-header";
     const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(index+1);
@@ -1237,14 +1236,15 @@ function renderCorrectionTrombi(){
     const metadata=document.createElement("span");metadata.className="correction-trombi-student-metadata";metadata.textContent=student.classe||"Classe non renseignée";
     identity.append(name,metadata);header.append(number,identity);
     if(student.pap){const pap=document.createElement("span");pap.className="correction-trombi-pap";pap.textContent="PAP";header.append(pap)}
-    column.append(header,createTrombiLevelScale());
+    const details=assignmentStudentDetails[student.id]||{};
+    const noteCell=document.createElement("div");noteCell.className="correction-trombi-row-value";noteCell.textContent=details.note===null||details.note===undefined||details.note===""?"—":String(details.note);
+    column.append(header,noteCell);
     const correction=studentCorrections[student.id];
     for(const category of categories){
       const selected=correction?.categoryEvaluations?.[category.id]?.exceeded?"D":correction?printCategoryLevel(category,correction):null;
       column.append(createTrombiLevelScale(selected));
     }
-    const details=assignmentStudentDetails[student.id]||{};
-    for(const value of [details.sousGroupe,details.sujet,details.note]){
+    for(const value of [details.sousGroupe,details.sujet]){
       const cell=document.createElement("div");cell.className="correction-trombi-row-value";cell.textContent=value===null||value===undefined||value===""?"—":String(value);column.append(cell);
     }
     track.append(column);
@@ -1466,9 +1466,6 @@ function setActiveView(viewId){
   if(!isCorrection&&!isAssignment&&!isStudents)document.getElementById("otherViewTitle").textContent=navigationButtons.find(button=>button.dataset.view===viewId)?.textContent||"";
   if(isCorrection)renderCorrectionTrombi();
 }
-document.getElementById("showIndividualCorrection").addEventListener("click",()=>{
-  document.getElementById("correctionTrombiView").hidden=true;correctionApp.classList.remove("trombi-view");
-});
 document.getElementById("toggleCorrectionTrombiLayout").addEventListener("click",()=>{
   correctionTrombiMode=correctionTrombiMode==="rows"?"full":"rows";renderCorrectionTrombi();
 });
