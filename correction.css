@@ -65,6 +65,10 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 #settingsDialog{width:min(420px,calc(100vw - 32px))}
 .student-group-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .student-group-toolbar h1{flex:1;min-width:0;margin:0;font-size:1.35rem}
+.student-selection-action{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;padding:0;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--text)}
+.student-selection-action:hover:not(:disabled){background:#44474c}
+.student-selection-action:disabled{opacity:.45;cursor:not-allowed}
+.student-selection-action .menu-icon{width:18px;height:18px}
 .student-csv-button{display:inline-flex;align-items:center;min-height:36px;padding:7px 11px;border:1px solid var(--line);border-radius:5px;background:#3a3d42;color:var(--text);font-size:.84rem;cursor:pointer}
 .student-table-wrap{width:100%;overflow:auto;border:1px solid var(--line)}
 .student-table{width:100%;min-width:1180px;border-collapse:collapse;table-layout:fixed}
@@ -90,7 +94,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .student-column-filter-actions button{padding:5px 8px;font-size:.76rem}
 .student-table th:first-child,.student-table td:first-child{width:38px;text-align:center}
 .student-table th:nth-child(2),.student-table th:nth-child(3){width:14%}
-.student-table th:nth-child(4),.student-table td:nth-child(4){width:96px;max-width:96px}
+.student-table th:nth-child(4),.student-table td:nth-child(4){width:72px;max-width:72px}
 .student-table th:nth-child(5){width:7%;text-align:center}
 .student-table th:nth-child(6){width:13%}
 .student-table th:nth-child(7),.student-table th:nth-child(8){width:18%}
@@ -99,11 +103,9 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .student-table td:nth-child(2) input{text-transform:uppercase}
 .student-table input[type="text"]:focus{border-color:var(--blue);outline:0;background:#1b1d20}
 .student-table input[type="checkbox"]{display:block;width:17px;height:17px;margin:auto;accent-color:var(--blue)}
-.student-row-delete{display:grid;place-items:center;width:30px;height:30px;margin:auto;padding:0;border:0;background:transparent;color:var(--sub)}
-.student-row-delete:hover{background:#44474c;color:var(--text)}
-.student-row-delete .menu-icon{width:17px;height:17px}
 .student-table-status{margin:0 0 8px;color:var(--sub);font-size:.82rem}
 .add-student-button{margin-top:10px;padding:7px 10px;border:1px solid var(--line);background:transparent;font-size:.86rem}
+@media(max-width:560px){.student-group-toolbar{flex-wrap:wrap;gap:8px}.student-group-toolbar h1{flex-basis:100%}.student-csv-button{flex:1;justify-content:center;text-align:center}}
 .group-name-field{display:grid;gap:6px;color:var(--sub);font-size:.84rem}
 .group-name-field input{padding:9px 10px;border:1px solid var(--line);border-radius:5px;background:#1b1d20;color:var(--text);font:inherit}
 #studentGroupDialog{width:min(440px,calc(100vw - 32px))}

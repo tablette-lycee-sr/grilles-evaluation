@@ -211,6 +211,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <section id="studentGroupWorkspace" hidden>
       <div class="student-group-toolbar">
         <h1 id="studentGroupTitle"></h1>
+        <button id="deleteSelectedStudents" class="student-selection-action" type="button" title="Supprimer les élèves sélectionnés" aria-label="Supprimer les élèves sélectionnés" disabled><span class="menu-icon" style="--icon:url('icones/delete.svg')" aria-hidden="true"></span></button>
         <label class="student-csv-button" for="studentCsvInput">Importer une liste depuis un export Pronote</label>
         <input id="studentCsvInput" class="sr-only" type="file" accept=".csv,text/csv" aria-label="Importer une liste depuis un export Pronote">
       </div>
@@ -219,7 +220,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
       <div class="student-table-wrap">
         <table class="student-table">
           <thead><tr>
-            <th scope="col" aria-label="Supprimer"></th>
+            <th scope="col"><input class="student-selection-checkbox" id="selectAllStudents" type="checkbox" aria-label="Sélectionner tous les élèves affichés"></th>
             <th scope="col" data-student-header="nom"><span class="student-header-label">Nom</span><button class="student-header-menu-button" type="button" data-column-menu="nom" aria-label="Actions pour la colonne Nom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
             <th scope="col" data-student-header="prenom"><span class="student-header-label">Prénom</span><button class="student-header-menu-button" type="button" data-column-menu="prenom" aria-label="Actions pour la colonne Prénom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
             <th scope="col" data-student-header="classe"><span class="student-header-label">Classe</span><button class="student-header-menu-button" type="button" data-column-menu="classe" aria-label="Actions pour la colonne Classe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
@@ -256,7 +257,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <div class="dialog-heading"><h2>Attribuer une classe</h2></div>
   <p id="studentClassStatus" class="catalog-status" role="status" aria-live="polite"></p>
   <label class="student-filter-field">Classe<select id="studentClassSelect"></select></label>
-  <div class="dialog-actions"><button id="cancelStudentClass" class="secondary" type="button">Annuler</button><button id="applyStudentClass" type="button" disabled>Attribuer à tous</button></div>
+  <div class="dialog-actions"><button id="cancelStudentClass" class="secondary" type="button">Annuler</button><button id="applyStudentClass" type="button" disabled>Attribuer à la sélection</button></div>
 </dialog>
 <dialog id="gridCatalogDialog">
   <div class="dialog-heading"><h2>Choisir une grille de correction</h2></div>
@@ -314,6 +315,7 @@ let config = structuredClone(DEFAULT_CONFIG);
 let assignment = {};
 let activeStudentGroup = null;
 let assignmentStudentDetails = {};
+let selectedStudentIds = new Set();
 let pendingStudentImport = null;
 let studentFilters = {};
 let studentSort = {field:"",direction:1};
@@ -1018,19 +1020,19 @@ function renderStudentTable(){
     }
   });
   document.getElementById("studentPapFilter").checked=studentFilters.pap==="oui";
+  const selectAll=document.getElementById("selectAllStudents"),selectedVisibleCount=visibleStudents.filter(student=>selectedStudentIds.has(student.id)).length;
+  selectAll.checked=visibleStudents.length>0&&selectedVisibleCount===visibleStudents.length;
+  selectAll.indeterminate=selectedVisibleCount>0&&selectedVisibleCount<visibleStudents.length;
+  document.getElementById("deleteSelectedStudents").disabled=selectedStudentIds.size===0;
   const tableStatus=document.getElementById("studentTableStatus"),activeFilterCount=Object.values(studentFilters).filter(Boolean).length;
   tableStatus.hidden=activeFilterCount===0;
   tableStatus.textContent=activeFilterCount?`${visibleStudents.length} élève(s) affiché(s) sur ${allStudents.length}.`:"";
   for(const student of visibleStudents){
-    const row=document.createElement("tr");
-    const deleteCell=document.createElement("td"),deleteButton=document.createElement("button");
-    deleteButton.type="button";deleteButton.className="student-row-delete";deleteButton.title="Supprimer l’élève";deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`);
-    const deleteIcon=document.createElement("span");deleteIcon.className="menu-icon";deleteIcon.style.setProperty("--icon","url('icones/delete.svg')");deleteIcon.setAttribute("aria-hidden","true");deleteButton.append(deleteIcon);
-    deleteButton.addEventListener("click",()=>{
-      if(!window.confirm(`Supprimer ${student.prenom} ${student.nom} de ce groupe ?`))return;
-      activeStudentGroup.students=activeStudentGroup.students.filter(item=>item.id!==student.id);delete assignmentStudentDetails[student.id];renderStudentTable();
-    });
-    deleteCell.append(deleteButton);row.append(deleteCell);
+    const row=document.createElement("tr");row.dataset.studentId=student.id;
+    const selectionCell=document.createElement("td"),selectionCheckbox=document.createElement("input");
+    selectionCheckbox.type="checkbox";selectionCheckbox.className="student-selection-checkbox";selectionCheckbox.checked=selectedStudentIds.has(student.id);selectionCheckbox.setAttribute("aria-label",`Sélectionner ${student.prenom} ${student.nom}`);
+    selectionCheckbox.addEventListener("change",()=>{if(selectionCheckbox.checked)selectedStudentIds.add(student.id);else selectedStudentIds.delete(student.id);renderStudentTable()});
+    selectionCell.append(selectionCheckbox);row.append(selectionCell);
     for(const [field,label] of [["nom","Nom"],["prenom","Prénom"],["classe","Classe"]]){
       const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=student[field]||"";if(field==="classe")input.maxLength=10;input.setAttribute("aria-label",`${label} de ${student.prenom} ${student.nom}`);
       input.addEventListener("input",()=>{
@@ -1042,7 +1044,6 @@ function renderStudentTable(){
           if(input.value!==capitalized){const nextCursor=capitalizeStudentFirstNames(input.value.slice(0,cursor)).length;input.value=capitalized;input.setSelectionRange(nextCursor,nextCursor)}
         }
         student[field]=input.value;
-        if(field==="nom"||field==="prenom")deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`);
       });input.addEventListener("change",()=>refreshStudentTableForField(field));
       cell.append(input);row.append(cell);
     }
@@ -1069,7 +1070,7 @@ function openStudentColumnMenu(button){
     const image=document.createElement("span");image.className="menu-icon";image.style.setProperty("--icon",`url('icones/${icon}.svg')`);image.setAttribute("aria-hidden","true");
     const copy=document.createElement("span");copy.className="student-column-action-copy";
     const strong=document.createElement("span");strong.textContent=title;copy.append(strong);action.append(image,copy);
-    action.addEventListener("click",callback);menu.append(action);
+    action.addEventListener("click",callback);menu.append(action);return action;
   };
   if(field!=="pap"){
     addAction("sort", "Trier par ordre croissant",()=>{studentSort={field,direction:1};closeStudentColumnMenu();renderStudentTable()});
@@ -1089,7 +1090,8 @@ function openStudentColumnMenu(button){
   filterActions.append(clear,apply);menu.append(filterActions);
   if(field==="classe"){
     const classDivider=document.createElement("div");classDivider.className="student-column-menu-divider";menu.append(classDivider);
-    addAction("school", "Attribuer une classe à tous",()=>{closeStudentColumnMenu();openStudentClassDialog()});
+    const assignClassAction=addAction("school", `Attribuer une classe aux élèves sélectionnés (${selectedStudentIds.size})`,()=>{closeStudentColumnMenu();openStudentClassDialog()});
+    assignClassAction.disabled=selectedStudentIds.size===0;
   }
   const buttonRect=button.getBoundingClientRect();menu.hidden=false;studentColumnMenuButton=button;button.setAttribute("aria-expanded","true");
   const menuRect=menu.getBoundingClientRect(),left=Math.max(8,Math.min(buttonRect.left,window.innerWidth-menuRect.width-8));
@@ -1100,11 +1102,12 @@ function addStudentRow(student={}){
   if(!activeStudentGroup)return;
   const newStudent={id:createStudentId(),nom:student.nom||"",prenom:student.prenom||"",classe:student.classe||"",pap:Boolean(student.pap)};
   activeStudentGroup.students.push(newStudent);assignmentStudentDetails[newStudent.id]={sousGroupe:"",sujet:"",remarque:""};renderStudentTable();
-  document.querySelector("#studentTableBody tr:last-child input")?.focus();
+  document.querySelector("#studentTableBody tr:last-child input[type='text']")?.focus();
 }
 async function openStudentClassDialog(){
-  if(!activeStudentGroup?.students.length){
-    const status=document.getElementById("studentImportStatus");status.hidden=false;status.textContent="Ajoutez au moins un élève avant d’attribuer une classe.";return;
+  const selectedStudents=activeStudentGroup?.students.filter(student=>selectedStudentIds.has(student.id))||[];
+  if(!selectedStudents.length){
+    const status=document.getElementById("studentImportStatus");status.hidden=false;status.textContent="Sélectionnez au moins un élève avant d’attribuer une classe.";return;
   }
   const status=document.getElementById("studentClassStatus"),select=document.getElementById("studentClassSelect"),applyButton=document.getElementById("applyStudentClass");
   status.textContent="Chargement du catalogue…";select.replaceChildren();applyButton.disabled=true;
@@ -1115,7 +1118,7 @@ async function openStudentClassDialog(){
     if(!classes.length)throw new Error("le catalogue ne contient aucune classe.");
     const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Sélectionner une classe…";placeholder.disabled=true;placeholder.selected=true;select.append(placeholder);
     for(const name of classes){const option=document.createElement("option");option.value=name;option.textContent=name;select.append(option)}
-    status.textContent=`${classes.length} classes disponibles. Le choix sera appliqué à ${activeStudentGroup.students.length} élève(s).`;
+    status.textContent=`${classes.length} classes disponibles. Le choix sera appliqué à ${selectedStudents.length} élève(s) sélectionné(s).`;
     document.getElementById("studentClassDialog").showModal();
   }catch(error){
     const importStatus=document.getElementById("studentImportStatus");importStatus.hidden=false;importStatus.textContent=`Catalogue des classes indisponible : ${error.message}`;
@@ -1234,11 +1237,25 @@ document.getElementById("cancelStudentGroup").addEventListener("click",()=>docum
 document.getElementById("studentGroupForm").addEventListener("submit",event=>{
   event.preventDefault();const name=document.getElementById("studentGroupNameInput").value.trim();if(!name)return;
   activeStudentGroup={name,students:[]};assignmentStudentDetails={};
+  selectedStudentIds.clear();
   studentFilters={};studentSort={field:"",direction:1};
   document.getElementById("studentGroupTitle").textContent=name;renderStudentTable();
   document.getElementById("studentGroupDialog").close();setActiveView("eleves");
 });
 document.getElementById("addStudentBtn").addEventListener("click",()=>addStudentRow());
+document.getElementById("selectAllStudents").addEventListener("change",event=>{
+  const visibleStudents=[...document.getElementById("studentTableBody").rows].map(row=>activeStudentGroup.students.find(student=>student.id===row.dataset.studentId)).filter(Boolean);
+  for(const student of visibleStudents){if(event.target.checked)selectedStudentIds.add(student.id);else selectedStudentIds.delete(student.id)}
+  renderStudentTable();
+});
+document.getElementById("deleteSelectedStudents").addEventListener("click",()=>{
+  const selectedStudents=activeStudentGroup?.students.filter(student=>selectedStudentIds.has(student.id))||[];
+  if(!selectedStudents.length)return;
+  if(!window.confirm(`Supprimer les ${selectedStudents.length} élève(s) sélectionné(s) de ce groupe ?`))return;
+  activeStudentGroup.students=activeStudentGroup.students.filter(student=>!selectedStudentIds.has(student.id));
+  for(const student of selectedStudents){delete assignmentStudentDetails[student.id];selectedStudentIds.delete(student.id)}
+  renderStudentTable();
+});
 document.querySelectorAll("[data-column-menu]").forEach(button=>button.addEventListener("click",()=>openStudentColumnMenu(button)));
 document.getElementById("studentPapFilter").addEventListener("change",event=>{
   if(event.target.checked)studentFilters.pap="oui";else delete studentFilters.pap;
@@ -1254,7 +1271,7 @@ document.getElementById("cancelStudentClass").addEventListener("click",()=>docum
 document.getElementById("applyStudentClass").addEventListener("click",()=>{
   const className=document.getElementById("studentClassSelect").value;
   if(!className||!activeStudentGroup)return;
-  for(const student of activeStudentGroup.students)student.classe=className;
+  for(const student of activeStudentGroup.students){if(selectedStudentIds.has(student.id))student.classe=className}
   document.getElementById("studentClassDialog").close();renderStudentTable();
 });
 document.getElementById("studentCsvInput").addEventListener("change",event=>{
@@ -1277,7 +1294,7 @@ document.getElementById("cancelReplaceStudents").addEventListener("click",()=>{
 document.getElementById("confirmReplaceStudents").addEventListener("click",()=>{
   if(!pendingStudentImport||!activeStudentGroup)return;
   activeStudentGroup.students=pendingStudentImport.map(student=>({id:createStudentId(),...student}));
-  assignmentStudentDetails={};pendingStudentImport=null;studentFilters={};studentSort={field:"",direction:1};renderStudentTable();
+  assignmentStudentDetails={};selectedStudentIds.clear();pendingStudentImport=null;studentFilters={};studentSort={field:"",direction:1};renderStudentTable();
   document.getElementById("replaceStudentsDialog").close();
 });
 navigationButtons.forEach(button=>button.addEventListener("click",()=>setActiveView(button.dataset.view)));
