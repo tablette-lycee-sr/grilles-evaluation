@@ -176,7 +176,8 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <button type="button" id="createStudentGroupBtn" title="Créer un nouveau groupe d’élèves" aria-label="Créer un nouveau groupe d’élèves"><svg aria-hidden="true"><use href="#icon-user-plus"/></svg></button>
     <span class="submenu-action" title="Charger un groupe d’élèves (à venir)"><button type="button" disabled aria-label="Charger un groupe d’élèves"><svg aria-hidden="true"><use href="#icon-folder-open"/></svg></button></span>
     <span class="submenu-action" title="Enregistrer le groupe d’élèves actif (à venir)"><button type="button" disabled aria-label="Enregistrer le groupe d’élèves actif"><svg aria-hidden="true"><use href="#icon-save"/></svg></button></span>
-    <span class="submenu-action" title="Associer des photos (à venir)"><button type="button" disabled aria-label="Associer des photos"><svg aria-hidden="true"><use href="#icon-image-plus"/></svg></button></span>
+    <button type="button" id="associateStudentPhotosBtn" title="Associer les photos du dossier G:\Notation\Grilles papier\FakeID" aria-label="Associer des photos"><svg aria-hidden="true"><use href="#icon-image-plus"/></svg></button>
+    <input id="trombiPhotoFolder" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" webkitdirectory directory multiple aria-label="Choisir un dossier de photos d’élèves">
     <span class="submenu-action" title="Réinitialiser la liste d’élèves (à venir)"><button type="button" disabled aria-label="Réinitialiser la liste d’élèves"><svg aria-hidden="true"><use href="#icon-reset"/></svg></button></span>
     <span class="submenu-action" title="Supprimer un groupe d’élèves (à venir)"><button type="button" disabled aria-label="Supprimer un groupe d’élèves"><svg aria-hidden="true"><use href="#icon-trash"/></svg></button></span>
   </div>
@@ -344,6 +345,7 @@ let activeStudentGroup = null;
 let assignmentStudentDetails = {};
 let selectedStudentIds = new Set();
 let correctionTrombiMode = "full";
+let trombiPhotoUrls = new Map();
 let pendingStudentImport = null;
 let studentFilters = {};
 const EMPTY_STUDENT_FILTER = Symbol("empty student filter");
@@ -1099,7 +1101,21 @@ function getCorrectionTrombiCategories(){
   };
   visit(grid.elements||[]);return categories;
 }
-function createTrombiPortrait(){
+function normalizeTrombiPhotoName(value){
+  return value.normalize("NFD").replace(/\p{Diacritic}/gu,"").trim().replace(/\s+/g," ").toLocaleLowerCase("fr-FR");
+}
+function trombiPhotoKey(student){
+  const name=[student.nom,student.prenom].filter(Boolean).join(" ");
+  return name?normalizeTrombiPhotoName(name):"";
+}
+function getStudentTrombiPhotoCount(){
+  return (activeStudentGroup?.students||[]).filter(student=>trombiPhotoUrls.has(trombiPhotoKey(student))).length;
+}
+function createTrombiPortrait(student){
+  const photoUrl=student&&trombiPhotoUrls.get(trombiPhotoKey(student));
+  if(photoUrl){
+    const photo=document.createElement("img");photo.className="correction-trombi-portrait";photo.src=photoUrl;photo.alt=`Portrait de ${[student.nom,student.prenom].filter(Boolean).join(" ")}`;photo.loading="lazy";photo.draggable=false;return photo;
+  }
   const namespace="http://www.w3.org/2000/svg",portrait=document.createElementNS(namespace,"svg");
   portrait.setAttribute("viewBox","0 0 72 88");portrait.setAttribute("aria-hidden","true");portrait.classList.add("correction-trombi-portrait");
   const background=document.createElementNS(namespace,"rect");background.setAttribute("width","72");background.setAttribute("height","88");background.setAttribute("rx","6");background.setAttribute("fill","#34373b");
@@ -1132,7 +1148,7 @@ function renderCorrectionTrombi(){
   for(const [index,student] of students.entries()){
     const card=document.createElement("article");card.className="correction-trombi-card";card.setAttribute("role","listitem");
     const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(index+1);
-    const cardPortrait=createTrombiPortrait();cardPortrait.classList.add("correction-trombi-card-portrait");
+    const cardPortrait=createTrombiPortrait(student);cardPortrait.classList.add("correction-trombi-card-portrait");
     const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
     const cardClass=document.createElement("span");cardClass.className="correction-trombi-card-class";cardClass.textContent=student.classe||"—";
     const cardNote=document.createElement("span"),note=assignmentStudentDetails[student.id]?.note;
@@ -1141,7 +1157,7 @@ function renderCorrectionTrombi(){
     const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-student-header";
     const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(index+1);
-    const identity=document.createElement("div");identity.className="correction-trombi-identity";identity.append(createTrombiPortrait());
+    const identity=document.createElement("div");identity.className="correction-trombi-identity";identity.append(createTrombiPortrait(student));
     const name=document.createElement("strong");name.className="correction-trombi-student-name";name.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
     const metadata=document.createElement("span");metadata.className="correction-trombi-student-metadata";metadata.textContent=student.classe||"Classe non renseignée";
     identity.append(name,metadata);header.append(number,identity);
@@ -1347,6 +1363,21 @@ document.getElementById("showIndividualCorrection").addEventListener("click",()=
 });
 document.getElementById("toggleCorrectionTrombiLayout").addEventListener("click",()=>{
   correctionTrombiMode=correctionTrombiMode==="rows"?"full":"rows";renderCorrectionTrombi();
+});
+const trombiPhotoFolder=document.getElementById("trombiPhotoFolder");
+document.getElementById("associateStudentPhotosBtn").addEventListener("click",()=>trombiPhotoFolder.click());
+trombiPhotoFolder.addEventListener("change",()=>{
+  if(!trombiPhotoFolder.files?.length)return;
+  for(const photoUrl of trombiPhotoUrls.values())URL.revokeObjectURL(photoUrl);
+  trombiPhotoUrls=new Map();let importedPhotoCount=0;
+  for(const file of trombiPhotoFolder.files){
+    if(!/\.(?:jpe?g|png)$/i.test(file.name))continue;
+    importedPhotoCount++;const key=normalizeTrombiPhotoName(file.name.replace(/\.(?:jpe?g|png)$/i,""));
+    if(key&&!trombiPhotoUrls.has(key))trombiPhotoUrls.set(key,URL.createObjectURL(file));
+  }
+  const studentCount=activeStudentGroup?.students.length||0,matchedCount=getStudentTrombiPhotoCount();
+  const status=document.getElementById("studentImportStatus");status.hidden=false;status.textContent=`${matchedCount} photo(s) associée(s) sur ${studentCount} élève(s) ; ${importedPhotoCount} fichier(s) image trouvé(s). Les autres gardent le portrait par défaut.`;
+  renderCorrectionTrombi();
 });
 document.getElementById("showCorrectionTrombi").addEventListener("click",()=>{
   document.getElementById("correctionTrombiView").hidden=false;correctionApp.classList.add("trombi-view");renderCorrectionTrombi();

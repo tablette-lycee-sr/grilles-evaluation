@@ -50,7 +50,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-trombi-student-header{position:relative;display:grid;justify-items:center;gap:5px;min-height:130px}
 .correction-trombi-student-number{align-self:start;justify-self:start;color:var(--sub);font-size:.72rem}
 .correction-trombi-identity{display:grid;justify-items:center;gap:4px;min-width:0}
-.correction-trombi-portrait{display:block;width:52px;height:64px;border-radius:4px}
+.correction-trombi-portrait{display:block;width:52px;height:64px;border-radius:4px;object-fit:cover;background:#34373b}
 .correction-trombi-student-name{max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.2;text-align:center}
 .correction-trombi-student-metadata{color:var(--sub);font-size:.7rem;font-weight:400}
 .correction-trombi-pap{position:absolute;top:0;right:0;padding:2px 4px;border-radius:3px;background:#44474c;color:var(--text);font-size:.62rem}
