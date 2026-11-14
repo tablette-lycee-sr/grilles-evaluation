@@ -54,7 +54,8 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-trombi-student-name{max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.2;text-align:center}
 .correction-trombi-student-metadata{color:var(--sub);font-size:.7rem;font-weight:400}
 .correction-trombi-pap{position:absolute;top:0;right:0;padding:2px 4px;border-radius:3px;background:#44474c;color:var(--text);font-size:.62rem}
-.correction-trombi-cards{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:max-content;gap:7px;width:100%;min-width:0;max-height:calc(100vh - var(--navigation-height) - 84px);align-content:start;align-items:start;overflow:auto;padding:2px}
+.correction-trombi-cards{display:flex;flex-direction:column;gap:7px;width:100%;min-width:0;max-height:calc(100vh - var(--navigation-height) - 84px);overflow:auto;padding:2px}
+.correction-trombi-card-row{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));align-items:start;gap:7px;width:100%}
 .correction-trombi-card{--trombi-card-gray:#b9b9b9;display:grid;grid-template-rows:24px auto 32px;align-self:start;justify-self:center;box-sizing:border-box;width:min(100%,150px);min-width:0;height:max-content;overflow:hidden;border:1px solid #44474c;border-radius:5px;background:#fff;color:#111;text-align:center}
 .correction-trombi-card-header{display:grid;grid-template-columns:24px minmax(0,1fr) 24px 24px;gap:2px;align-items:stretch;min-width:0;background:var(--trombi-card-gray)}
 .correction-trombi-card-header>span{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:0;padding:0 2px;overflow:hidden;white-space:nowrap}
@@ -75,7 +76,8 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 	.correction-trombi-criteria{grid-template-rows:130px repeat(var(--trombi-criterion-count),48px)}
 	.correction-trombi-criterion-heading,.correction-trombi-criterion{padding-right:7px;padding-left:7px;font-size:.7rem}
 	.correction-trombi-row-card{flex-basis:198px;width:198px}
-	.correction-trombi-cards{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:max-content;max-height:70vh}
+	.correction-trombi-cards{max-height:70vh}
+	.correction-trombi-card-row{grid-template-columns:repeat(3,minmax(0,1fr))}
 	.correction-trombi-card{grid-template-rows:24px auto 32px;width:min(100%,165px);height:max-content;padding:0}
 	.correction-trombi-card-portrait{width:100%;height:auto}
 }

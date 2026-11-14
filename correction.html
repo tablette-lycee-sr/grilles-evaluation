@@ -1163,7 +1163,9 @@ function renderCorrectionTrombi(){
   for(const label of criterionLabels){const criterion=document.createElement("div");criterion.className="correction-trombi-criterion";criterion.textContent=label;criteria.append(criterion)}
   const alphabeticalStudents=students.slice().sort((first,second)=>first.nom.localeCompare(second.nom,"fr",{numeric:true,sensitivity:"base"})||first.prenom.localeCompare(second.prenom,"fr",{numeric:true,sensitivity:"base"}));
   const groupColors=getTrombiGroupColorMap(alphabeticalStudents);
+  const cardsPerRow=window.matchMedia("(max-width: 600px)").matches?3:9;let cardRow=null;
   for(const [index,student] of alphabeticalStudents.entries()){
+    if(index%cardsPerRow===0){cardRow=document.createElement("div");cardRow.className="correction-trombi-card-row";cardRow.setAttribute("role","presentation");cards.append(cardRow)}
     const card=document.createElement("article");card.className="correction-trombi-card";card.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-card-header";
     const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(index+1);cardNumber.setAttribute("aria-label",`Élève numéro ${index+1} dans l’ordre alphabétique`);
@@ -1176,7 +1178,7 @@ function renderCorrectionTrombi(){
     const cardPortrait=createTrombiPortrait(student,true);cardPortrait.classList.add("correction-trombi-card-portrait");
     const photoArea=document.createElement("div");photoArea.className="correction-trombi-card-photo";photoArea.append(cardPortrait);
     const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
-    card.append(header,photoArea,cardName);cards.append(card);
+    card.append(header,photoArea,cardName);cardRow.append(card);
   }
   for(const [index,student] of students.entries()){
     const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
