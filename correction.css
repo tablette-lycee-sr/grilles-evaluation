@@ -54,15 +54,15 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-trombi-student-name{max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.2;text-align:center}
 .correction-trombi-student-metadata{color:var(--sub);font-size:.7rem;font-weight:400}
 .correction-trombi-pap{position:absolute;top:0;right:0;padding:2px 4px;border-radius:3px;background:#44474c;color:var(--text);font-size:.62rem}
-.correction-trombi-cards{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(4,240px);grid-auto-rows:240px;gap:7px;width:100%;min-width:0;max-height:calc(100vh - var(--navigation-height) - 84px);align-content:start;overflow:auto;padding:2px}
-.correction-trombi-card{--trombi-card-gray:#b9b9b9;display:grid;grid-template-rows:24px minmax(0,1fr) 32px;justify-self:center;box-sizing:border-box;width:min(100%,150px);min-width:0;height:240px;overflow:hidden;border:1px solid #44474c;border-radius:5px;background:#fff;color:#111;text-align:center}
+.correction-trombi-cards{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(4,auto);grid-auto-rows:auto;gap:7px;width:100%;min-width:0;max-height:calc(100vh - var(--navigation-height) - 84px);align-content:start;overflow:auto;padding:2px}
+.correction-trombi-card{--trombi-card-gray:#b9b9b9;display:grid;grid-template-rows:24px auto 32px;align-self:start;justify-self:center;box-sizing:border-box;width:min(100%,150px);min-width:0;overflow:hidden;border:1px solid #44474c;border-radius:5px;background:#fff;color:#111;text-align:center}
 .correction-trombi-card-header{display:grid;grid-template-columns:24px minmax(0,1fr) 24px 24px;gap:2px;align-items:stretch;min-width:0;background:var(--trombi-card-gray)}
 .correction-trombi-card-header>span{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:0;padding:0 2px;overflow:hidden;white-space:nowrap}
 .correction-trombi-card-number{background:var(--trombi-card-gray);color:#111;font-size:.65rem;font-weight:700}
 .correction-trombi-card-note{color:#fff;font-size:.72rem;font-weight:700;line-height:1}
 .correction-trombi-card-pap{background:var(--trombi-card-gray);color:#111;font-size:.85rem;font-weight:800}
 .correction-trombi-card-group{color:#111;font-size:.65rem;font-weight:650;text-overflow:ellipsis}
-.correction-trombi-card-portrait{display:block;width:100%;height:100%;min-height:0;border-radius:0;object-fit:contain;background:var(--trombi-card-gray)}
+.correction-trombi-card-portrait{display:block;width:100%;height:auto;aspect-ratio:3 / 2;min-height:0;border-radius:0;object-fit:cover;background:var(--trombi-card-gray)}
 .correction-trombi-card-name{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:32px;padding:2px 4px;overflow:hidden;background:#fff;color:#111;font-size:.72rem;line-height:1.1;text-align:center}
 .correction-trombi-level-scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
 .correction-trombi-level-scale span{display:grid;place-items:center;min-height:24px;border:1px solid #62666d;border-radius:3px;color:var(--sub);font-size:.62rem}
@@ -74,9 +74,9 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 	.correction-trombi-criteria{grid-template-rows:130px repeat(var(--trombi-criterion-count),48px)}
 	.correction-trombi-criterion-heading,.correction-trombi-criterion{padding-right:7px;padding-left:7px;font-size:.7rem}
 	.correction-trombi-row-card{flex-basis:198px;width:198px}
-	.correction-trombi-cards{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:240px;max-height:70vh}
-	.correction-trombi-card{grid-template-rows:24px minmax(0,1fr) 32px;width:min(100%,165px);height:240px;padding:0}
-	.correction-trombi-card-portrait{width:100%;height:100%}
+	.correction-trombi-cards{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto;max-height:70vh}
+	.correction-trombi-card{grid-template-rows:24px auto 32px;width:min(100%,165px);padding:0}
+	.correction-trombi-card-portrait{width:100%;height:auto}
 }
 @media print{.app.trombi-view{width:auto;max-width:none;margin:0;padding:0}}
 .assignment-empty{padding:8px 0}
