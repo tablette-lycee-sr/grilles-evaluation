@@ -1047,7 +1047,7 @@ function renderStudentTable(){
       });input.addEventListener("change",()=>refreshStudentTableForField(field));
       cell.append(input);row.append(cell);
     }
-    const papCell=document.createElement("td"),papInput=document.createElement("input");papInput.type="checkbox";papInput.checked=Boolean(student.pap);papInput.setAttribute("aria-label",`PAP pour ${student.prenom} ${student.nom}`);papInput.addEventListener("change",()=>{student.pap=papInput.checked;refreshStudentTableForField("pap")});papCell.append(papInput);row.append(papCell);
+    const papCell=document.createElement("td"),papInput=document.createElement("input");papInput.type="checkbox";papInput.className="student-pap-value";papInput.checked=Boolean(student.pap);papInput.setAttribute("aria-label",`PAP pour ${student.prenom} ${student.nom}`);papInput.addEventListener("change",()=>{student.pap=papInput.checked;refreshStudentTableForField("pap")});papCell.append(papInput);row.append(papCell);
     const details=assignmentStudentDetails[student.id]||(assignmentStudentDetails[student.id]={sousGroupe:"",sujet:"",remarque:""});
     for(const [field,label] of [["sousGroupe","Sous-groupe"],["sujet","Sujet"],["remarque","Remarque"]]){
       const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=details[field]||"";input.setAttribute("aria-label",`${label} pour ${student.prenom} ${student.nom}`);input.addEventListener("input",()=>{details[field]=input.value});input.addEventListener("change",()=>refreshStudentTableForField(field));cell.append(input);row.append(cell);

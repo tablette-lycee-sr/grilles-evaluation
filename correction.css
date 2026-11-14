@@ -104,6 +104,8 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .student-table td:nth-child(2) input{text-transform:uppercase}
 .student-table input[type="text"]:focus{border-color:var(--blue);outline:0;background:#1b1d20}
 .student-table input[type="checkbox"]{display:block;width:17px;height:17px;margin:auto;accent-color:var(--blue)}
+.student-table input.student-pap-value{-webkit-appearance:none;appearance:none;border:1px solid #92979d;border-radius:3px;background-color:transparent;accent-color:transparent}
+.student-table input.student-pap-value:checked{background-image:linear-gradient(45deg,transparent 42%,#fff 43%,#fff 57%,transparent 58%),linear-gradient(-45deg,transparent 42%,#fff 43%,#fff 57%,transparent 58%);background-position:center;background-repeat:no-repeat;background-size:9px 9px}
 .student-table-status{margin:0 0 8px;color:var(--sub);font-size:.82rem}
 .add-student-button{margin-top:10px;padding:7px 10px;border:1px solid var(--line);background:transparent;font-size:.86rem}
 @media(max-width:560px){.student-group-toolbar{flex-wrap:wrap;gap:8px}.student-group-toolbar h1{flex-basis:100%}.student-csv-button{flex:1;justify-content:center;text-align:center}}
