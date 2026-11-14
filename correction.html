@@ -1131,7 +1131,8 @@ function addStudentRow(student={}){
   if(!activeStudentGroup)return;
   const newStudent={id:createStudentId(),nom:student.nom||"",prenom:student.prenom||"",classe:student.classe||"",pap:Boolean(student.pap)};
   activeStudentGroup.students.push(newStudent);assignmentStudentDetails[newStudent.id]={sousGroupe:"",sujet:"",remarque:""};renderStudentTable();
-  document.querySelector("#studentTableBody tr:last-child input[type='text']")?.focus();
+  const newStudentRow=[...document.getElementById("studentTableBody").rows].find(row=>row.dataset.studentId===newStudent.id);
+  newStudentRow?.querySelector("input[type='text']")?.focus();
 }
 async function openStudentClassDialog(){
   const selectedStudents=activeStudentGroup?.students.filter(student=>selectedStudentIds.has(student.id))||[];
