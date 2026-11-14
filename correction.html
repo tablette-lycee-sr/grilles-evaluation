@@ -1174,8 +1174,9 @@ function renderCorrectionTrombi(){
     const groupBadge=document.createElement("span");groupBadge.className="correction-trombi-card-group";groupBadge.textContent=groupName||"—";groupBadge.style.backgroundColor=groupName?groupColors.get(normalizeTrombiPhotoName(groupName)):"var(--trombi-card-gray)";groupBadge.setAttribute("aria-label",groupName?`Groupe ${groupName}`:"Aucun groupe");
     header.append(cardNumber,cardNote,papBadge,groupBadge);
     const cardPortrait=createTrombiPortrait(student,true);cardPortrait.classList.add("correction-trombi-card-portrait");
+    const photoArea=document.createElement("div");photoArea.className="correction-trombi-card-photo";photoArea.append(cardPortrait);
     const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
-    card.append(header,cardPortrait,cardName);cards.append(card);
+    card.append(header,photoArea,cardName);cards.append(card);
   }
   for(const [index,student] of students.entries()){
     const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
