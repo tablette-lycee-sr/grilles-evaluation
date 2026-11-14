@@ -1111,16 +1111,30 @@ function trombiPhotoKey(student){
 function getStudentTrombiPhotoCount(){
   return (activeStudentGroup?.students||[]).filter(student=>trombiPhotoUrls.has(trombiPhotoKey(student))).length;
 }
-function createTrombiPortrait(student){
+const TROMBI_GROUP_COLORS=["#D8C1AF","#D1C0AD","#C9BBAA","#D2C7B5","#C9C5AD","#BEC6B0","#B9C8BB","#B2C7C2","#B5C5C9","#B6C3CC","#C2C1C7","#CABEC5"];
+function getTrombiGroupColorMap(students){
+  const groups=[...new Set(students.map(student=>assignmentStudentDetails[student.id]?.sousGroupe?.trim()).filter(Boolean).map(normalizeTrombiPhotoName))].sort((first,second)=>first.localeCompare(second,"fr",{sensitivity:"base"}));
+  return new Map(groups.map((group,index)=>[group,TROMBI_GROUP_COLORS[index%TROMBI_GROUP_COLORS.length]]));
+}
+function getTrombiNoteColor(note){
+  const score=Number(String(note??"").trim().replace(",","."));
+  if(!Number.isFinite(score)||score<0||score>20)return "#777d85";
+  if(score<7)return "#A33B40";
+  if(score<12)return "#8A7000";
+  if(score<18)return "#286B43";
+  return "#276B9B";
+}
+function createTrombiPortrait(student,fullBleed=false){
   const photoUrl=student&&trombiPhotoUrls.get(trombiPhotoKey(student));
   if(photoUrl){
     const photo=document.createElement("img");photo.className="correction-trombi-portrait";photo.src=photoUrl;photo.alt=`Portrait de ${[student.nom,student.prenom].filter(Boolean).join(" ")}`;photo.loading="lazy";photo.draggable=false;return photo;
   }
   const namespace="http://www.w3.org/2000/svg",portrait=document.createElementNS(namespace,"svg");
-  portrait.setAttribute("viewBox","0 0 72 88");portrait.setAttribute("aria-hidden","true");portrait.classList.add("correction-trombi-portrait");
-  const background=document.createElementNS(namespace,"rect");background.setAttribute("width","72");background.setAttribute("height","88");background.setAttribute("rx","6");background.setAttribute("fill","#34373b");
-  const head=document.createElementNS(namespace,"circle");head.setAttribute("cx","36");head.setAttribute("cy","28");head.setAttribute("r","13");head.setAttribute("fill","#aeb3b9");
-  const shoulders=document.createElementNS(namespace,"path");shoulders.setAttribute("d","M10 88c1-20 10-31 26-31s25 11 26 31z");shoulders.setAttribute("fill","#777d85");
+  const width=fullBleed?180:72,height=fullBleed?100:88;
+  portrait.setAttribute("viewBox",`0 0 ${width} ${height}`);portrait.setAttribute("aria-hidden","true");portrait.classList.add("correction-trombi-portrait");
+  const background=document.createElementNS(namespace,"rect");background.setAttribute("width",String(width));background.setAttribute("height",String(height));if(!fullBleed)background.setAttribute("rx","6");background.setAttribute("fill","#34373b");
+  const head=document.createElementNS(namespace,"circle");head.setAttribute("cx",fullBleed?"90":"36");head.setAttribute("cy",fullBleed?"34":"28");head.setAttribute("r",fullBleed?"18":"13");head.setAttribute("fill","#aeb3b9");
+  const shoulders=document.createElementNS(namespace,"path");shoulders.setAttribute("d",fullBleed?"M32 100c3-28 25-43 58-43s55 15 58 43z":"M10 88c1-20 10-31 26-31s25 11 26 31z");shoulders.setAttribute("fill","#777d85");
   portrait.append(background,shoulders,head);return portrait;
 }
 function createTrombiLevelScale(){
@@ -1145,15 +1159,23 @@ function renderCorrectionTrombi(){
   track.style.setProperty("--trombi-criterion-count",String(criterionLabels.length));
   const criterionHeading=document.createElement("div");criterionHeading.className="correction-trombi-criterion-heading";criterionHeading.textContent="Critères";criteria.append(criterionHeading);
   for(const label of criterionLabels){const criterion=document.createElement("div");criterion.className="correction-trombi-criterion";criterion.textContent=label;criteria.append(criterion)}
-  for(const [index,student] of students.entries()){
+  const alphabeticalStudents=students.slice().sort((first,second)=>first.nom.localeCompare(second.nom,"fr",{numeric:true,sensitivity:"base"})||first.prenom.localeCompare(second.prenom,"fr",{numeric:true,sensitivity:"base"}));
+  const groupColors=getTrombiGroupColorMap(alphabeticalStudents);
+  for(const [index,student] of alphabeticalStudents.entries()){
     const card=document.createElement("article");card.className="correction-trombi-card";card.setAttribute("role","listitem");
-    const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(index+1);
-    const cardPortrait=createTrombiPortrait(student);cardPortrait.classList.add("correction-trombi-card-portrait");
+    const header=document.createElement("div");header.className="correction-trombi-card-header";
+    const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(index+1);cardNumber.setAttribute("aria-label",`Élève numéro ${index+1} dans l’ordre alphabétique`);
+    const note=assignmentStudentDetails[student.id]?.note,noteLabel=note===null||note===undefined||note===""?"—":String(note);
+    const cardNote=document.createElement("span");cardNote.className="correction-trombi-card-note";cardNote.textContent=noteLabel;cardNote.style.backgroundColor=getTrombiNoteColor(note);cardNote.setAttribute("aria-label",`Note : ${noteLabel}`);
+    const papBadge=document.createElement("span");papBadge.className="correction-trombi-card-pap";papBadge.textContent=student.pap?"!":"";papBadge.setAttribute("aria-label",student.pap?"PAP":"Pas de PAP");
+    const groupName=assignmentStudentDetails[student.id]?.sousGroupe?.trim()||"";
+    const groupBadge=document.createElement("span");groupBadge.className="correction-trombi-card-group";groupBadge.textContent=groupName||"—";groupBadge.style.backgroundColor=groupName?groupColors.get(normalizeTrombiPhotoName(groupName)):"#b9b9b9";groupBadge.setAttribute("aria-label",groupName?`Groupe ${groupName}`:"Aucun groupe");
+    header.append(cardNumber,cardNote,papBadge,groupBadge);
+    const cardPortrait=createTrombiPortrait(student,true);cardPortrait.classList.add("correction-trombi-card-portrait");
     const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
-    const cardClass=document.createElement("span");cardClass.className="correction-trombi-card-class";cardClass.textContent=student.classe||"—";
-    const cardNote=document.createElement("span"),note=assignmentStudentDetails[student.id]?.note;
-    cardNote.className="correction-trombi-card-note";cardNote.textContent=`Note : ${note===null||note===undefined||note===""?"—":String(note)}`;
-    card.append(cardNumber,cardPortrait,cardName,cardClass,cardNote);cards.append(card);
+    card.append(header,cardPortrait,cardName);cards.append(card);
+  }
+  for(const [index,student] of students.entries()){
     const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-student-header";
     const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(index+1);
