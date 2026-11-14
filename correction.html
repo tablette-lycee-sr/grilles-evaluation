@@ -275,9 +275,10 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 </dialog>
 <dialog id="resetAssignmentDialog">
   <div class="dialog-heading"><h2>Effacer le devoir en cours ?</h2></div>
-  <p>Cette action effacera les informations du devoir, la grille chargée, les coefficients modifiés et toutes les saisies de correction non sauvegardées. Elle ne supprimera aucun fichier déjà enregistré et ne pourra pas être annulée.</p>
+  <p>Cette action effacera le devoir, la grille, les coefficients modifiés et toutes les corrections de ce devoir, y compris celles enregistrées dans le navigateur. Elle ne pourra pas être annulée.</p>
   <div class="dialog-actions"><button id="cancelResetAssignment" class="secondary" type="button">Annuler</button><button id="confirmResetAssignment" type="button">Effacer le devoir</button></div>
 </dialog>
+<div id="storageWarning" class="storage-warning" role="alert" hidden></div>
 <div class="app" hidden>
 <section id="correctionTrombiView" class="correction-trombi-view" hidden aria-labelledby="correctionTrombiHeading">
   <div class="correction-trombi-toolbar">
@@ -343,6 +344,8 @@ let config = structuredClone(DEFAULT_CONFIG);
 let assignment = {};
 let activeStudentGroup = null;
 let assignmentStudentDetails = {};
+let studentCorrections = {};
+let activeCorrectionStudentId = null;
 let selectedStudentIds = new Set();
 let correctionTrombiMode = "full";
 let trombiPhotoUrls = new Map();
@@ -970,22 +973,43 @@ function gridFromCsv(text,fileName){
   return{grid,config,partLayout:[...parts.values()]};
 }
 function resetChoices(){manualChoices={};manualCategoryPercent={};categoryEvaluations={};leafChoices={};bonusChoices={}}
+function captureActiveCorrection(){
+  if(!activeCorrectionStudentId)return;
+  const note=document.getElementById("finalGrade").value;
+  studentCorrections[activeCorrectionStudentId]=structuredClone({manualChoices,manualCategoryPercent,categoryEvaluations,leafChoices,bonusChoices,note});
+  const details=assignmentStudentDetails[activeCorrectionStudentId]||(assignmentStudentDetails[activeCorrectionStudentId]={sousGroupe:"",sujet:"",remarque:""});
+  details.note=note;
+}
+function openStudentCorrection(student){
+  if(!document.querySelector(".app").classList.contains("grid-loaded")){
+    setStatus("Créez d'abord un devoir et choisissez une grille de correction.","error");return;
+  }
+  captureActiveCorrection();activeCorrectionStudentId=student.id;
+  const correction=structuredClone(studentCorrections[student.id]||{});
+  manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};
+  leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};
+  document.getElementById("studentName").value=[student.nom,student.prenom].filter(Boolean).join(" ");
+  document.getElementById("studentName").readOnly=true;
+  document.getElementById("finalGrade").value=correction.note||"";
+  document.getElementById("correctionTrombiView").hidden=true;document.querySelector(".app").classList.remove("trombi-view");render();
+}
 function activateLoadedGrid(title){document.getElementById("pageTitle").textContent=title;document.querySelector(".app").classList.add("grid-loaded");initializePartNav()}
 function initializeAssignment(){
   const today=new Date(),date=[today.getFullYear(),String(today.getMonth()+1).padStart(2,"0"),String(today.getDate()).padStart(2,"0")].join("-");
-  assignment={name:"",evaluationType:grid.typeDevoir||"",date,period:"",maxScore:20,comment:""};
+  assignment={id:createStudentId(),name:"",evaluationType:grid.typeDevoir||"",date,period:"",maxScore:20,comment:""};
   const form=document.getElementById("assignmentForm");
-  for(const [name,value] of Object.entries(assignment))form.elements.namedItem(name).value=value;
+  for(const [name,value] of Object.entries(assignment)){const field=form.elements.namedItem(name);if(field)field.value=value}
   document.getElementById("assignmentEmptyState").hidden=true;
   document.getElementById("assignmentDetails").hidden=false;
   renderAssignmentGrid();
 }
 function resetAssignment(){
   grid=structuredClone(DEFAULT_GRID);config=structuredClone(DEFAULT_CONFIG);partLayout=PART_LAYOUT;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
-  resetChoices();assignment={};
+  resetChoices();assignment={};studentCorrections={};activeCorrectionStudentId=null;
+  for(const details of Object.values(assignmentStudentDetails))delete details.note;
   document.querySelector(".app").classList.remove("grid-loaded");
   document.getElementById("pageTitle").textContent="";partNavEl.replaceChildren();contentEl.replaceChildren();
-  document.getElementById("studentName").value="";document.getElementById("finalGrade").value="";document.getElementById("finalScore").textContent="—/20";
+  document.getElementById("studentName").value="";document.getElementById("studentName").readOnly=false;document.getElementById("finalGrade").value="";document.getElementById("finalScore").textContent="—/20";
   document.getElementById("assignmentForm").reset();document.getElementById("assignmentGridTree").replaceChildren();
   document.getElementById("assignmentEmptyState").hidden=false;document.getElementById("assignmentDetails").hidden=true;
   setStatus("");setActiveView("devoir");
@@ -1198,7 +1222,7 @@ function renderCorrectionTrombi(){
     const groupBadge=document.createElement("span");groupBadge.className="correction-trombi-card-group";groupBadge.textContent=groupName||"—";groupBadge.style.backgroundColor=groupName?groupColors.get(normalizeTrombiPhotoName(groupName)):"var(--trombi-card-gray)";groupBadge.setAttribute("aria-label",groupName?`Groupe ${groupName}`:"Aucun groupe");
     header.append(cardNumber,cardNote,papBadge,groupBadge);
     const cardPortrait=createTrombiPortrait(student,true);cardPortrait.classList.add("correction-trombi-card-portrait");
-    const photoArea=document.createElement("div");photoArea.className="correction-trombi-card-photo";photoArea.append(cardPortrait);
+    const photoArea=document.createElement("button");photoArea.type="button";photoArea.className="correction-trombi-card-photo correction-trombi-photo-button";photoArea.setAttribute("aria-label",`Corriger ${[student.nom,student.prenom].filter(Boolean).join(" ")}`);photoArea.addEventListener("click",()=>openStudentCorrection(student));photoArea.append(cardPortrait);
     const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
     card.append(header,photoArea,cardName);cardRow.append(card);
   }
@@ -1206,7 +1230,8 @@ function renderCorrectionTrombi(){
     const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-student-header";
     const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(index+1);
-    const identity=document.createElement("div");identity.className="correction-trombi-identity";identity.append(createTrombiPortrait(student));
+    const identity=document.createElement("div");identity.className="correction-trombi-identity";
+    const photoButton=document.createElement("button");photoButton.type="button";photoButton.className="correction-trombi-photo-button";photoButton.setAttribute("aria-label",`Corriger ${[student.nom,student.prenom].filter(Boolean).join(" ")}`);photoButton.addEventListener("click",()=>openStudentCorrection(student));photoButton.append(createTrombiPortrait(student));identity.append(photoButton);
     const name=document.createElement("strong");name.className="correction-trombi-student-name";name.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
     const metadata=document.createElement("span");metadata.className="correction-trombi-student-metadata";metadata.textContent=student.classe||"Classe non renseignée";
     identity.append(name,metadata);header.append(number,identity);
@@ -1356,7 +1381,10 @@ function parseStudentCsv(text){
 }
 function applyCsvText(text,fileName){
   const loaded=gridFromCsv(text,fileName);grid=loaded.grid;config=loaded.config;partLayout=loaded.partLayout;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
+  studentCorrections={};activeCorrectionStudentId=null;document.getElementById("studentName").readOnly=false;document.getElementById("studentName").value="";document.getElementById("finalGrade").value="";
+  for(const details of Object.values(assignmentStudentDetails))delete details.note;
   activateLoadedGrid(grid.titre);resetChoices();render();initializeAssignment();setStatus(`Grille CSV « ${fileName} » chargée. Les choix précédents ont été réinitialisés.`);
+  saveWorkspace();
 }
 async function loadRepositoryGrid(entry,button){
   button.disabled=true;const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=false;modalStatus.textContent=`Chargement de la grille « ${entry.titre} »…`;
@@ -1401,7 +1429,7 @@ document.getElementById("settingsDialog").addEventListener("click",event=>{
 window.addEventListener("beforeprint",renderPrintReport);
 window.addEventListener("afterprint",()=>document.getElementById("printReport").replaceChildren());
 window.addEventListener("beforeunload",event=>{
-  if(!document.querySelector(".app").classList.contains("grid-loaded"))return;
+  if(!document.querySelector(".app").classList.contains("grid-loaded")&&!workspaceWriting&&!workspaceWritePending&&workspaceStorageReady)return;
   event.preventDefault();
   event.returnValue="";
 });
@@ -1412,6 +1440,7 @@ const submenus=document.querySelectorAll(".submenu");
 const correctionApp=document.querySelector(".app");
 const otherView=document.getElementById("otherView");
 function setActiveView(viewId){
+  captureActiveCorrection();
   const isCorrection=viewId==="correction",isAssignment=viewId==="devoir";
   const isStudents=viewId==="eleves",hasStudentGroup=Boolean(activeStudentGroup);
   const hasActiveAssignment=correctionApp.classList.contains("grid-loaded");
@@ -1454,10 +1483,12 @@ trombiPhotoFolder.addEventListener("change",()=>{
   renderCorrectionTrombi();
 });
 document.getElementById("showCorrectionTrombi").addEventListener("click",()=>{
+  captureActiveCorrection();
   document.getElementById("correctionTrombiView").hidden=false;correctionApp.classList.add("trombi-view");renderCorrectionTrombi();
 });
 document.getElementById("correctionTrombiGoStudents").addEventListener("click",()=>setActiveView("eleves"));
 document.getElementById("createAssignmentBtn").addEventListener("click",()=>{
+  if(document.querySelector(".app").classList.contains("grid-loaded")&&!window.confirm("Créer un nouveau devoir remplacera le devoir actuel et toutes ses corrections enregistrées dans ce navigateur. Continuer ?"))return;
   const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=true;modalStatus.textContent="";
   document.getElementById("gridCatalogDialog").showModal();
 });
@@ -1472,13 +1503,16 @@ document.getElementById("assignmentForm").addEventListener("input",event=>{
   if(field.name)assignment[field.name]=field.name==="maxScore"?Number(field.value):field.value;
 });
 document.getElementById("createStudentGroupBtn").addEventListener("click",()=>{
+  if(activeStudentGroup?.students.length&&!window.confirm("Créer un nouveau groupe remplacera la liste actuelle et ses corrections pour ce devoir. Continuer ?"))return;
   document.getElementById("studentGroupForm").reset();document.getElementById("studentGroupDialog").showModal();
   document.getElementById("studentGroupNameInput").focus();
 });
 document.getElementById("cancelStudentGroup").addEventListener("click",()=>document.getElementById("studentGroupDialog").close());
 document.getElementById("studentGroupForm").addEventListener("submit",event=>{
   event.preventDefault();const name=document.getElementById("studentGroupNameInput").value.trim();if(!name)return;
-  activeStudentGroup={name,students:[]};assignmentStudentDetails={};
+  activeStudentGroup={id:createStudentId(),name,students:[]};assignmentStudentDetails={};studentCorrections={};activeCorrectionStudentId=null;resetChoices();
+  document.getElementById("studentName").value="";document.getElementById("studentName").readOnly=false;document.getElementById("finalGrade").value="";
+  if(document.querySelector(".app").classList.contains("grid-loaded"))render();
   selectedStudentIds.clear();
   studentFilters={};studentSort={field:"",direction:1};
   document.getElementById("studentGroupTitle").textContent=name;renderStudentTable();
@@ -1493,7 +1527,7 @@ document.getElementById("selectAllStudents").addEventListener("change",event=>{
 document.getElementById("deleteSelectedStudents").addEventListener("click",()=>{
   const selectedStudents=activeStudentGroup?.students.filter(student=>selectedStudentIds.has(student.id))||[];
   if(!selectedStudents.length)return;
-  document.getElementById("deleteSelectedStudentsMessage").textContent=`Vous allez supprimer ${selectedStudents.length} élève(s) du groupe. Cette action est irréversible.`;
+  document.getElementById("deleteSelectedStudentsMessage").textContent=`Vous allez supprimer ${selectedStudents.length} élève(s) du groupe et leurs corrections pour ce devoir. Cette action est irréversible.`;
   document.getElementById("deleteSelectedStudentsDialog").showModal();
 });
 document.getElementById("cancelDeleteSelectedStudents").addEventListener("click",()=>document.getElementById("deleteSelectedStudentsDialog").close());
@@ -1501,7 +1535,8 @@ document.getElementById("confirmDeleteSelectedStudents").addEventListener("click
   if(!activeStudentGroup)return;
   const selectedStudents=activeStudentGroup.students.filter(student=>selectedStudentIds.has(student.id));
   activeStudentGroup.students=activeStudentGroup.students.filter(student=>!selectedStudentIds.has(student.id));
-  for(const student of selectedStudents){delete assignmentStudentDetails[student.id];selectedStudentIds.delete(student.id)}
+  for(const student of selectedStudents){delete assignmentStudentDetails[student.id];delete studentCorrections[student.id];selectedStudentIds.delete(student.id)}
+  if(selectedStudents.some(student=>student.id===activeCorrectionStudentId)){activeCorrectionStudentId=null;resetChoices();document.getElementById("studentName").value="";document.getElementById("studentName").readOnly=false;document.getElementById("finalGrade").value="";if(document.querySelector(".app").classList.contains("grid-loaded"))render()}
   document.getElementById("deleteSelectedStudentsDialog").close();renderStudentTable();
 });
 document.querySelectorAll("[data-column-menu]").forEach(button=>button.addEventListener("click",()=>openStudentColumnMenu(button)));
@@ -1529,7 +1564,7 @@ document.getElementById("studentCsvInput").addEventListener("change",event=>{
   reader.onload=()=>{
     try{
       pendingStudentImport=parseStudentCsv(String(reader.result||""));
-      document.getElementById("replaceStudentsMessage").textContent=`Les ${pendingStudentImport.length} élève(s) détecté(s) dans l’export Pronote remplaceront la liste actuelle du groupe « ${activeStudentGroup.name} ».`;
+      document.getElementById("replaceStudentsMessage").textContent=`Les ${pendingStudentImport.length} élève(s) détecté(s) remplaceront la liste du groupe « ${activeStudentGroup.name} » et supprimeront ses corrections pour ce devoir.`;
       document.getElementById("replaceStudentsDialog").showModal();
     }catch(error){status.hidden=false;status.textContent=`Import Pronote impossible : ${error.message}`}
   };
@@ -1542,10 +1577,88 @@ document.getElementById("cancelReplaceStudents").addEventListener("click",()=>{
 document.getElementById("confirmReplaceStudents").addEventListener("click",()=>{
   if(!pendingStudentImport||!activeStudentGroup)return;
   activeStudentGroup.students=pendingStudentImport.map(student=>({id:createStudentId(),...student}));
-  assignmentStudentDetails={};selectedStudentIds.clear();pendingStudentImport=null;studentFilters={};studentSort={field:"",direction:1};renderStudentTable();
+  assignmentStudentDetails={};studentCorrections={};activeCorrectionStudentId=null;resetChoices();document.getElementById("studentName").value="";document.getElementById("studentName").readOnly=false;document.getElementById("finalGrade").value="";
+  if(document.querySelector(".app").classList.contains("grid-loaded"))render();
+  selectedStudentIds.clear();pendingStudentImport=null;studentFilters={};studentSort={field:"",direction:1};renderStudentTable();
   document.getElementById("replaceStudentsDialog").close();
 });
 navigationButtons.forEach(button=>button.addEventListener("click",()=>setActiveView(button.dataset.view)));
 setActiveView("devoir");
+let workspaceDatabase=null,workspaceStorageReady=false,workspaceWritePending=null,workspaceWriting=false,workspaceRevision=0;
+function showStorageWarning(message){const warning=document.getElementById("storageWarning");warning.textContent=message;warning.hidden=!message}
+function openWorkspaceDatabase(){
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open("grilles-evaluation",1);
+    request.onupgradeneeded=()=>request.result.createObjectStore("workspace");
+    request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
+    request.onblocked=()=>reject(new Error("Base de données bloquée par un autre onglet."));
+  });
+}
+function readWorkspace(database){
+  return new Promise((resolve,reject)=>{
+    const transaction=database.transaction("workspace","readonly"),request=transaction.objectStore("workspace").get("current");
+    request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);transaction.onabort=()=>reject(transaction.error);
+  });
+}
+function writeWorkspace(database,snapshot,expectedRevision){
+  return new Promise((resolve,reject)=>{
+    const transaction=database.transaction("workspace","readwrite"),store=transaction.objectStore("workspace"),request=store.get("current");let conflict=false;
+    request.onsuccess=()=>{
+      if((request.result?.revision||0)!==expectedRevision){conflict=true;transaction.abort();return}
+      store.put({...snapshot,revision:expectedRevision+1},"current");
+    };
+    transaction.oncomplete=()=>resolve(expectedRevision+1);
+    transaction.onabort=()=>reject(conflict?new Error("workspace-conflict"):transaction.error||new Error("Sauvegarde annulée."));
+    transaction.onerror=()=>reject(transaction.error);
+  });
+}
+function workspaceSnapshot(){
+  captureActiveCorrection();
+  return structuredClone({version:1,gridLoaded:correctionApp.classList.contains("grid-loaded"),grid,config,partLayout,assignment,activeStudentGroup,assignmentStudentDetails,studentCorrections,activeCorrectionStudentId,
+    currentCorrection:{manualChoices,manualCategoryPercent,categoryEvaluations,leafChoices,bonusChoices,studentName:document.getElementById("studentName").value,note:document.getElementById("finalGrade").value}});
+}
+async function saveWorkspace(){
+  if(!workspaceStorageReady||!workspaceDatabase)return;
+  try{workspaceWritePending=workspaceSnapshot()}catch(error){showStorageWarning("La sauvegarde locale a échoué. Les modifications restent uniquement en mémoire.");return}
+  if(workspaceWriting)return;
+  workspaceWriting=true;
+  while(workspaceWritePending){
+    const snapshot=workspaceWritePending;workspaceWritePending=null;
+    try{workspaceRevision=await writeWorkspace(workspaceDatabase,snapshot,workspaceRevision);showStorageWarning("")}
+    catch(error){
+      workspaceWritePending=workspaceWritePending||snapshot;
+      if(error.message==="workspace-conflict"){workspaceStorageReady=false;showStorageWarning("Un autre onglet a modifié les données enregistrées. Les changements de cet onglet ne sont plus sauvegardés ; ne le fermez pas sans les avoir relevés.")}
+      else showStorageWarning("La sauvegarde locale a échoué. Les modifications restent uniquement en mémoire ; vérifiez l'espace disponible et les paramètres du navigateur.");
+      break;
+    }
+  }
+  workspaceWriting=false;
+}
+function restoreWorkspace(snapshot){
+  if(!snapshot||snapshot.version!==1)throw new Error("Format de sauvegarde inconnu.");
+  grid=snapshot.grid;config=snapshot.config;partLayout=snapshot.partLayout;assignment=snapshot.assignment||{};activeStudentGroup=snapshot.activeStudentGroup||null;
+  assignmentStudentDetails=snapshot.assignmentStudentDetails||{};studentCorrections=snapshot.studentCorrections||{};activeCorrectionStudentId=snapshot.activeCorrectionStudentId||null;
+  const correction=snapshot.currentCorrection||{};manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};
+  levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
+  document.getElementById("studentName").value=correction.studentName||"";document.getElementById("studentName").readOnly=Boolean(activeCorrectionStudentId);document.getElementById("finalGrade").value=correction.note||"";
+  if(snapshot.gridLoaded){
+    activateLoadedGrid(grid.titre);const form=document.getElementById("assignmentForm");
+    for(const [name,value] of Object.entries(assignment)){const field=form.elements.namedItem(name);if(field)field.value=value}
+    renderAssignmentGrid();render();
+  }
+  if(activeStudentGroup){document.getElementById("studentGroupTitle").textContent=activeStudentGroup.name;renderStudentTable()}
+  setActiveView("devoir");
+}
+async function initializeWorkspaceStorage(){
+  document.body.inert=true;
+  try{
+    workspaceDatabase=await openWorkspaceDatabase();
+    const snapshot=await readWorkspace(workspaceDatabase);if(snapshot){workspaceRevision=snapshot.revision||0;restoreWorkspace(snapshot)}
+    workspaceStorageReady=true;
+  }catch(error){showStorageWarning("La sauvegarde locale est indisponible ou illisible. Les modifications restent uniquement en mémoire ; ne fermez pas cette page sans avoir résolu le problème.")}
+  finally{document.body.inert=false}
+}
+for(const eventName of ["input","change","click","submit","pointerup","pointercancel","keydown"])document.addEventListener(eventName,saveWorkspace);
+initializeWorkspaceStorage();
 </script>
 </body></html>

@@ -2,6 +2,7 @@
 
 :root{--app-nav-height:52px;--submenu-height:40px;--navigation-height:calc(var(--app-nav-height) + var(--submenu-height))}
 .app-navigation{position:fixed;z-index:50;top:0;left:0;right:0;height:var(--app-nav-height);display:flex;align-items:stretch;gap:2px;overflow-x:auto;background:#202225;border-bottom:1px solid var(--line);padding:0 12px}
+.storage-warning{position:fixed;z-index:200;right:12px;bottom:12px;max-width:min(520px,calc(100vw - 24px));padding:10px 12px;border:1px solid #e45b60;border-radius:4px;background:#3c2022;color:#fff;font-size:.85rem}
 .app-navigation button{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;padding:0 16px;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:var(--sub);font-weight:600;white-space:nowrap}
 .app-navigation button:hover{background:#34373b;color:var(--text)}
 .app-navigation button[aria-current="page"]{border-bottom-color:var(--accent);color:var(--text)}
@@ -26,7 +27,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .app-view h1{margin:0 0 12px;font-size:1.55rem}
 .app-view p{color:var(--sub)}
 .app.trombi-view{width:min(1600px,100%);max-width:1600px;margin:var(--navigation-height) auto 0;padding:22px 16px}
-.app.trombi-view>:not(#correctionTrombiView):not(#printReport):not(dialog){display:none!important}
+.app.trombi-view>:not(#correctionTrombiView):not(#printReport):not(#status):not(dialog){display:none!important}
 .correction-trombi-view{display:grid;gap:14px;min-width:0;color:var(--text)}
 .correction-trombi-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .correction-trombi-title{display:flex;align-items:baseline;gap:8px;min-width:0}
@@ -64,6 +65,8 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-trombi-card-pap{background:var(--trombi-card-gray);color:#111;font-size:.85rem;font-weight:800}
 .correction-trombi-card-group{color:#111;font-size:.65rem;font-weight:650;text-overflow:ellipsis}
 .correction-trombi-card-photo{width:100%;aspect-ratio:10 / 13;overflow:hidden;background:var(--trombi-card-gray)}
+.correction-trombi-photo-button{display:block;padding:0;border:0;border-radius:0;background:transparent;cursor:pointer}
+.correction-trombi-photo-button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .correction-trombi-card-portrait{display:block;width:100%;height:100%;min-height:0;border-radius:0;object-fit:cover;object-position:center top;background:var(--trombi-card-gray)}
 .correction-trombi-card-name{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;height:32px;padding:2px 4px;overflow:hidden;background:#fff;color:#111;font-size:.72rem;line-height:1.1;text-align:center}
 .correction-trombi-level-scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
