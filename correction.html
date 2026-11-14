@@ -220,13 +220,13 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
         <table class="student-table">
           <thead><tr>
             <th scope="col" aria-label="Supprimer"></th>
-            <th scope="col" data-student-header="nom"><span class="student-header-label">Nom</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="nom" title="Trier par nom" aria-label="Trier par nom"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="nom" title="Filtrer par nom" aria-label="Filtrer par nom"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
-            <th scope="col" data-student-header="prenom"><span class="student-header-label">Prénom</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="prenom" title="Trier par prénom" aria-label="Trier par prénom"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="prenom" title="Filtrer par prénom" aria-label="Filtrer par prénom"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
-            <th scope="col" data-student-header="classe"><span class="student-header-label">Classe</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="classe" title="Trier par classe" aria-label="Trier par classe"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="classe" title="Filtrer par classe" aria-label="Filtrer par classe"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button><button class="student-header-button" id="bulkClassBtn" type="button" title="Attribuer une classe à tous les élèves" aria-label="Attribuer une classe à tous les élèves"><span class="menu-icon" style="--icon:url('icones/school.svg')" aria-hidden="true"></span></button></span></th>
-            <th scope="col" data-student-header="pap"><span class="student-header-label">PAP</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="pap" title="Trier par PAP" aria-label="Trier par PAP"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="pap" title="Filtrer par PAP" aria-label="Filtrer par PAP"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
-            <th scope="col" data-student-header="sousGroupe"><span class="student-header-label">Sous-groupe</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="sousGroupe" title="Trier par sous-groupe" aria-label="Trier par sous-groupe"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="sousGroupe" title="Filtrer par sous-groupe" aria-label="Filtrer par sous-groupe"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
-            <th scope="col" data-student-header="sujet"><span class="student-header-label">Sujet</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="sujet" title="Trier par sujet" aria-label="Trier par sujet"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="sujet" title="Filtrer par sujet" aria-label="Filtrer par sujet"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
-            <th scope="col" data-student-header="remarque"><span class="student-header-label">Remarque</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="remarque" title="Trier par remarque" aria-label="Trier par remarque"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="remarque" title="Filtrer par remarque" aria-label="Filtrer par remarque"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
+            <th scope="col" data-student-header="nom"><span class="student-header-label">Nom</span><button class="student-header-menu-button" type="button" data-column-menu="nom" aria-label="Actions pour la colonne Nom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
+            <th scope="col" data-student-header="prenom"><span class="student-header-label">Prénom</span><button class="student-header-menu-button" type="button" data-column-menu="prenom" aria-label="Actions pour la colonne Prénom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
+            <th scope="col" data-student-header="classe"><span class="student-header-label">Classe</span><button class="student-header-menu-button" type="button" data-column-menu="classe" aria-label="Actions pour la colonne Classe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
+            <th scope="col" data-student-header="pap"><span class="student-header-label">PAP</span><button class="student-header-menu-button" type="button" data-column-menu="pap" aria-label="Actions pour la colonne PAP" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
+            <th scope="col" data-student-header="sousGroupe"><span class="student-header-label">Sous-groupe</span><button class="student-header-menu-button" type="button" data-column-menu="sousGroupe" aria-label="Actions pour la colonne Sous-groupe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
+            <th scope="col" data-student-header="sujet"><span class="student-header-label">Sujet</span><button class="student-header-menu-button" type="button" data-column-menu="sujet" aria-label="Actions pour la colonne Sujet" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
+            <th scope="col" data-student-header="remarque"><span class="student-header-label">Remarque</span><button class="student-header-menu-button" type="button" data-column-menu="remarque" aria-label="Actions pour la colonne Remarque" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
           </tr></thead>
           <tbody id="studentTableBody"></tbody>
         </table>
@@ -251,11 +251,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <p id="replaceStudentsMessage">Les élèves actuellement dans le groupe seront remplacés par ceux du fichier CSV.</p>
   <div class="dialog-actions"><button id="cancelReplaceStudents" class="secondary" type="button">Annuler</button><button id="confirmReplaceStudents" type="button">Remplacer</button></div>
 </dialog>
-<dialog id="studentFilterDialog">
-  <div class="dialog-heading"><h2 id="studentFilterHeading">Filtrer</h2></div>
-  <label class="student-filter-field">Contient<input id="studentFilterValue" type="search" autocomplete="off"></label>
-  <div class="dialog-actions"><button id="clearStudentFilter" class="secondary" type="button">Effacer le filtre</button><button id="cancelStudentFilter" class="secondary" type="button">Annuler</button><button id="applyStudentFilter" type="button">Appliquer</button></div>
-</dialog>
+<div id="studentColumnMenu" class="student-column-menu" hidden></div>
 <dialog id="studentClassDialog">
   <div class="dialog-heading"><h2>Attribuer une classe</h2></div>
   <p id="studentClassStatus" class="catalog-status" role="status" aria-live="polite"></p>
@@ -321,7 +317,7 @@ let assignmentStudentDetails = {};
 let pendingStudentImport = null;
 let studentFilters = {};
 let studentSort = {field:"",direction:1};
-let studentFilterField = "";
+let studentColumnMenuButton = null;
 let manualChoices = {};
 let manualCategoryPercent = {};
 let categoryEvaluations = {};
@@ -1009,10 +1005,9 @@ function renderStudentTable(){
   let visibleStudents=allStudents.filter(student=>Object.entries(studentFilters).every(([field,filter])=>String(studentFieldValue(student,field)).toLocaleLowerCase().includes(filter.toLocaleLowerCase())));
   if(studentSort.field)visibleStudents.sort((first,second)=>String(studentFieldValue(first,studentSort.field)).localeCompare(String(studentFieldValue(second,studentSort.field)),"fr",{numeric:true,sensitivity:"base"})*studentSort.direction);
   document.querySelectorAll("[data-student-header]").forEach(header=>{
-    const field=header.dataset.studentHeader,sortButton=header.querySelector("[data-sort-field]"),filterButton=header.querySelector("[data-filter-field]");
+    const field=header.dataset.studentHeader,menuButton=header.querySelector("[data-column-menu]");
     header.setAttribute("aria-sort",studentSort.field===field?(studentSort.direction===1?"ascending":"descending"):"none");
-    if(sortButton){const isSorted=studentSort.field===field;sortButton.setAttribute("aria-pressed",String(isSorted));sortButton.dataset.sortDirection=isSorted?(studentSort.direction===1?"ascending":"descending"):"";sortButton.title=isSorted?`Tri ${studentSort.direction===1?"croissant":"décroissant"} : ${field}`:`Trier par ${field}`}
-    if(filterButton)filterButton.setAttribute("aria-pressed",String(Boolean(studentFilters[field])));
+    if(menuButton)menuButton.setAttribute("aria-expanded",String(menuButton===studentColumnMenuButton));
   });
   const tableStatus=document.getElementById("studentTableStatus"),activeFilterCount=Object.values(studentFilters).filter(Boolean).length;
   tableStatus.hidden=activeFilterCount===0;
@@ -1039,6 +1034,46 @@ function renderStudentTable(){
     }
     body.append(row);
   }
+}
+function closeStudentColumnMenu(){
+  document.getElementById("studentColumnMenu").hidden=true;
+  studentColumnMenuButton?.setAttribute("aria-expanded","false");studentColumnMenuButton=null;
+}
+function openStudentColumnMenu(button){
+  if(studentColumnMenuButton===button){closeStudentColumnMenu();return}
+  closeStudentColumnMenu();
+  const field=button.dataset.columnMenu,header=button.closest("th"),label=header.querySelector(".student-header-label").textContent;
+  const menu=document.getElementById("studentColumnMenu");menu.replaceChildren();menu.setAttribute("aria-label",`Actions pour ${label}`);
+  const heading=document.createElement("p");heading.className="student-column-menu-heading";heading.textContent=label;menu.append(heading);
+  const addAction=(icon,title,description,callback)=>{
+    const action=document.createElement("button");action.type="button";action.className="student-column-action";
+    const image=document.createElement("span");image.className="menu-icon";image.style.setProperty("--icon",`url('icones/${icon}.svg')`);image.setAttribute("aria-hidden","true");
+    const copy=document.createElement("span");copy.className="student-column-action-copy";
+    const strong=document.createElement("span");strong.textContent=title;const detail=document.createElement("small");detail.textContent=description;copy.append(strong,detail);action.append(image,copy);
+    action.addEventListener("click",callback);menu.append(action);
+  };
+  addAction("sort", "Trier par ordre croissant", "De A à Z, du plus petit au plus grand.",()=>{studentSort={field,direction:1};closeStudentColumnMenu();renderStudentTable()});
+  addAction("sort", "Trier par ordre décroissant", "De Z à A, du plus grand au plus petit.",()=>{studentSort={field,direction:-1};closeStudentColumnMenu();renderStudentTable()});
+  menu.querySelectorAll(".student-column-action .menu-icon")[1].style.transform="rotate(180deg)";
+  const divider=document.createElement("div");divider.className="student-column-menu-divider";menu.append(divider);
+  const filter=document.createElement("label");filter.className="student-column-filter";filter.textContent="Filtrer cette colonne";
+  const input=document.createElement("input");input.type="search";input.autocomplete="off";input.placeholder=field==="pap"?"Oui ou Non":"Saisir une valeur";input.value=studentFilters[field]||"";
+  const help=document.createElement("small");help.textContent="N’afficher que les lignes dont la valeur contient ce texte.";filter.append(input,help);menu.append(filter);
+  const filterActions=document.createElement("div");filterActions.className="student-column-filter-actions";
+  const clear=document.createElement("button");clear.type="button";clear.className="secondary";clear.textContent="Effacer";clear.disabled=!studentFilters[field];
+  clear.addEventListener("click",()=>{delete studentFilters[field];closeStudentColumnMenu();renderStudentTable()});
+  const apply=document.createElement("button");apply.type="button";apply.textContent="Appliquer";
+  apply.addEventListener("click",()=>{const value=input.value.trim();if(value)studentFilters[field]=value;else delete studentFilters[field];closeStudentColumnMenu();renderStudentTable()});
+  input.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();apply.click()}});
+  filterActions.append(clear,apply);menu.append(filterActions);
+  if(field==="classe"){
+    const classDivider=document.createElement("div");classDivider.className="student-column-menu-divider";menu.append(classDivider);
+    addAction("school", "Attribuer une classe à tous", "Choisir une classe dans le catalogue.",()=>{closeStudentColumnMenu();openStudentClassDialog()});
+  }
+  const buttonRect=button.getBoundingClientRect();menu.hidden=false;studentColumnMenuButton=button;button.setAttribute("aria-expanded","true");
+  const menuRect=menu.getBoundingClientRect(),left=Math.max(8,Math.min(buttonRect.left,window.innerWidth-menuRect.width-8));
+  const below=buttonRect.bottom+2,top=below+menuRect.height<=window.innerHeight-8?below:Math.max(8,buttonRect.top-menuRect.height-2);
+  menu.style.left=`${left}px`;menu.style.top=`${top}px`;input.focus();
 }
 function addStudentRow(student={}){
   if(!activeStudentGroup)return;
@@ -1183,28 +1218,12 @@ document.getElementById("studentGroupForm").addEventListener("submit",event=>{
   document.getElementById("studentGroupDialog").close();setActiveView("eleves");
 });
 document.getElementById("addStudentBtn").addEventListener("click",()=>addStudentRow());
-document.querySelectorAll("[data-sort-field]").forEach(button=>button.addEventListener("click",()=>{
-  const field=button.dataset.sortField;
-  studentSort=studentSort.field===field?{field,direction:-studentSort.direction}:{field,direction:1};renderStudentTable();
-}));
-document.querySelectorAll("[data-filter-field]").forEach(button=>button.addEventListener("click",()=>{
-  studentFilterField=button.dataset.filterField;
-  const header=button.closest("th"),label=header.querySelector(".student-header-label").textContent;
-  document.getElementById("studentFilterHeading").textContent=`Filtrer : ${label}`;
-  const input=document.getElementById("studentFilterValue");input.value=studentFilters[studentFilterField]||"";
-  document.getElementById("studentFilterDialog").showModal();input.focus();
-}));
-document.getElementById("cancelStudentFilter").addEventListener("click",()=>document.getElementById("studentFilterDialog").close());
-document.getElementById("applyStudentFilter").addEventListener("click",()=>{
-  const value=document.getElementById("studentFilterValue").value.trim();
-  if(value)studentFilters[studentFilterField]=value;else delete studentFilters[studentFilterField];
-  document.getElementById("studentFilterDialog").close();renderStudentTable();
+document.querySelectorAll("[data-column-menu]").forEach(button=>button.addEventListener("click",()=>openStudentColumnMenu(button)));
+document.addEventListener("click",event=>{
+  if(event.target.closest("#studentColumnMenu")||event.target.closest("[data-column-menu]"))return;
+  closeStudentColumnMenu();
 });
-document.getElementById("clearStudentFilter").addEventListener("click",()=>{
-  delete studentFilters[studentFilterField];document.getElementById("studentFilterValue").value="";
-  document.getElementById("studentFilterDialog").close();renderStudentTable();
-});
-document.getElementById("bulkClassBtn").addEventListener("click",openStudentClassDialog);
+document.addEventListener("keydown",event=>{if(event.key==="Escape")closeStudentColumnMenu()});
 document.getElementById("studentClassSelect").addEventListener("change",event=>{document.getElementById("applyStudentClass").disabled=!event.target.value});
 document.getElementById("cancelStudentClass").addEventListener("click",()=>document.getElementById("studentClassDialog").close());
 document.getElementById("applyStudentClass").addEventListener("click",()=>{
