@@ -73,14 +73,15 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .student-table-wrap{width:100%;overflow:auto;border:1px solid var(--line)}
 .student-table{width:100%;min-width:1180px;border-collapse:collapse;table-layout:fixed}
 .student-table th,.student-table td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
-.student-table th{background:#2d3034;color:var(--text);font-size:.78rem;font-weight:650}
-.student-table th[data-student-header]{position:relative;padding:4px 30px 4px 6px}
-.student-header-label{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.student-header-menu-button{position:absolute;top:3px;right:4px;display:grid;place-items:center;width:24px;height:24px;padding:0;border:0;border-radius:3px;background:transparent;color:var(--sub)}
+.student-table th{background:transparent;color:var(--text);font-size:.78rem;font-weight:650}
+.student-table th[data-student-header]{padding:3px 4px}
+.student-header-control{display:flex;align-items:center;gap:2px;width:100%;min-width:0;min-height:30px;box-sizing:border-box;padding:3px 2px 3px 6px;border-radius:8px;background:#2d3034}
+.student-header-label{flex:1;display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.student-header-menu-button{display:grid;place-items:center;flex:0 0 20px;width:20px;height:24px;padding:0;border:0;border-radius:3px;background:transparent;color:var(--sub)}
 .student-header-menu-button:hover,.student-header-menu-button[aria-expanded="true"]{background:#44474c;color:var(--text)}
 .student-header-menu-button[data-filter-active="true"]{background:var(--blue);color:#17191c}
 .student-header-menu-button .menu-icon{width:17px;height:17px}
-.student-pap-filter{position:absolute;top:7px;right:8px;width:16px;height:16px;margin:0;accent-color:var(--blue);cursor:pointer}
+.student-pap-filter{flex:none;width:16px;height:16px;margin:0 4px 0 0;accent-color:var(--blue);cursor:pointer}
 .student-column-menu{position:fixed;z-index:90;width:min(280px,calc(100vw - 16px));padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.42);color:var(--text)}
 .student-column-menu-heading{margin:4px 7px 6px;color:var(--sub);font-size:.72rem;font-weight:700;text-transform:uppercase}
 .student-column-action{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:start;gap:8px;width:100%;padding:8px 7px;border:0;border-radius:4px;background:transparent;color:var(--text);text-align:left}
