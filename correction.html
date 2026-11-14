@@ -215,9 +215,19 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
         <input id="studentCsvInput" class="sr-only" type="file" accept=".csv,text/csv" aria-label="Importer une liste depuis un export Pronote">
       </div>
       <p id="studentImportStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
+      <p id="studentTableStatus" class="student-table-status" role="status" aria-live="polite" hidden></p>
       <div class="student-table-wrap">
         <table class="student-table">
-          <thead><tr><th scope="col" aria-label="Supprimer"></th><th scope="col">Nom</th><th scope="col">Prénom</th><th scope="col">Classe</th><th scope="col">PAP</th><th scope="col">Sous-groupe</th><th scope="col">Sujet</th><th scope="col">Remarque</th></tr></thead>
+          <thead><tr>
+            <th scope="col" aria-label="Supprimer"></th>
+            <th scope="col" data-student-header="nom"><span class="student-header-label">Nom</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="nom" title="Trier par nom" aria-label="Trier par nom"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="nom" title="Filtrer par nom" aria-label="Filtrer par nom"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
+            <th scope="col" data-student-header="prenom"><span class="student-header-label">Prénom</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="prenom" title="Trier par prénom" aria-label="Trier par prénom"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="prenom" title="Filtrer par prénom" aria-label="Filtrer par prénom"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
+            <th scope="col" data-student-header="classe"><span class="student-header-label">Classe</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="classe" title="Trier par classe" aria-label="Trier par classe"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="classe" title="Filtrer par classe" aria-label="Filtrer par classe"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button><button class="student-header-button" id="bulkClassBtn" type="button" title="Attribuer une classe à tous les élèves" aria-label="Attribuer une classe à tous les élèves"><span class="menu-icon" style="--icon:url('icones/school.svg')" aria-hidden="true"></span></button></span></th>
+            <th scope="col" data-student-header="pap"><span class="student-header-label">PAP</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="pap" title="Trier par PAP" aria-label="Trier par PAP"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="pap" title="Filtrer par PAP" aria-label="Filtrer par PAP"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
+            <th scope="col" data-student-header="sousGroupe"><span class="student-header-label">Sous-groupe</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="sousGroupe" title="Trier par sous-groupe" aria-label="Trier par sous-groupe"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="sousGroupe" title="Filtrer par sous-groupe" aria-label="Filtrer par sous-groupe"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
+            <th scope="col" data-student-header="sujet"><span class="student-header-label">Sujet</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="sujet" title="Trier par sujet" aria-label="Trier par sujet"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="sujet" title="Filtrer par sujet" aria-label="Filtrer par sujet"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
+            <th scope="col" data-student-header="remarque"><span class="student-header-label">Remarque</span><span class="student-header-actions"><button class="student-header-button" type="button" data-sort-field="remarque" title="Trier par remarque" aria-label="Trier par remarque"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></button><button class="student-header-button" type="button" data-filter-field="remarque" title="Filtrer par remarque" aria-label="Filtrer par remarque"><span class="menu-icon" style="--icon:url('icones/filter_alt.svg')" aria-hidden="true"></span></button></span></th>
+          </tr></thead>
           <tbody id="studentTableBody"></tbody>
         </table>
       </div>
@@ -240,6 +250,17 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <div class="dialog-heading"><h2>Remplacer la liste d’élèves ?</h2></div>
   <p id="replaceStudentsMessage">Les élèves actuellement dans le groupe seront remplacés par ceux du fichier CSV.</p>
   <div class="dialog-actions"><button id="cancelReplaceStudents" class="secondary" type="button">Annuler</button><button id="confirmReplaceStudents" type="button">Remplacer</button></div>
+</dialog>
+<dialog id="studentFilterDialog">
+  <div class="dialog-heading"><h2 id="studentFilterHeading">Filtrer</h2></div>
+  <label class="student-filter-field">Contient<input id="studentFilterValue" type="search" autocomplete="off"></label>
+  <div class="dialog-actions"><button id="clearStudentFilter" class="secondary" type="button">Effacer le filtre</button><button id="cancelStudentFilter" class="secondary" type="button">Annuler</button><button id="applyStudentFilter" type="button">Appliquer</button></div>
+</dialog>
+<dialog id="studentClassDialog">
+  <div class="dialog-heading"><h2>Attribuer une classe</h2></div>
+  <p id="studentClassStatus" class="catalog-status" role="status" aria-live="polite"></p>
+  <label class="student-filter-field">Classe<select id="studentClassSelect"></select></label>
+  <div class="dialog-actions"><button id="cancelStudentClass" class="secondary" type="button">Annuler</button><button id="applyStudentClass" type="button" disabled>Attribuer à tous</button></div>
 </dialog>
 <dialog id="gridCatalogDialog">
   <div class="dialog-heading"><h2>Choisir une grille de correction</h2></div>
@@ -298,6 +319,9 @@ let assignment = {};
 let activeStudentGroup = null;
 let assignmentStudentDetails = {};
 let pendingStudentImport = null;
+let studentFilters = {};
+let studentSort = {field:"",direction:1};
+let studentFilterField = "";
 let manualChoices = {};
 let manualCategoryPercent = {};
 let categoryEvaluations = {};
@@ -974,9 +998,26 @@ function renderAssignmentNode(node,depth){
   return fragment;
 }
 function createStudentId(){return globalThis.crypto?.randomUUID?.()||`eleve-${Date.now()}-${Math.random().toString(36).slice(2)}`}
+function studentFieldValue(student,field){
+  if(field==="pap")return student.pap?"Oui":"Non";
+  if(Object.hasOwn(student,field))return student[field]||"";
+  return assignmentStudentDetails[student.id]?.[field]||"";
+}
+function refreshStudentTableForField(field){if(studentSort.field===field||studentFilters[field])renderStudentTable()}
 function renderStudentTable(){
-  const body=document.getElementById("studentTableBody");body.replaceChildren();
-  for(const student of activeStudentGroup?.students||[]){
+  const body=document.getElementById("studentTableBody"),allStudents=activeStudentGroup?.students||[];body.replaceChildren();
+  let visibleStudents=allStudents.filter(student=>Object.entries(studentFilters).every(([field,filter])=>String(studentFieldValue(student,field)).toLocaleLowerCase().includes(filter.toLocaleLowerCase())));
+  if(studentSort.field)visibleStudents.sort((first,second)=>String(studentFieldValue(first,studentSort.field)).localeCompare(String(studentFieldValue(second,studentSort.field)),"fr",{numeric:true,sensitivity:"base"})*studentSort.direction);
+  document.querySelectorAll("[data-student-header]").forEach(header=>{
+    const field=header.dataset.studentHeader,sortButton=header.querySelector("[data-sort-field]"),filterButton=header.querySelector("[data-filter-field]");
+    header.setAttribute("aria-sort",studentSort.field===field?(studentSort.direction===1?"ascending":"descending"):"none");
+    if(sortButton){const isSorted=studentSort.field===field;sortButton.setAttribute("aria-pressed",String(isSorted));sortButton.dataset.sortDirection=isSorted?(studentSort.direction===1?"ascending":"descending"):"";sortButton.title=isSorted?`Tri ${studentSort.direction===1?"croissant":"décroissant"} : ${field}`:`Trier par ${field}`}
+    if(filterButton)filterButton.setAttribute("aria-pressed",String(Boolean(studentFilters[field])));
+  });
+  const tableStatus=document.getElementById("studentTableStatus"),activeFilterCount=Object.values(studentFilters).filter(Boolean).length;
+  tableStatus.hidden=activeFilterCount===0;
+  tableStatus.textContent=activeFilterCount?`${visibleStudents.length} élève(s) affiché(s) sur ${allStudents.length}.`:"";
+  for(const student of visibleStudents){
     const row=document.createElement("tr");
     const deleteCell=document.createElement("td"),deleteButton=document.createElement("button");
     deleteButton.type="button";deleteButton.className="student-row-delete";deleteButton.title="Supprimer l’élève";deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`);
@@ -988,13 +1029,13 @@ function renderStudentTable(){
     deleteCell.append(deleteButton);row.append(deleteCell);
     for(const [field,label] of [["nom","Nom"],["prenom","Prénom"],["classe","Classe"]]){
       const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=student[field]||"";input.setAttribute("aria-label",`${label} de ${student.prenom} ${student.nom}`);
-      input.addEventListener("input",()=>{student[field]=input.value;if(field==="nom"||field==="prenom")deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`)});
+      input.addEventListener("input",()=>{student[field]=input.value;if(field==="nom"||field==="prenom")deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`)});input.addEventListener("change",()=>refreshStudentTableForField(field));
       cell.append(input);row.append(cell);
     }
-    const papCell=document.createElement("td"),papInput=document.createElement("input");papInput.type="checkbox";papInput.checked=Boolean(student.pap);papInput.setAttribute("aria-label",`PAP pour ${student.prenom} ${student.nom}`);papInput.addEventListener("change",()=>{student.pap=papInput.checked});papCell.append(papInput);row.append(papCell);
+    const papCell=document.createElement("td"),papInput=document.createElement("input");papInput.type="checkbox";papInput.checked=Boolean(student.pap);papInput.setAttribute("aria-label",`PAP pour ${student.prenom} ${student.nom}`);papInput.addEventListener("change",()=>{student.pap=papInput.checked;refreshStudentTableForField("pap")});papCell.append(papInput);row.append(papCell);
     const details=assignmentStudentDetails[student.id]||(assignmentStudentDetails[student.id]={sousGroupe:"",sujet:"",remarque:""});
     for(const [field,label] of [["sousGroupe","Sous-groupe"],["sujet","Sujet"],["remarque","Remarque"]]){
-      const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=details[field]||"";input.setAttribute("aria-label",`${label} pour ${student.prenom} ${student.nom}`);input.addEventListener("input",()=>{details[field]=input.value});cell.append(input);row.append(cell);
+      const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=details[field]||"";input.setAttribute("aria-label",`${label} pour ${student.prenom} ${student.nom}`);input.addEventListener("input",()=>{details[field]=input.value});input.addEventListener("change",()=>refreshStudentTableForField(field));cell.append(input);row.append(cell);
     }
     body.append(row);
   }
@@ -1004,6 +1045,25 @@ function addStudentRow(student={}){
   const newStudent={id:createStudentId(),nom:student.nom||"",prenom:student.prenom||"",classe:student.classe||"",pap:Boolean(student.pap)};
   activeStudentGroup.students.push(newStudent);assignmentStudentDetails[newStudent.id]={sousGroupe:"",sujet:"",remarque:""};renderStudentTable();
   document.querySelector("#studentTableBody tr:last-child input")?.focus();
+}
+async function openStudentClassDialog(){
+  if(!activeStudentGroup?.students.length){
+    const status=document.getElementById("studentImportStatus");status.hidden=false;status.textContent="Ajoutez au moins un élève avant d’attribuer une classe.";return;
+  }
+  const status=document.getElementById("studentClassStatus"),select=document.getElementById("studentClassSelect"),applyButton=document.getElementById("applyStudentClass");
+  status.textContent="Chargement du catalogue…";select.replaceChildren();applyButton.disabled=true;
+  try{
+    const response=await fetch(new URL("catalogue-des-classes.csv",document.baseURI),{cache:"no-cache"});
+    if(!response.ok)throw new Error(`réponse HTTP ${response.status}.`);
+    const rows=parseCsv(await response.text(),["classe"]),classes=[...new Set(rows.map(row=>row.classe.trim()).filter(Boolean))];
+    if(!classes.length)throw new Error("le catalogue ne contient aucune classe.");
+    const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Sélectionner une classe…";placeholder.disabled=true;placeholder.selected=true;select.append(placeholder);
+    for(const name of classes){const option=document.createElement("option");option.value=name;option.textContent=name;select.append(option)}
+    status.textContent=`${classes.length} classes disponibles. Le choix sera appliqué à ${activeStudentGroup.students.length} élève(s).`;
+    document.getElementById("studentClassDialog").showModal();
+  }catch(error){
+    const importStatus=document.getElementById("studentImportStatus");importStatus.hidden=false;importStatus.textContent=`Catalogue des classes indisponible : ${error.message}`;
+  }
 }
 function parseStudentCsv(text){
   const lines=String(text).replace(/^\uFEFF/,"").split(/\r\n|\n|\r/),students=[];
@@ -1118,10 +1178,41 @@ document.getElementById("cancelStudentGroup").addEventListener("click",()=>docum
 document.getElementById("studentGroupForm").addEventListener("submit",event=>{
   event.preventDefault();const name=document.getElementById("studentGroupNameInput").value.trim();if(!name)return;
   activeStudentGroup={name,students:[]};assignmentStudentDetails={};
+  studentFilters={};studentSort={field:"",direction:1};
   document.getElementById("studentGroupTitle").textContent=name;renderStudentTable();
   document.getElementById("studentGroupDialog").close();setActiveView("eleves");
 });
 document.getElementById("addStudentBtn").addEventListener("click",()=>addStudentRow());
+document.querySelectorAll("[data-sort-field]").forEach(button=>button.addEventListener("click",()=>{
+  const field=button.dataset.sortField;
+  studentSort=studentSort.field===field?{field,direction:-studentSort.direction}:{field,direction:1};renderStudentTable();
+}));
+document.querySelectorAll("[data-filter-field]").forEach(button=>button.addEventListener("click",()=>{
+  studentFilterField=button.dataset.filterField;
+  const header=button.closest("th"),label=header.querySelector(".student-header-label").textContent;
+  document.getElementById("studentFilterHeading").textContent=`Filtrer : ${label}`;
+  const input=document.getElementById("studentFilterValue");input.value=studentFilters[studentFilterField]||"";
+  document.getElementById("studentFilterDialog").showModal();input.focus();
+}));
+document.getElementById("cancelStudentFilter").addEventListener("click",()=>document.getElementById("studentFilterDialog").close());
+document.getElementById("applyStudentFilter").addEventListener("click",()=>{
+  const value=document.getElementById("studentFilterValue").value.trim();
+  if(value)studentFilters[studentFilterField]=value;else delete studentFilters[studentFilterField];
+  document.getElementById("studentFilterDialog").close();renderStudentTable();
+});
+document.getElementById("clearStudentFilter").addEventListener("click",()=>{
+  delete studentFilters[studentFilterField];document.getElementById("studentFilterValue").value="";
+  document.getElementById("studentFilterDialog").close();renderStudentTable();
+});
+document.getElementById("bulkClassBtn").addEventListener("click",openStudentClassDialog);
+document.getElementById("studentClassSelect").addEventListener("change",event=>{document.getElementById("applyStudentClass").disabled=!event.target.value});
+document.getElementById("cancelStudentClass").addEventListener("click",()=>document.getElementById("studentClassDialog").close());
+document.getElementById("applyStudentClass").addEventListener("click",()=>{
+  const className=document.getElementById("studentClassSelect").value;
+  if(!className||!activeStudentGroup)return;
+  for(const student of activeStudentGroup.students)student.classe=className;
+  document.getElementById("studentClassDialog").close();renderStudentTable();
+});
 document.getElementById("studentCsvInput").addEventListener("change",event=>{
   const file=event.target.files?.[0];event.target.value="";if(!file)return;
   const status=document.getElementById("studentImportStatus");status.hidden=true;status.textContent="";
@@ -1142,7 +1233,7 @@ document.getElementById("cancelReplaceStudents").addEventListener("click",()=>{
 document.getElementById("confirmReplaceStudents").addEventListener("click",()=>{
   if(!pendingStudentImport||!activeStudentGroup)return;
   activeStudentGroup.students=pendingStudentImport.map(student=>({id:createStudentId(),...student}));
-  assignmentStudentDetails={};pendingStudentImport=null;renderStudentTable();
+  assignmentStudentDetails={};pendingStudentImport=null;studentFilters={};studentSort={field:"",direction:1};renderStudentTable();
   document.getElementById("replaceStudentsDialog").close();
 });
 navigationButtons.forEach(button=>button.addEventListener("click",()=>setActiveView(button.dataset.view)));

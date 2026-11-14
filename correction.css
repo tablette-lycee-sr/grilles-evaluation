@@ -67,12 +67,21 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .student-group-toolbar h1{flex:1;min-width:0;margin:0;font-size:1.35rem}
 .student-csv-button{display:inline-flex;align-items:center;min-height:36px;padding:7px 11px;border:1px solid var(--line);border-radius:5px;background:#3a3d42;color:var(--text);font-size:.84rem;cursor:pointer}
 .student-table-wrap{width:100%;overflow:auto;border:1px solid var(--line)}
-.student-table{width:100%;min-width:920px;border-collapse:collapse;table-layout:fixed}
+.student-table{width:100%;min-width:1180px;border-collapse:collapse;table-layout:fixed}
 .student-table th,.student-table td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
 .student-table th{background:#2d3034;color:var(--text);font-size:.78rem;font-weight:650}
+.student-table th[data-student-header]{padding:4px 5px}
+.student-header-label{display:block;min-width:0;padding-right:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.student-table th[data-student-header="classe"] .student-header-label{padding-right:74px}
+.student-header-actions{position:absolute;top:4px;right:5px;display:inline-flex;align-items:center;gap:1px}
+.student-table th[data-student-header]{position:relative}
+.student-header-button{display:grid;place-items:center;flex:none;width:23px;height:24px;padding:0;border:0;border-radius:3px;background:transparent;color:var(--sub)}
+.student-header-button:hover,.student-header-button[aria-pressed="true"]{background:#44474c;color:var(--text)}
+.student-header-button .menu-icon{width:14px;height:14px}
+.student-header-button[data-sort-direction="descending"] .menu-icon{transform:rotate(180deg)}
 .student-table th:first-child,.student-table td:first-child{width:38px;text-align:center}
 .student-table th:nth-child(2),.student-table th:nth-child(3){width:14%}
-.student-table th:nth-child(4){width:10%}
+.student-table th:nth-child(4){width:15%}
 .student-table th:nth-child(5){width:7%;text-align:center}
 .student-table th:nth-child(6){width:13%}
 .student-table th:nth-child(7),.student-table th:nth-child(8){width:18%}
@@ -82,6 +91,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .student-row-delete{display:grid;place-items:center;width:30px;height:30px;margin:auto;padding:0;border:0;background:transparent;color:var(--sub)}
 .student-row-delete:hover{background:#44474c;color:var(--text)}
 .student-row-delete .menu-icon{width:17px;height:17px}
+.student-table-status{margin:0 0 8px;color:var(--sub);font-size:.82rem}
 .add-student-button{margin-top:10px;padding:7px 10px;border:1px solid var(--line);background:transparent;font-size:.86rem}
 .group-name-field{display:grid;gap:6px;color:var(--sub);font-size:.84rem}
 .group-name-field input{padding:9px 10px;border:1px solid var(--line);border-radius:5px;background:#1b1d20;color:var(--text);font:inherit}
@@ -90,6 +100,10 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 #replaceStudentsDialog{width:min(460px,calc(100vw - 32px))}
 #replaceStudentsDialog p{color:var(--sub)}
 #replaceStudentsDialog .dialog-actions{gap:8px}
+#studentFilterDialog,#studentClassDialog{width:min(440px,calc(100vw - 32px))}
+#studentFilterDialog .dialog-actions,#studentClassDialog .dialog-actions{gap:8px;flex-wrap:wrap}
+.student-filter-field{display:grid;gap:6px;color:var(--sub);font-size:.84rem}
+.student-filter-field input,.student-filter-field select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:5px;background:#1b1d20;color:var(--text);font:inherit}
 @media(max-width:760px){.assignment-layout{grid-template-columns:minmax(0,1fr);gap:24px}.assignment-grid{border-left:0;border-top:1px solid var(--line);padding:20px 0 0}}
 @media(max-width:699px){.student-group-toolbar{align-items:flex-start;flex-direction:column;gap:8px}}
 [hidden]{display:none!important}
