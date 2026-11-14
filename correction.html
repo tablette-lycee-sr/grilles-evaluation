@@ -281,7 +281,10 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <section id="correctionTrombiView" class="correction-trombi-view" hidden aria-labelledby="correctionTrombiHeading">
   <div class="correction-trombi-toolbar">
     <div><p class="correction-trombi-kicker">Correction</p><h1 id="correctionTrombiHeading">Trombinoscope</h1><p id="correctionTrombiSummary" class="correction-trombi-summary"></p></div>
-    <button id="showIndividualCorrection" type="button">Grille individuelle</button>
+    <div class="correction-trombi-actions">
+      <button id="toggleCorrectionTrombiLayout" class="icon-button correction-trombi-layout-toggle" type="button" title="Pleine page" aria-label="Passer à l’affichage pleine page" aria-pressed="false"><span class="menu-icon" style="--icon:url('icones/grid_view.svg')" aria-hidden="true"></span></button>
+      <button id="showIndividualCorrection" type="button">Grille individuelle</button>
+    </div>
   </div>
   <div id="correctionTrombiEmpty" class="correction-trombi-empty" hidden>
     <p>Aucun groupe d’élèves actif. Ouvrez l’onglet Élèves pour créer ou charger un groupe.</p>
@@ -293,6 +296,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
       <tbody id="correctionTrombiBody"></tbody>
     </table>
   </div>
+  <div id="correctionTrombiCards" class="correction-trombi-cards" role="list" aria-label="Élèves du groupe" hidden></div>
 </section>
 <nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
 <header aria-label="En-tête">
@@ -339,6 +343,7 @@ let assignment = {};
 let activeStudentGroup = null;
 let assignmentStudentDetails = {};
 let selectedStudentIds = new Set();
+let correctionTrombiMode = "rows";
 let pendingStudentImport = null;
 let studentFilters = {};
 const EMPTY_STUDENT_FILTER = Symbol("empty student filter");
@@ -1109,15 +1114,26 @@ function createTrombiLevelScale(){
 }
 function renderCorrectionTrombi(){
   const head=document.getElementById("correctionTrombiHead"),body=document.getElementById("correctionTrombiBody");
-  const empty=document.getElementById("correctionTrombiEmpty"),matrix=document.getElementById("correctionTrombiMatrix");
+  const empty=document.getElementById("correctionTrombiEmpty"),matrix=document.getElementById("correctionTrombiMatrix"),cards=document.getElementById("correctionTrombiCards");
   const students=activeStudentGroup?.students||[];
   document.getElementById("correctionTrombiSummary").textContent=activeStudentGroup?`${activeStudentGroup.name} · ${students.length} élève(s)`:"";
-  empty.hidden=students.length>0;matrix.hidden=students.length===0;
+  empty.hidden=students.length>0;matrix.hidden=students.length===0||correctionTrombiMode==="full";cards.hidden=students.length===0||correctionTrombiMode!=="full";
+  document.getElementById("correctionTrombiView").dataset.layout=correctionTrombiMode;
+  updateCorrectionTrombiToggle();
+  cards.replaceChildren();
   if(!activeStudentGroup)empty.querySelector("p").textContent="Aucun groupe d’élèves actif. Ouvrez l’onglet Élèves pour créer ou charger un groupe.";
   else empty.querySelector("p").textContent="Ce groupe ne contient aucun élève.";
   head.replaceChildren();body.replaceChildren();
   const criterionHeading=document.createElement("th");criterionHeading.scope="col";criterionHeading.textContent="Critères";head.append(criterionHeading);
   for(const [index,student] of students.entries()){
+    const card=document.createElement("article");card.className="correction-trombi-card";card.setAttribute("role","listitem");
+    const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(index+1);
+    const cardPortrait=createTrombiPortrait();cardPortrait.classList.add("correction-trombi-card-portrait");
+    const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
+    const cardClass=document.createElement("span");cardClass.className="correction-trombi-card-class";cardClass.textContent=student.classe||"—";
+    const cardNote=document.createElement("span"),note=assignmentStudentDetails[student.id]?.note;
+    cardNote.className="correction-trombi-card-note";cardNote.textContent=`Note : ${note===null||note===undefined||note===""?"—":String(note)}`;
+    card.append(cardNumber,cardPortrait,cardName,cardClass,cardNote);cards.append(card);
     const column=document.createElement("th");column.scope="col";
     const header=document.createElement("div");header.className="correction-trombi-student-header";
     const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(index+1);
@@ -1142,6 +1158,12 @@ function renderCorrectionTrombi(){
   appendRow("Groupe",student=>assignmentStudentDetails[student.id]?.sousGroupe);
   appendRow("Sujet",student=>assignmentStudentDetails[student.id]?.sujet);
   appendRow("Note",student=>assignmentStudentDetails[student.id]?.note);
+}
+function updateCorrectionTrombiToggle(){
+  const button=document.getElementById("toggleCorrectionTrombiLayout"),icon=button.querySelector(".menu-icon"),isFullPage=correctionTrombiMode==="full";
+  const targetMode=isFullPage?"en rang":"en pleine page";
+  button.title=`Afficher ${targetMode}`;button.setAttribute("aria-label",`Passer à l’affichage ${targetMode}`);button.setAttribute("aria-pressed",String(isFullPage));
+  icon.style.setProperty("--icon",`url('icones/${isFullPage?"view_list.svg":"grid_view.svg"}')`);
 }
 function closeStudentColumnMenu(){
   document.getElementById("studentColumnMenu").hidden=true;
@@ -1326,6 +1348,9 @@ function setActiveView(viewId){
 }
 document.getElementById("showIndividualCorrection").addEventListener("click",()=>{
   document.getElementById("correctionTrombiView").hidden=true;correctionApp.classList.remove("trombi-view");
+});
+document.getElementById("toggleCorrectionTrombiLayout").addEventListener("click",()=>{
+  correctionTrombiMode=correctionTrombiMode==="rows"?"full":"rows";renderCorrectionTrombi();
 });
 document.getElementById("showCorrectionTrombi").addEventListener("click",()=>{
   document.getElementById("correctionTrombiView").hidden=false;correctionApp.classList.add("trombi-view");renderCorrectionTrombi();
