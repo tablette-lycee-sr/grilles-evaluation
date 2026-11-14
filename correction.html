@@ -282,7 +282,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <div class="app" hidden>
 <section id="correctionTrombiView" class="correction-trombi-view" hidden aria-labelledby="correctionTrombiHeading">
   <div class="correction-trombi-toolbar">
-    <div class="correction-trombi-title"><h1 id="correctionTrombiHeading"></h1><p id="correctionTrombiSummary" class="correction-trombi-summary"></p></div>
+    <div class="correction-trombi-title"><h1 id="correctionTrombiHeading"></h1><div class="correction-trombi-count"><p id="correctionTrombiSummary" class="correction-trombi-summary"></p><details class="correction-trombi-sort" id="correctionTrombiSort"><summary class="icon-button" title="Trier les élèves" aria-label="Trier les élèves"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></summary><div class="correction-trombi-sort-menu" aria-label="Tri des élèves"><button type="button" data-trombi-sort="name-asc" aria-pressed="true">Nom : ordre croissant</button><button type="button" data-trombi-sort="name-desc" aria-pressed="false">Nom : ordre décroissant</button><button type="button" data-trombi-sort="sousGroupe" aria-pressed="false">Sous-groupe</button><button type="button" data-trombi-sort="classe" aria-pressed="false">Classe</button></div></details></div></div>
     <div class="correction-trombi-actions">
       <button id="toggleCorrectionTrombiLayout" class="icon-button correction-trombi-layout-toggle" type="button" title="Afficher en rang" aria-label="Passer à l’affichage en rang" aria-pressed="true"><span class="menu-icon" style="--icon:url('icones/view_list.svg')" aria-hidden="true"></span></button>
     </div>
@@ -347,6 +347,7 @@ let studentCorrections = {};
 let activeCorrectionStudentId = null;
 let selectedStudentIds = new Set();
 let correctionTrombiMode = "full";
+let correctionTrombiSort = "name-asc";
 let trombiPhotoUrls = new Map();
 let pendingStudentImport = null;
 let studentFilters = {};
@@ -1190,6 +1191,18 @@ function createTrombiLevelScale(selected=null){
   for(const level of ["NA","ECA","A","D"]){const marker=document.createElement("span");marker.textContent=level;if(level===selected){marker.classList.add("selected");marker.dataset.level=level}scale.append(marker)}
   return scale;
 }
+function compareTrombiStudentNames(first,second){
+  return first.nom.localeCompare(second.nom,"fr",{numeric:true,sensitivity:"base"})||first.prenom.localeCompare(second.prenom,"fr",{numeric:true,sensitivity:"base"});
+}
+function getSortedTrombiStudents(students){
+  return students.slice().sort((first,second)=>{
+    if(correctionTrombiSort==="name-desc")return compareTrombiStudentNames(second,first);
+    if(correctionTrombiSort==="name-asc")return compareTrombiStudentNames(first,second);
+    const firstValue=String(studentFieldValue(first,correctionTrombiSort)).trim(),secondValue=String(studentFieldValue(second,correctionTrombiSort)).trim();
+    if(!firstValue||!secondValue)return Number(!firstValue)-Number(!secondValue)||compareTrombiStudentNames(first,second);
+    return firstValue.localeCompare(secondValue,"fr",{numeric:true,sensitivity:"base"})||compareTrombiStudentNames(first,second);
+  });
+}
 function renderCorrectionTrombi(){
   const criteria=document.getElementById("correctionTrombiCriteria"),track=document.getElementById("correctionTrombiTrack");
   const empty=document.getElementById("correctionTrombiEmpty"),matrix=document.getElementById("correctionTrombiMatrix"),cards=document.getElementById("correctionTrombiCards");
@@ -1207,14 +1220,15 @@ function renderCorrectionTrombi(){
   track.style.setProperty("--trombi-criterion-count",String(criterionLabels.length));
   const criterionHeading=document.createElement("div");criterionHeading.className="correction-trombi-criterion-heading";criterionHeading.textContent="Critères";criteria.append(criterionHeading);
   for(const label of criterionLabels){const criterion=document.createElement("div");criterion.className="correction-trombi-criterion";criterion.textContent=label;criteria.append(criterion)}
-  const alphabeticalStudents=students.slice().sort((first,second)=>first.nom.localeCompare(second.nom,"fr",{numeric:true,sensitivity:"base"})||first.prenom.localeCompare(second.prenom,"fr",{numeric:true,sensitivity:"base"}));
+  const alphabeticalStudents=students.slice().sort(compareTrombiStudentNames),studentNumbers=new Map(alphabeticalStudents.map((student,index)=>[student.id,index+1]));
+  const sortedStudents=getSortedTrombiStudents(students);
   const groupColors=getTrombiGroupColorMap(alphabeticalStudents);
   const cardsPerRow=window.matchMedia("(max-width: 600px)").matches?3:9;let cardRow=null;
-  for(const [index,student] of alphabeticalStudents.entries()){
+  for(const [index,student] of sortedStudents.entries()){
     if(index%cardsPerRow===0){cardRow=document.createElement("div");cardRow.className="correction-trombi-card-row";cardRow.setAttribute("role","presentation");cards.append(cardRow)}
     const card=document.createElement("article");card.className="correction-trombi-card";card.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-card-header";
-    const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(index+1);cardNumber.setAttribute("aria-label",`Élève numéro ${index+1} dans l’ordre alphabétique`);
+    const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(studentNumbers.get(student.id));cardNumber.setAttribute("aria-label",`Élève numéro ${studentNumbers.get(student.id)} dans l’ordre alphabétique`);
     const note=assignmentStudentDetails[student.id]?.note,noteLabel=note===null||note===undefined||note===""?"—":String(note);
     const cardNote=document.createElement("span");cardNote.className="correction-trombi-card-note";cardNote.textContent=noteLabel;cardNote.style.backgroundColor=getTrombiNoteColor(note);cardNote.setAttribute("aria-label",`Note : ${noteLabel}`);
     const papBadge=document.createElement("span");papBadge.className="correction-trombi-card-pap";papBadge.textContent=student.pap?"!":"";papBadge.setAttribute("aria-label",student.pap?"PAP":"Pas de PAP");
@@ -1226,10 +1240,10 @@ function renderCorrectionTrombi(){
     const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
     card.append(header,photoArea,cardName);cardRow.append(card);
   }
-  for(const [index,student] of alphabeticalStudents.entries()){
+  for(const student of sortedStudents){
     const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-student-header";
-    const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(index+1);
+    const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(studentNumbers.get(student.id));number.setAttribute("aria-label",`Élève numéro ${studentNumbers.get(student.id)} dans l’ordre alphabétique`);
     const identity=document.createElement("div");identity.className="correction-trombi-identity";
     const photoButton=document.createElement("button");photoButton.type="button";photoButton.className="correction-trombi-photo-button";photoButton.setAttribute("aria-label",`Corriger ${[student.nom,student.prenom].filter(Boolean).join(" ")}`);photoButton.addEventListener("click",()=>openStudentCorrection(student));photoButton.append(createTrombiPortrait(student));identity.append(photoButton);
     const name=document.createElement("strong");name.className="correction-trombi-student-name";name.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
@@ -1472,6 +1486,21 @@ function setActiveView(viewId){
 document.getElementById("toggleCorrectionTrombiLayout").addEventListener("click",()=>{
   correctionTrombiMode=correctionTrombiMode==="rows"?"full":"rows";renderCorrectionTrombi();
 });
+const correctionTrombiSortMenu=document.getElementById("correctionTrombiSort");
+function positionCorrectionTrombiSortMenu(){
+  if(!correctionTrombiSortMenu.open)return;
+  const anchor=correctionTrombiSortMenu.querySelector("summary"),menu=correctionTrombiSortMenu.querySelector(".correction-trombi-sort-menu"),anchorRect=anchor.getBoundingClientRect();
+  menu.style.left=`${Math.max(8,Math.min(anchorRect.left,window.innerWidth-menu.offsetWidth-8))-anchorRect.left}px`;
+}
+correctionTrombiSortMenu.addEventListener("toggle",positionCorrectionTrombiSortMenu);
+window.addEventListener("resize",positionCorrectionTrombiSortMenu);
+correctionTrombiSortMenu.querySelectorAll("[data-trombi-sort]").forEach(button=>button.addEventListener("click",()=>{
+  correctionTrombiSort=button.dataset.trombiSort;
+  correctionTrombiSortMenu.querySelectorAll("[data-trombi-sort]").forEach(option=>option.setAttribute("aria-pressed",String(option===button)));
+  correctionTrombiSortMenu.open=false;renderCorrectionTrombi();correctionTrombiSortMenu.querySelector("summary").focus();
+}));
+document.addEventListener("click",event=>{if(!correctionTrombiSortMenu.contains(event.target))correctionTrombiSortMenu.open=false});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&correctionTrombiSortMenu.open){correctionTrombiSortMenu.open=false;correctionTrombiSortMenu.querySelector("summary").focus()}});
 const trombiPhotoFolder=document.getElementById("trombiPhotoFolder");
 document.getElementById("associateStudentPhotosBtn").addEventListener("click",()=>trombiPhotoFolder.click());
 trombiPhotoFolder.addEventListener("change",()=>{
