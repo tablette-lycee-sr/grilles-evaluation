@@ -300,20 +300,20 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <div id="correctionTrombiCards" class="correction-trombi-cards" role="list" aria-label="Élèves du groupe" hidden></div>
 </section>
 <nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
-<header aria-label="En-tête">
-  <div class="header-left">
-    <h1 id="pageTitle" aria-label="Titre de la grille"></h1>
-    <div class="header-fields">
-      <input id="studentName" class="student-name" type="text" placeholder="Nom de l’élève" aria-label="Nom de l’élève">
-      <div class="grade-line"><input id="finalGrade" class="student-name final-grade" type="text" placeholder="Note finale" aria-label="Note finale"><div class="header-score" aria-label="Proposition de note finale avec bonus"><output id="finalScore">—/20</output></div></div>
-    </div>
-  </div>
-  <div class="header-actions no-print" aria-label="Actions">
-    <button id="resetBtn" class="icon-button" type="button" title="Effacer la correction de cette grille" aria-label="Effacer la correction de cette grille"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1-6.2 10.2"/></svg></button>
+<header class="correction-header" aria-label="En-tête">
+  <span id="pageTitle" hidden></span>
+  <button id="showCorrectionStudentInfo" class="icon-button correction-student-photo" type="button" title="Fiche élève" aria-label="Fiche élève" aria-haspopup="dialog" disabled><span class="menu-icon" style="--icon:url('icones/portrait.svg')" aria-hidden="true"></span></button>
+  <div class="correction-student-name"><input id="studentName" class="student-name" type="text" placeholder="Nom de l’élève" aria-label="Nom de l’élève"></div>
+  <div class="correction-grade"><input id="finalGrade" class="student-name final-grade" type="text" placeholder="Note" aria-label="Note finale"><div class="header-score" aria-label="Proposition de note finale avec bonus"><output id="finalScore">—/20</output></div></div>
+  <div class="correction-header-actions no-print" aria-label="Actions">
+    <button id="previousCorrectionStudent" class="icon-button" type="button" title="Élève précédent" aria-label="Élève précédent" disabled><span class="menu-icon" style="--icon:url('icones/keyboard_arrow_left.svg')" aria-hidden="true"></span></button>
+    <button id="nextCorrectionStudent" class="icon-button" type="button" title="Élève suivant" aria-label="Élève suivant" disabled><span class="menu-icon" style="--icon:url('icones/keyboard_arrow_right.svg')" aria-hidden="true"></span></button>
+    <button id="resetBtn" class="icon-button" type="button" title="Effacer la correction de cette grille" aria-label="Effacer la correction de cette grille"><span class="menu-icon" style="--icon:url('icones/delete.svg')" aria-hidden="true"></span></button>
     <button id="showCorrectionTrombi" class="icon-button correction-trombi-layout-toggle" type="button" title="Revenir au trombinoscope en pleine page" aria-label="Revenir au trombinoscope en pleine page"><span class="menu-icon" style="--icon:url('icones/grid_view.svg')" aria-hidden="true"></span></button>
   </div>
 </header>
 <div id="status" class="sr-only" role="status" aria-live="polite"></div>
+<dialog id="correctionStudentInfo" class="correction-student-info" aria-label="Fiche élève"></dialog>
 <dialog id="settingsDialog"><div class="dialog-heading"><h2>Préférences</h2><button id="closeSettings" class="icon-button" type="button" aria-label="Fermer les préférences"><span class="menu-icon" style="--icon:url('icones/close.svg')" aria-hidden="true"></span></button></div><label class="settings-option"><input id="showMetrics" type="checkbox">Métriques de calcul</label></dialog>
 <div id="initialState" class="initial-state">Choisissez une grille de correction...</div>
 <main id="content"></main>
@@ -345,6 +345,7 @@ let activeStudentGroup = null;
 let assignmentStudentDetails = {};
 let studentCorrections = {};
 let activeCorrectionStudentId = null;
+let correctionStudentOrder = [];
 let selectedStudentIds = new Set();
 let correctionTrombiMode = "full";
 let correctionTrombiSort = "name-asc";
@@ -985,6 +986,7 @@ function openStudentCorrection(student){
   if(!document.querySelector(".app").classList.contains("grid-loaded")){
     setStatus("Créez d'abord un devoir et choisissez une grille de correction.","error");return;
   }
+  if(!document.getElementById("correctionTrombiView").hidden)correctionStudentOrder=getSortedTrombiStudents(activeStudentGroup?.students||[]).map(item=>item.id);
   captureActiveCorrection();activeCorrectionStudentId=student.id;
   const correction=structuredClone(studentCorrections[student.id]||{});
   manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};
@@ -992,7 +994,25 @@ function openStudentCorrection(student){
   document.getElementById("studentName").value=[student.nom,student.prenom].filter(Boolean).join(" ");
   document.getElementById("studentName").readOnly=true;
   document.getElementById("finalGrade").value=correction.note||"";
-  document.getElementById("correctionTrombiView").hidden=true;document.querySelector(".app").classList.remove("trombi-view");render();
+  document.getElementById("correctionTrombiView").hidden=true;document.querySelector(".app").classList.remove("trombi-view");updateCorrectionStudentNavigation();render();
+}
+function updateCorrectionStudentNavigation(){
+  const students=activeStudentGroup?.students||[],studentIds=new Set(students.map(student=>student.id));
+  correctionStudentOrder=correctionStudentOrder.filter(id=>studentIds.has(id));
+  if(!correctionStudentOrder.includes(activeCorrectionStudentId))correctionStudentOrder=getSortedTrombiStudents(students).map(student=>student.id);
+  const index=correctionStudentOrder.indexOf(activeCorrectionStudentId);
+  document.getElementById("previousCorrectionStudent").disabled=index<=0;
+  document.getElementById("nextCorrectionStudent").disabled=index<0||index>=correctionStudentOrder.length-1;
+  const photoButton=document.getElementById("showCorrectionStudentInfo"),student=students.find(item=>item.id===activeCorrectionStudentId);
+  photoButton.disabled=!student;photoButton.replaceChildren();
+  if(student)photoButton.append(createTrombiPortrait(student,true));
+  else{const icon=document.createElement("span");icon.className="menu-icon";icon.style.setProperty("--icon","url('icones/portrait.svg')");icon.setAttribute("aria-hidden","true");photoButton.append(icon)}
+}
+function navigateCorrectionStudent(direction){
+  updateCorrectionStudentNavigation();
+  const index=correctionStudentOrder.indexOf(activeCorrectionStudentId),id=correctionStudentOrder[index+direction];
+  const student=activeStudentGroup?.students.find(item=>item.id===id);
+  if(student)openStudentCorrection(student);
 }
 function activateLoadedGrid(title){document.getElementById("pageTitle").textContent=title;document.querySelector(".app").classList.add("grid-loaded");initializePartNav()}
 function initializeAssignment(){
@@ -1451,6 +1471,21 @@ async function loadGridCatalog(){
   }catch(error){catalogEl.textContent="Catalogue indisponible.";const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=false;modalStatus.textContent=`Impossible de charger le catalogue des grilles : ${error.message}`}
 }
 document.getElementById("exportPrintBtn").addEventListener("click",()=>{renderPrintReport();window.print()});
+document.getElementById("previousCorrectionStudent").addEventListener("click",()=>navigateCorrectionStudent(-1));
+document.getElementById("nextCorrectionStudent").addEventListener("click",()=>navigateCorrectionStudent(1));
+document.getElementById("showCorrectionStudentInfo").addEventListener("click",()=>{
+  const student=activeStudentGroup?.students.find(item=>item.id===activeCorrectionStudentId);if(!student)return;
+  const dialog=document.getElementById("correctionStudentInfo"),details=assignmentStudentDetails[student.id]||{};
+  const photo=document.createElement("div");photo.className="correction-student-info-photo";photo.append(createTrombiPortrait(student,true));
+  const content=document.createElement("div");content.className="correction-student-info-content";
+  const name=document.createElement("h2");name.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";content.append(name);
+  const list=document.createElement("dl");
+  for(const [label,value] of [["Classe",student.classe],["Sous-groupe",details.sousGroupe],["Sujet",details.sujet],["Remarque",details.remarque],["PAP",student.pap?"Oui":"Non"]]){
+    const term=document.createElement("dt"),description=document.createElement("dd");term.textContent=label;description.textContent=value||"—";list.append(term,description);
+  }
+  content.append(list);dialog.replaceChildren(photo,content);dialog.showModal();
+});
+document.getElementById("correctionStudentInfo").addEventListener("click",()=>{document.getElementById("correctionStudentInfo").close();document.getElementById("showCorrectionStudentInfo").focus()});
 document.getElementById("resetBtn").addEventListener("click",()=>{resetChoices();document.getElementById("finalGrade").value="";captureActiveCorrection();render();setStatus("La correction et la note de cette grille ont été effacées.")});
 document.getElementById("showMetrics").addEventListener("change",event=>document.querySelector(".app").classList.toggle("show-metrics",event.target.checked));
 document.getElementById("submenuSettings").addEventListener("click",()=>document.getElementById("settingsDialog").showModal());
@@ -1473,6 +1508,7 @@ const correctionApp=document.querySelector(".app");
 const otherView=document.getElementById("otherView");
 function setActiveView(viewId){
   captureActiveCorrection();
+  updateCorrectionStudentNavigation();
   const isCorrection=viewId==="correction",isAssignment=viewId==="devoir";
   const isStudents=viewId==="eleves",hasStudentGroup=Boolean(activeStudentGroup);
   const hasActiveAssignment=correctionApp.classList.contains("grid-loaded");
