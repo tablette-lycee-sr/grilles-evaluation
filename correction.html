@@ -223,7 +223,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
             <th scope="col" data-student-header="nom"><span class="student-header-label">Nom</span><button class="student-header-menu-button" type="button" data-column-menu="nom" aria-label="Actions pour la colonne Nom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
             <th scope="col" data-student-header="prenom"><span class="student-header-label">Prénom</span><button class="student-header-menu-button" type="button" data-column-menu="prenom" aria-label="Actions pour la colonne Prénom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
             <th scope="col" data-student-header="classe"><span class="student-header-label">Classe</span><button class="student-header-menu-button" type="button" data-column-menu="classe" aria-label="Actions pour la colonne Classe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
-            <th scope="col" data-student-header="pap"><span class="student-header-label">PAP</span><button class="student-header-menu-button" type="button" data-column-menu="pap" aria-label="Actions pour la colonne PAP" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
+            <th scope="col" data-student-header="pap"><span class="student-header-label">PAP</span><input class="student-pap-filter" id="studentPapFilter" type="checkbox" aria-label="Afficher uniquement les élèves avec un PAP"></th>
             <th scope="col" data-student-header="sousGroupe"><span class="student-header-label">Sous-groupe</span><button class="student-header-menu-button" type="button" data-column-menu="sousGroupe" aria-label="Actions pour la colonne Sous-groupe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
             <th scope="col" data-student-header="sujet"><span class="student-header-label">Sujet</span><button class="student-header-menu-button" type="button" data-column-menu="sujet" aria-label="Actions pour la colonne Sujet" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
             <th scope="col" data-student-header="remarque"><span class="student-header-label">Remarque</span><button class="student-header-menu-button" type="button" data-column-menu="remarque" aria-label="Actions pour la colonne Remarque" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></th>
@@ -999,6 +999,9 @@ function studentFieldValue(student,field){
   if(Object.hasOwn(student,field))return student[field]||"";
   return assignmentStudentDetails[student.id]?.[field]||"";
 }
+function capitalizeStudentFirstNames(value){
+  return value.replace(/(^|[\s'’\-])(\p{Ll})/gu,(_,separator,letter)=>separator+letter.toLocaleUpperCase("fr-FR"));
+}
 function refreshStudentTableForField(field){if(studentSort.field===field||studentFilters[field])renderStudentTable()}
 function renderStudentTable(){
   const body=document.getElementById("studentTableBody"),allStudents=activeStudentGroup?.students||[];body.replaceChildren();
@@ -1007,8 +1010,14 @@ function renderStudentTable(){
   document.querySelectorAll("[data-student-header]").forEach(header=>{
     const field=header.dataset.studentHeader,menuButton=header.querySelector("[data-column-menu]");
     header.setAttribute("aria-sort",studentSort.field===field?(studentSort.direction===1?"ascending":"descending"):"none");
-    if(menuButton)menuButton.setAttribute("aria-expanded",String(menuButton===studentColumnMenuButton));
+    if(menuButton){
+      const filterActive=Boolean(studentFilters[field]);
+      menuButton.setAttribute("aria-expanded",String(menuButton===studentColumnMenuButton));
+      menuButton.setAttribute("aria-pressed",String(filterActive));
+      menuButton.dataset.filterActive=String(filterActive);
+    }
   });
+  document.getElementById("studentPapFilter").checked=studentFilters.pap==="oui";
   const tableStatus=document.getElementById("studentTableStatus"),activeFilterCount=Object.values(studentFilters).filter(Boolean).length;
   tableStatus.hidden=activeFilterCount===0;
   tableStatus.textContent=activeFilterCount?`${visibleStudents.length} élève(s) affiché(s) sur ${allStudents.length}.`:"";
@@ -1023,11 +1032,14 @@ function renderStudentTable(){
     });
     deleteCell.append(deleteButton);row.append(deleteCell);
     for(const [field,label] of [["nom","Nom"],["prenom","Prénom"],["classe","Classe"]]){
-      const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=student[field]||"";input.setAttribute("aria-label",`${label} de ${student.prenom} ${student.nom}`);
+      const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=student[field]||"";if(field==="classe")input.maxLength=10;input.setAttribute("aria-label",`${label} de ${student.prenom} ${student.nom}`);
       input.addEventListener("input",()=>{
         if(field==="nom"){
           const cursor=input.selectionStart,upperPrefix=input.value.slice(0,cursor).toLocaleUpperCase("fr-FR"),upperValue=input.value.toLocaleUpperCase("fr-FR");
           if(input.value!==upperValue){input.value=upperValue;input.setSelectionRange(upperPrefix.length,upperPrefix.length)}
+        }else if(field==="prenom"){
+          const cursor=input.selectionStart,capitalized=capitalizeStudentFirstNames(input.value);
+          if(input.value!==capitalized){const nextCursor=capitalizeStudentFirstNames(input.value.slice(0,cursor)).length;input.value=capitalized;input.setSelectionRange(nextCursor,nextCursor)}
         }
         student[field]=input.value;
         if(field==="nom"||field==="prenom")deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`);
@@ -1228,6 +1240,10 @@ document.getElementById("studentGroupForm").addEventListener("submit",event=>{
 });
 document.getElementById("addStudentBtn").addEventListener("click",()=>addStudentRow());
 document.querySelectorAll("[data-column-menu]").forEach(button=>button.addEventListener("click",()=>openStudentColumnMenu(button)));
+document.getElementById("studentPapFilter").addEventListener("change",event=>{
+  if(event.target.checked)studentFilters.pap="oui";else delete studentFilters.pap;
+  renderStudentTable();
+});
 document.addEventListener("click",event=>{
   if(event.target.closest("#studentColumnMenu")||event.target.closest("[data-column-menu]"))return;
   closeStudentColumnMenu();
