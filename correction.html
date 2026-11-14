@@ -95,6 +95,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   html,body{background:#fff!important}
   body{margin:0;background:#fff!important;color:#111!important;font:7pt/1.12 system-ui,-apple-system,"Segoe UI",sans-serif}
   body>:not(.app){display:none!important}
+  body .app[hidden]{display:block!important}
   .app{width:auto;margin:0;padding:0}
   .app>:not(#printReport){display:none!important}
   #printReport{display:block!important}
@@ -1205,7 +1206,7 @@ async function loadGridCatalog(){
     catalogEl.replaceChildren(...buttons);
   }catch(error){catalogEl.textContent="Catalogue indisponible.";const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=false;modalStatus.textContent=`Impossible de charger le catalogue des grilles : ${error.message}`}
 }
-document.getElementById("exportPrintBtn").addEventListener("click",()=>window.print());
+document.getElementById("exportPrintBtn").addEventListener("click",()=>{renderPrintReport();window.print()});
 document.getElementById("resetBtn").addEventListener("click",()=>{resetChoices();render();setStatus("Tous les choix et bonus ont été réinitialisés.")});
 document.getElementById("showMetrics").addEventListener("change",event=>document.querySelector(".app").classList.toggle("show-metrics",event.target.checked));
 document.getElementById("submenuSettings").addEventListener("click",()=>document.getElementById("settingsDialog").showModal());
