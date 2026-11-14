@@ -1024,7 +1024,14 @@ function renderStudentTable(){
     deleteCell.append(deleteButton);row.append(deleteCell);
     for(const [field,label] of [["nom","Nom"],["prenom","Prénom"],["classe","Classe"]]){
       const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=student[field]||"";input.setAttribute("aria-label",`${label} de ${student.prenom} ${student.nom}`);
-      input.addEventListener("input",()=>{student[field]=input.value;if(field==="nom"||field==="prenom")deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`)});input.addEventListener("change",()=>refreshStudentTableForField(field));
+      input.addEventListener("input",()=>{
+        if(field==="nom"){
+          const cursor=input.selectionStart,upperPrefix=input.value.slice(0,cursor).toLocaleUpperCase("fr-FR"),upperValue=input.value.toLocaleUpperCase("fr-FR");
+          if(input.value!==upperValue){input.value=upperValue;input.setSelectionRange(upperPrefix.length,upperPrefix.length)}
+        }
+        student[field]=input.value;
+        if(field==="nom"||field==="prenom")deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`);
+      });input.addEventListener("change",()=>refreshStudentTableForField(field));
       cell.append(input);row.append(cell);
     }
     const papCell=document.createElement("td"),papInput=document.createElement("input");papInput.type="checkbox";papInput.checked=Boolean(student.pap);papInput.setAttribute("aria-label",`PAP pour ${student.prenom} ${student.nom}`);papInput.addEventListener("change",()=>{student.pap=papInput.checked;refreshStudentTableForField("pap")});papCell.append(papInput);row.append(papCell);
@@ -1045,20 +1052,22 @@ function openStudentColumnMenu(button){
   const field=button.dataset.columnMenu,header=button.closest("th"),label=header.querySelector(".student-header-label").textContent;
   const menu=document.getElementById("studentColumnMenu");menu.replaceChildren();menu.setAttribute("aria-label",`Actions pour ${label}`);
   const heading=document.createElement("p");heading.className="student-column-menu-heading";heading.textContent=label;menu.append(heading);
-  const addAction=(icon,title,description,callback)=>{
+  const addAction=(icon,title,callback)=>{
     const action=document.createElement("button");action.type="button";action.className="student-column-action";
     const image=document.createElement("span");image.className="menu-icon";image.style.setProperty("--icon",`url('icones/${icon}.svg')`);image.setAttribute("aria-hidden","true");
     const copy=document.createElement("span");copy.className="student-column-action-copy";
-    const strong=document.createElement("span");strong.textContent=title;const detail=document.createElement("small");detail.textContent=description;copy.append(strong,detail);action.append(image,copy);
+    const strong=document.createElement("span");strong.textContent=title;copy.append(strong);action.append(image,copy);
     action.addEventListener("click",callback);menu.append(action);
   };
-  addAction("sort", "Trier par ordre croissant", "De A à Z, du plus petit au plus grand.",()=>{studentSort={field,direction:1};closeStudentColumnMenu();renderStudentTable()});
-  addAction("sort", "Trier par ordre décroissant", "De Z à A, du plus grand au plus petit.",()=>{studentSort={field,direction:-1};closeStudentColumnMenu();renderStudentTable()});
-  menu.querySelectorAll(".student-column-action .menu-icon")[1].style.transform="rotate(180deg)";
-  const divider=document.createElement("div");divider.className="student-column-menu-divider";menu.append(divider);
+  if(field!=="pap"){
+    addAction("sort", "Trier par ordre croissant",()=>{studentSort={field,direction:1};closeStudentColumnMenu();renderStudentTable()});
+    addAction("sort", "Trier par ordre décroissant",()=>{studentSort={field,direction:-1};closeStudentColumnMenu();renderStudentTable()});
+    menu.querySelectorAll(".student-column-action .menu-icon")[1].style.transform="rotate(180deg)";
+    const divider=document.createElement("div");divider.className="student-column-menu-divider";menu.append(divider);
+  }
   const filter=document.createElement("label");filter.className="student-column-filter";filter.textContent="Filtrer cette colonne";
   const input=document.createElement("input");input.type="search";input.autocomplete="off";input.placeholder=field==="pap"?"Oui ou Non":"Saisir une valeur";input.value=studentFilters[field]||"";
-  const help=document.createElement("small");help.textContent="N’afficher que les lignes dont la valeur contient ce texte.";filter.append(input,help);menu.append(filter);
+  filter.append(input);menu.append(filter);
   const filterActions=document.createElement("div");filterActions.className="student-column-filter-actions";
   const clear=document.createElement("button");clear.type="button";clear.className="secondary";clear.textContent="Effacer";clear.disabled=!studentFilters[field];
   clear.addEventListener("click",()=>{delete studentFilters[field];closeStudentColumnMenu();renderStudentTable()});
@@ -1068,7 +1077,7 @@ function openStudentColumnMenu(button){
   filterActions.append(clear,apply);menu.append(filterActions);
   if(field==="classe"){
     const classDivider=document.createElement("div");classDivider.className="student-column-menu-divider";menu.append(classDivider);
-    addAction("school", "Attribuer une classe à tous", "Choisir une classe dans le catalogue.",()=>{closeStudentColumnMenu();openStudentClassDialog()});
+    addAction("school", "Attribuer une classe à tous",()=>{closeStudentColumnMenu();openStudentClassDialog()});
   }
   const buttonRect=button.getBoundingClientRect();menu.hidden=false;studentColumnMenuButton=button;button.setAttribute("aria-expanded","true");
   const menuRect=menu.getBoundingClientRect(),left=Math.max(8,Math.min(buttonRect.left,window.innerWidth-menuRect.width-8));
