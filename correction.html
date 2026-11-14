@@ -172,7 +172,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <span class="submenu-action" title="Télécharger une grille de correction (à venir)"><button type="button" disabled aria-label="Télécharger une grille de correction"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button></span>
   </div>
   <div class="submenu" data-submenu="eleves" hidden>
-    <span class="submenu-action" title="Créer un nouveau groupe d’élèves (à venir)"><button type="button" disabled aria-label="Créer un nouveau groupe d’élèves"><svg aria-hidden="true"><use href="#icon-user-plus"/></svg></button></span>
+    <button type="button" id="createStudentGroupBtn" title="Créer un nouveau groupe d’élèves" aria-label="Créer un nouveau groupe d’élèves"><svg aria-hidden="true"><use href="#icon-user-plus"/></svg></button>
     <span class="submenu-action" title="Charger un groupe d’élèves (à venir)"><button type="button" disabled aria-label="Charger un groupe d’élèves"><svg aria-hidden="true"><use href="#icon-folder-open"/></svg></button></span>
     <span class="submenu-action" title="Enregistrer le groupe d’élèves actif (à venir)"><button type="button" disabled aria-label="Enregistrer le groupe d’élèves actif"><svg aria-hidden="true"><use href="#icon-save"/></svg></button></span>
     <span class="submenu-action" title="Associer des photos (à venir)"><button type="button" disabled aria-label="Associer des photos"><svg aria-hidden="true"><use href="#icon-image-plus"/></svg></button></span>
@@ -206,11 +206,41 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
       </section>
     </div>
   </section>
+  <section id="studentsPanel" hidden>
+    <p id="studentsEmptyState" class="assignment-empty">Veuillez d'abord sélectionner créer ou charger un groupe d'élèves pour l'affecter au devoir.</p>
+    <section id="studentGroupWorkspace" hidden>
+      <div class="student-group-toolbar">
+        <h1 id="studentGroupTitle"></h1>
+        <label class="student-csv-button" for="studentCsvInput">Importer une liste CSV</label>
+        <input id="studentCsvInput" class="sr-only" type="file" accept=".csv,text/csv" aria-label="Importer une liste d’élèves au format CSV">
+      </div>
+      <p id="studentImportStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
+      <div class="student-table-wrap">
+        <table class="student-table">
+          <thead><tr><th scope="col" aria-label="Supprimer"></th><th scope="col">Nom</th><th scope="col">Prénom</th><th scope="col">Classe</th><th scope="col">PAP</th><th scope="col">Sous-groupe</th><th scope="col">Sujet</th><th scope="col">Remarque</th></tr></thead>
+          <tbody id="studentTableBody"></tbody>
+        </table>
+      </div>
+      <button id="addStudentBtn" class="add-student-button" type="button">+ Ajouter un élève</button>
+    </section>
+  </section>
   <section id="otherViewPlaceholder" hidden>
     <h1 id="otherViewTitle"></h1>
     <p>Cette partie sera disponible prochainement.</p>
   </section>
 </main>
+<dialog id="studentGroupDialog">
+  <form id="studentGroupForm">
+    <div class="dialog-heading"><h2>Créer un groupe d’élèves</h2></div>
+    <label class="group-name-field">Nom du groupe<input id="studentGroupNameInput" name="groupName" type="text" required placeholder="Ex. Terminale HGGSP 3"></label>
+    <div class="dialog-actions"><button id="cancelStudentGroup" class="secondary" type="button">Annuler</button><button type="submit">Créer le groupe</button></div>
+  </form>
+</dialog>
+<dialog id="replaceStudentsDialog">
+  <div class="dialog-heading"><h2>Remplacer la liste d’élèves ?</h2></div>
+  <p id="replaceStudentsMessage">Les élèves actuellement dans le groupe seront remplacés par ceux du fichier CSV.</p>
+  <div class="dialog-actions"><button id="cancelReplaceStudents" class="secondary" type="button">Annuler</button><button id="confirmReplaceStudents" type="button">Remplacer</button></div>
+</dialog>
 <dialog id="gridCatalogDialog">
   <div class="dialog-heading"><h2>Choisir une grille de correction</h2></div>
   <p class="catalog-description">Grille disponible</p>
@@ -265,6 +295,9 @@ let partLayout = PART_LAYOUT;
 let grid = structuredClone(DEFAULT_GRID);
 let config = structuredClone(DEFAULT_CONFIG);
 let assignment = {};
+let activeStudentGroup = null;
+let assignmentStudentDetails = {};
+let pendingStudentImport = null;
 let manualChoices = {};
 let manualCategoryPercent = {};
 let categoryEvaluations = {};
@@ -738,7 +771,7 @@ function detectCsvDelimiter(text){
   }
   return semicolons>commas?";":",";
 }
-function parseCsv(text){
+function parseCsv(text,requiredHeaders=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","ponderation","parametre","valeur","coefficient_categorie"]){
   const source=text.replace(/^\uFEFF/,"");const delimiter=detectCsvDelimiter(source);const rows=[];
   let row=[],field="",quoted=false;
   for(let index=0;index<source.length;index++){
@@ -760,8 +793,7 @@ function parseCsv(text){
   if(rows.length<2)throw new Error("le fichier ne contient aucune donnée.");
   const headers=rows.shift().map(value=>value.trim());
   if(new Set(headers).size!==headers.length)throw new Error("les noms de colonnes doivent être uniques.");
-  const required=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","ponderation","parametre","valeur","coefficient_categorie"];
-  const missing=required.filter(header=>!headers.includes(header));
+  const missing=requiredHeaders.filter(header=>!headers.includes(header));
   if(missing.length)throw new Error(`colonnes manquantes : ${missing.join(", ")}.`);
   return rows.map((values,index)=>{
     if(values.length>headers.length)throw new Error(`la ligne ${index+2} contient trop de colonnes.`);
@@ -941,6 +973,48 @@ function renderAssignmentNode(node,depth){
   for(const child of node.enfants||[])fragment.appendChild(renderAssignmentNode(child,depth+1));
   return fragment;
 }
+function createStudentId(){return globalThis.crypto?.randomUUID?.()||`eleve-${Date.now()}-${Math.random().toString(36).slice(2)}`}
+function renderStudentTable(){
+  const body=document.getElementById("studentTableBody");body.replaceChildren();
+  for(const student of activeStudentGroup?.students||[]){
+    const row=document.createElement("tr");
+    const deleteCell=document.createElement("td"),deleteButton=document.createElement("button");
+    deleteButton.type="button";deleteButton.className="student-row-delete";deleteButton.title="Supprimer l’élève";deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`);
+    const deleteIcon=document.createElement("span");deleteIcon.className="menu-icon";deleteIcon.style.setProperty("--icon","url('icones/delete.svg')");deleteIcon.setAttribute("aria-hidden","true");deleteButton.append(deleteIcon);
+    deleteButton.addEventListener("click",()=>{
+      if(!window.confirm(`Supprimer ${student.prenom} ${student.nom} de ce groupe ?`))return;
+      activeStudentGroup.students=activeStudentGroup.students.filter(item=>item.id!==student.id);delete assignmentStudentDetails[student.id];renderStudentTable();
+    });
+    deleteCell.append(deleteButton);row.append(deleteCell);
+    for(const [field,label] of [["nom","Nom"],["prenom","Prénom"],["classe","Classe"]]){
+      const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=student[field]||"";input.setAttribute("aria-label",`${label} de ${student.prenom} ${student.nom}`);
+      input.addEventListener("input",()=>{student[field]=input.value;if(field==="nom"||field==="prenom")deleteButton.setAttribute("aria-label",`Supprimer ${student.prenom} ${student.nom}`)});
+      cell.append(input);row.append(cell);
+    }
+    const papCell=document.createElement("td"),papInput=document.createElement("input");papInput.type="checkbox";papInput.checked=Boolean(student.pap);papInput.setAttribute("aria-label",`PAP pour ${student.prenom} ${student.nom}`);papInput.addEventListener("change",()=>{student.pap=papInput.checked});papCell.append(papInput);row.append(papCell);
+    const details=assignmentStudentDetails[student.id]||(assignmentStudentDetails[student.id]={sousGroupe:"",sujet:"",remarque:""});
+    for(const [field,label] of [["sousGroupe","Sous-groupe"],["sujet","Sujet"],["remarque","Remarque"]]){
+      const cell=document.createElement("td"),input=document.createElement("input");input.type="text";input.value=details[field]||"";input.setAttribute("aria-label",`${label} pour ${student.prenom} ${student.nom}`);input.addEventListener("input",()=>{details[field]=input.value});cell.append(input);row.append(cell);
+    }
+    body.append(row);
+  }
+}
+function addStudentRow(student={}){
+  if(!activeStudentGroup)return;
+  const newStudent={id:createStudentId(),nom:student.nom||"",prenom:student.prenom||"",classe:student.classe||"",pap:Boolean(student.pap)};
+  activeStudentGroup.students.push(newStudent);assignmentStudentDetails[newStudent.id]={sousGroupe:"",sujet:"",remarque:""};renderStudentTable();
+  document.querySelector("#studentTableBody tr:last-child input")?.focus();
+}
+function parseStudentCsv(text){
+  const rows=parseCsv(text,[]),normalize=value=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const headers=Object.keys(rows[0]),normalizedHeaders=new Map(headers.map(header=>[normalize(header),header]));
+  const findHeader=aliases=>aliases.map(alias=>normalizedHeaders.get(alias)).find(Boolean);
+  const nameHeader=findHeader(["nom","nomdefamille"]),firstNameHeader=findHeader(["prenom","prenoms"]),classHeader=findHeader(["classe"]);
+  if(!nameHeader||!firstNameHeader||!classHeader)throw new Error("le CSV doit contenir les colonnes Nom, Prénom et Classe.");
+  const students=rows.map(row=>({nom:row[nameHeader]||"",prenom:row[firstNameHeader]||"",classe:row[classHeader]||"",pap:false})).filter(student=>student.nom||student.prenom);
+  if(!students.length)throw new Error("aucun élève avec un nom ou un prénom n’a été trouvé.");
+  return students;
+}
 function applyCsvText(text,fileName){
   const loaded=gridFromCsv(text,fileName);grid=loaded.grid;config=loaded.config;partLayout=loaded.partLayout;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
   activateLoadedGrid(grid.titre);resetChoices();render();initializeAssignment();setStatus(`Grille CSV « ${fileName} » chargée. Les choix précédents ont été réinitialisés.`);
@@ -1000,6 +1074,7 @@ const correctionApp=document.querySelector(".app");
 const otherView=document.getElementById("otherView");
 function setActiveView(viewId){
   const isCorrection=viewId==="correction",isAssignment=viewId==="devoir";
+  const isStudents=viewId==="eleves",hasStudentGroup=Boolean(activeStudentGroup);
   const hasActiveAssignment=correctionApp.classList.contains("grid-loaded");
   navigationButtons.forEach(item=>{
     if(item.dataset.view===viewId)item.setAttribute("aria-current","page");
@@ -1010,8 +1085,11 @@ function setActiveView(viewId){
   document.getElementById("assignmentPanel").hidden=!isAssignment;
   document.getElementById("assignmentEmptyState").hidden=!isAssignment||hasActiveAssignment;
   document.getElementById("assignmentDetails").hidden=!isAssignment||!hasActiveAssignment;
-  document.getElementById("otherViewPlaceholder").hidden=isAssignment;
-  if(!isCorrection&&!isAssignment)document.getElementById("otherViewTitle").textContent=navigationButtons.find(button=>button.dataset.view===viewId)?.textContent||"";
+  document.getElementById("studentsPanel").hidden=!isStudents;
+  document.getElementById("studentsEmptyState").hidden=!isStudents||hasStudentGroup;
+  document.getElementById("studentGroupWorkspace").hidden=!isStudents||!hasStudentGroup;
+  document.getElementById("otherViewPlaceholder").hidden=isAssignment||isStudents;
+  if(!isCorrection&&!isAssignment&&!isStudents)document.getElementById("otherViewTitle").textContent=navigationButtons.find(button=>button.dataset.view===viewId)?.textContent||"";
 }
 document.getElementById("createAssignmentBtn").addEventListener("click",()=>{
   const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=true;modalStatus.textContent="";
@@ -1026,6 +1104,41 @@ document.getElementById("confirmResetAssignment").addEventListener("click",()=>{
 document.getElementById("assignmentForm").addEventListener("input",event=>{
   const field=event.target;
   if(field.name)assignment[field.name]=field.name==="maxScore"?Number(field.value):field.value;
+});
+document.getElementById("createStudentGroupBtn").addEventListener("click",()=>{
+  document.getElementById("studentGroupForm").reset();document.getElementById("studentGroupDialog").showModal();
+  document.getElementById("studentGroupNameInput").focus();
+});
+document.getElementById("cancelStudentGroup").addEventListener("click",()=>document.getElementById("studentGroupDialog").close());
+document.getElementById("studentGroupForm").addEventListener("submit",event=>{
+  event.preventDefault();const name=document.getElementById("studentGroupNameInput").value.trim();if(!name)return;
+  activeStudentGroup={name,students:[]};assignmentStudentDetails={};
+  document.getElementById("studentGroupTitle").textContent=name;renderStudentTable();
+  document.getElementById("studentGroupDialog").close();setActiveView("eleves");
+});
+document.getElementById("addStudentBtn").addEventListener("click",()=>addStudentRow());
+document.getElementById("studentCsvInput").addEventListener("change",event=>{
+  const file=event.target.files?.[0];event.target.value="";if(!file)return;
+  const status=document.getElementById("studentImportStatus");status.hidden=true;status.textContent="";
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      pendingStudentImport=parseStudentCsv(String(reader.result||""));
+      document.getElementById("replaceStudentsMessage").textContent=`Les ${pendingStudentImport.length} élève(s) du fichier remplaceront la liste actuelle du groupe « ${activeStudentGroup.name} ».`;
+      document.getElementById("replaceStudentsDialog").showModal();
+    }catch(error){status.hidden=false;status.textContent=`Import CSV impossible : ${error.message}`}
+  };
+  reader.onerror=()=>{status.hidden=false;status.textContent="La lecture du fichier CSV a échoué."};
+  reader.readAsText(file,"UTF-8");
+});
+document.getElementById("cancelReplaceStudents").addEventListener("click",()=>{
+  pendingStudentImport=null;document.getElementById("replaceStudentsDialog").close();
+});
+document.getElementById("confirmReplaceStudents").addEventListener("click",()=>{
+  if(!pendingStudentImport||!activeStudentGroup)return;
+  activeStudentGroup.students=pendingStudentImport.map(student=>({id:createStudentId(),...student}));
+  assignmentStudentDetails={};pendingStudentImport=null;renderStudentTable();
+  document.getElementById("replaceStudentsDialog").close();
 });
 navigationButtons.forEach(button=>button.addEventListener("click",()=>setActiveView(button.dataset.view)));
 setActiveView("devoir");
