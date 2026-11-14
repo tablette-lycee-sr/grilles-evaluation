@@ -34,6 +34,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-trombi-title h1{min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.15rem}
 .correction-trombi-actions{display:flex;align-items:center;gap:8px}
 .correction-trombi-layout-toggle .menu-icon{width:21px;height:21px}
+#showCorrectionTrombi{grid-column:-2 / -1}
 .correction-trombi-summary{flex:none;margin:0;color:var(--sub);font-size:.78rem;white-space:nowrap}
 .correction-trombi-empty{padding:24px 0;border-top:1px solid var(--line)}
 .correction-trombi-empty p{margin:0 0 12px}

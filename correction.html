@@ -32,7 +32,7 @@ header{position:fixed;z-index:20;inset:0 0 auto;height:var(--header-height);disp
 .header-left{grid-column:1;min-width:0}.header-left h1{font-size:1.25rem;line-height:1.15;margin:0 0 6px}h2{font-size:1.05rem;margin:0 0 6px}
 .student-name{width:min(100%,360px);height:34px;padding:6px 10px;border:1px solid #62666d;border-radius:6px;background:#1b1d20;color:#fff;font:inherit;font-size:.9rem}
 .header-score{display:block;min-width:0;margin:0;color:#969ba1;font-size:1.05rem;font-weight:600;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
-.header-actions{grid-column:2;display:grid;grid-template-columns:repeat(4,44px);justify-content:start;align-content:center;gap:8px;margin:0}
+.header-actions{grid-column:2;display:grid;grid-template-columns:repeat(4,44px);justify-content:end;align-content:center;gap:8px;margin:0}
 button,.filelabel{font:inherit;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#3a3d42;color:var(--text);cursor:pointer}
 button:focus-visible,.filelabel:focus-within{outline:2px solid white;outline-offset:2px}button.secondary{background:transparent}
 .icon-button,.icon-file{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #5a5e64;border-radius:7px;background:#34373b;color:#fff}
@@ -309,8 +309,8 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     </div>
   </div>
   <div class="header-actions no-print" aria-label="Actions">
-    <button id="showCorrectionTrombi" type="button">Trombinoscope</button>
-    <button id="resetBtn" class="icon-button" type="button" title="Réinitialiser les choix" aria-label="Réinitialiser les choix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1-6.2 10.2"/></svg></button>
+    <button id="resetBtn" class="icon-button" type="button" title="Effacer la correction de cette grille" aria-label="Effacer la correction de cette grille"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1-6.2 10.2"/></svg></button>
+    <button id="showCorrectionTrombi" class="icon-button correction-trombi-layout-toggle" type="button" title="Revenir au trombinoscope en pleine page" aria-label="Revenir au trombinoscope en pleine page"><span class="menu-icon" style="--icon:url('icones/grid_view.svg')" aria-hidden="true"></span></button>
   </div>
 </header>
 <div id="status" class="sr-only" role="status" aria-live="polite"></div>
@@ -1255,6 +1255,9 @@ function updateCorrectionTrombiToggle(){
   const targetMode=isFullPage?"en rang":"en pleine page";
   button.title=`Afficher ${targetMode}`;button.setAttribute("aria-label",`Passer à l’affichage ${targetMode}`);button.setAttribute("aria-pressed",String(isFullPage));
   icon.style.setProperty("--icon",`url('icones/${isFullPage?"view_list.svg":"grid_view.svg"}')`);
+  const returnButton=document.getElementById("showCorrectionTrombi"),returnMode=isFullPage?"en pleine page":"en rang";
+  returnButton.title=`Revenir au trombinoscope ${returnMode}`;returnButton.setAttribute("aria-label",returnButton.title);
+  returnButton.querySelector(".menu-icon").style.setProperty("--icon",`url('icones/${isFullPage?"grid_view.svg":"view_list.svg"}')`);
 }
 function closeStudentColumnMenu(){
   document.getElementById("studentColumnMenu").hidden=true;
@@ -1424,7 +1427,7 @@ async function loadGridCatalog(){
   }catch(error){catalogEl.textContent="Catalogue indisponible.";const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=false;modalStatus.textContent=`Impossible de charger le catalogue des grilles : ${error.message}`}
 }
 document.getElementById("exportPrintBtn").addEventListener("click",()=>{renderPrintReport();window.print()});
-document.getElementById("resetBtn").addEventListener("click",()=>{resetChoices();render();setStatus("Tous les choix et bonus ont été réinitialisés.")});
+document.getElementById("resetBtn").addEventListener("click",()=>{resetChoices();document.getElementById("finalGrade").value="";captureActiveCorrection();render();setStatus("La correction et la note de cette grille ont été effacées.")});
 document.getElementById("showMetrics").addEventListener("change",event=>document.querySelector(".app").classList.toggle("show-metrics",event.target.checked));
 document.getElementById("submenuSettings").addEventListener("click",()=>document.getElementById("settingsDialog").showModal());
 document.getElementById("closeSettings").addEventListener("click",()=>document.getElementById("settingsDialog").close());
