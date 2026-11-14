@@ -278,6 +278,22 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <div class="dialog-actions"><button id="cancelResetAssignment" class="secondary" type="button">Annuler</button><button id="confirmResetAssignment" type="button">Effacer le devoir</button></div>
 </dialog>
 <div class="app" hidden>
+<section id="correctionTrombiView" class="correction-trombi-view" hidden aria-labelledby="correctionTrombiHeading">
+  <div class="correction-trombi-toolbar">
+    <div><p class="correction-trombi-kicker">Correction</p><h1 id="correctionTrombiHeading">Trombinoscope</h1><p id="correctionTrombiSummary" class="correction-trombi-summary"></p></div>
+    <button id="showIndividualCorrection" type="button">Grille individuelle</button>
+  </div>
+  <div id="correctionTrombiEmpty" class="correction-trombi-empty" hidden>
+    <p>Aucun groupe d’élèves actif. Ouvrez l’onglet Élèves pour créer ou charger un groupe.</p>
+    <button id="correctionTrombiGoStudents" type="button">Ouvrir Élèves</button>
+  </div>
+  <div id="correctionTrombiMatrix" class="correction-trombi-matrix" hidden>
+    <table class="correction-trombi-table">
+      <thead><tr id="correctionTrombiHead"><th scope="col">Critères / élèves</th></tr></thead>
+      <tbody id="correctionTrombiBody"></tbody>
+    </table>
+  </div>
+</section>
 <nav class="part-nav no-print" id="partNav" aria-label="Navigation des parties"></nav>
 <header aria-label="En-tête">
   <div class="header-left">
@@ -288,6 +304,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     </div>
   </div>
   <div class="header-actions no-print" aria-label="Actions">
+    <button id="showCorrectionTrombi" type="button">Trombinoscope</button>
     <button id="resetBtn" class="icon-button" type="button" title="Réinitialiser les choix" aria-label="Réinitialiser les choix"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 1 1-6.2 10.2"/></svg></button>
   </div>
 </header>
@@ -1067,6 +1084,65 @@ function renderStudentTable(){
     body.append(row);
   }
 }
+function getCorrectionTrombiCategories(){
+  const categories=[],coefficients=config.coefficientsCategories||{};
+  const visit=nodes=>{
+    for(const node of nodes||[]){
+      if(Object.hasOwn(coefficients,node.id))categories.push(node.titre);
+      visit(node.enfants);
+    }
+  };
+  visit(grid.elements||[]);return categories;
+}
+function createTrombiPortrait(){
+  const namespace="http://www.w3.org/2000/svg",portrait=document.createElementNS(namespace,"svg");
+  portrait.setAttribute("viewBox","0 0 72 88");portrait.setAttribute("aria-hidden","true");portrait.classList.add("correction-trombi-portrait");
+  const background=document.createElementNS(namespace,"rect");background.setAttribute("width","72");background.setAttribute("height","88");background.setAttribute("rx","6");background.setAttribute("fill","#34373b");
+  const head=document.createElementNS(namespace,"circle");head.setAttribute("cx","36");head.setAttribute("cy","28");head.setAttribute("r","13");head.setAttribute("fill","#aeb3b9");
+  const shoulders=document.createElementNS(namespace,"path");shoulders.setAttribute("d","M10 88c1-20 10-31 26-31s25 11 26 31z");shoulders.setAttribute("fill","#777d85");
+  portrait.append(background,shoulders,head);return portrait;
+}
+function createTrombiLevelScale(){
+  const scale=document.createElement("div");scale.className="correction-trombi-level-scale";scale.setAttribute("aria-label","Aucun niveau saisi");
+  for(const level of ["NA","ECA","A","D"]){const marker=document.createElement("span");marker.textContent=level;scale.append(marker)}
+  return scale;
+}
+function renderCorrectionTrombi(){
+  const head=document.getElementById("correctionTrombiHead"),body=document.getElementById("correctionTrombiBody");
+  const empty=document.getElementById("correctionTrombiEmpty"),matrix=document.getElementById("correctionTrombiMatrix");
+  const students=activeStudentGroup?.students||[];
+  document.getElementById("correctionTrombiSummary").textContent=activeStudentGroup?`${activeStudentGroup.name} · ${students.length} élève(s)`:"";
+  empty.hidden=students.length>0;matrix.hidden=students.length===0;
+  if(!activeStudentGroup)empty.querySelector("p").textContent="Aucun groupe d’élèves actif. Ouvrez l’onglet Élèves pour créer ou charger un groupe.";
+  else empty.querySelector("p").textContent="Ce groupe ne contient aucun élève.";
+  head.replaceChildren();body.replaceChildren();
+  const criterionHeading=document.createElement("th");criterionHeading.scope="col";criterionHeading.textContent="Critères";head.append(criterionHeading);
+  for(const [index,student] of students.entries()){
+    const column=document.createElement("th");column.scope="col";
+    const header=document.createElement("div");header.className="correction-trombi-student-header";
+    const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(index+1);
+    const identity=document.createElement("div");identity.className="correction-trombi-identity";identity.append(createTrombiPortrait());
+    const name=document.createElement("strong");name.className="correction-trombi-student-name";name.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
+    const metadata=document.createElement("span");metadata.className="correction-trombi-student-metadata";metadata.textContent=student.classe||"Classe non renseignée";
+    identity.append(name,metadata);header.append(number,identity);
+    if(student.pap){const pap=document.createElement("span");pap.className="correction-trombi-pap";pap.textContent="PAP";header.append(pap)}
+    column.append(header);head.append(column);
+  }
+  const appendRow=(label,contentForStudent,{category=false}={})=>{
+    const row=document.createElement("tr"),heading=document.createElement("th");heading.scope="row";heading.textContent=label;row.append(heading);
+    for(const student of students){
+      const cell=document.createElement("td"),content=contentForStudent(student);
+      if(category)cell.append(createTrombiLevelScale());else cell.textContent=content===null||content===undefined||content===""?"—":String(content);
+      row.append(cell);
+    }
+    body.append(row);
+  };
+  appendRow("Appréciation générale",()=>"",{category:true});
+  for(const category of getCorrectionTrombiCategories())appendRow(category,()=>"",{category:true});
+  appendRow("Groupe",student=>assignmentStudentDetails[student.id]?.sousGroupe);
+  appendRow("Sujet",student=>assignmentStudentDetails[student.id]?.sujet);
+  appendRow("Note",student=>assignmentStudentDetails[student.id]?.note);
+}
 function closeStudentColumnMenu(){
   document.getElementById("studentColumnMenu").hidden=true;
   studentColumnMenuButton?.setAttribute("aria-expanded","false");studentColumnMenuButton=null;
@@ -1236,7 +1312,8 @@ function setActiveView(viewId){
     else item.removeAttribute("aria-current");
   });
   submenus.forEach(menu=>menu.hidden=menu.dataset.submenu!==viewId);
-  correctionApp.hidden=!isCorrection;otherView.hidden=isCorrection;
+  correctionApp.hidden=!isCorrection;correctionApp.classList.toggle("trombi-view",isCorrection);
+  document.getElementById("correctionTrombiView").hidden=!isCorrection;otherView.hidden=isCorrection;
   document.getElementById("assignmentPanel").hidden=!isAssignment;
   document.getElementById("assignmentEmptyState").hidden=!isAssignment||hasActiveAssignment;
   document.getElementById("assignmentDetails").hidden=!isAssignment||!hasActiveAssignment;
@@ -1245,7 +1322,15 @@ function setActiveView(viewId){
   document.getElementById("studentGroupWorkspace").hidden=!isStudents||!hasStudentGroup;
   document.getElementById("otherViewPlaceholder").hidden=isAssignment||isStudents;
   if(!isCorrection&&!isAssignment&&!isStudents)document.getElementById("otherViewTitle").textContent=navigationButtons.find(button=>button.dataset.view===viewId)?.textContent||"";
+  if(isCorrection)renderCorrectionTrombi();
 }
+document.getElementById("showIndividualCorrection").addEventListener("click",()=>{
+  document.getElementById("correctionTrombiView").hidden=true;correctionApp.classList.remove("trombi-view");
+});
+document.getElementById("showCorrectionTrombi").addEventListener("click",()=>{
+  document.getElementById("correctionTrombiView").hidden=false;correctionApp.classList.add("trombi-view");renderCorrectionTrombi();
+});
+document.getElementById("correctionTrombiGoStudents").addEventListener("click",()=>setActiveView("eleves"));
 document.getElementById("createAssignmentBtn").addEventListener("click",()=>{
   const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=true;modalStatus.textContent="";
   document.getElementById("gridCatalogDialog").showModal();

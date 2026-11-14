@@ -25,6 +25,41 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .app-view{max-width:1080px;margin:var(--navigation-height) auto 0;padding:28px 20px;color:var(--text)}
 .app-view h1{margin:0 0 12px;font-size:1.55rem}
 .app-view p{color:var(--sub)}
+.app.trombi-view{width:min(1600px,100%);max-width:1600px;margin:var(--navigation-height) auto 0;padding:22px 16px}
+.app.trombi-view>:not(#correctionTrombiView):not(#printReport){display:none!important}
+.correction-trombi-view{display:grid;gap:14px;min-width:0;color:var(--text)}
+.correction-trombi-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.correction-trombi-toolbar h1{margin:0;font-size:1.4rem}
+.correction-trombi-kicker{margin:0;color:var(--accent)!important;font-size:.72rem;font-weight:700;text-transform:uppercase}
+.correction-trombi-summary{margin:3px 0 0;font-size:.82rem}
+.correction-trombi-empty{padding:24px 0;border-top:1px solid var(--line)}
+.correction-trombi-empty p{margin:0 0 12px}
+.correction-trombi-matrix{max-height:calc(100vh - var(--navigation-height) - 154px);overflow:auto;border:1px solid var(--line);background:var(--bg)}
+.correction-trombi-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.correction-trombi-table th,.correction-trombi-table td{box-sizing:border-box;padding:8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:middle}
+.correction-trombi-table thead th{position:sticky;top:0;z-index:2;background:#2d3034;text-align:center}
+.correction-trombi-table thead th:first-child,.correction-trombi-table tbody th{position:sticky;left:0;z-index:3;width:210px;min-width:210px;background:#2d3034;text-align:left}
+.correction-trombi-table thead th:first-child{z-index:4}
+.correction-trombi-table th:not(:first-child),.correction-trombi-table td:not(:first-child){width:148px;min-width:148px}
+.correction-trombi-table tbody th{font-size:.82rem;font-weight:600}
+.correction-trombi-student-header{position:relative;display:grid;justify-items:center;gap:5px;min-height:130px}
+.correction-trombi-student-number{align-self:start;justify-self:start;color:var(--sub);font-size:.72rem}
+.correction-trombi-identity{display:grid;justify-items:center;gap:4px;min-width:0}
+.correction-trombi-portrait{display:block;width:52px;height:64px;border-radius:4px}
+.correction-trombi-student-name{max-width:100%;overflow-wrap:anywhere;font-size:.8rem;line-height:1.2;text-align:center}
+.correction-trombi-student-metadata{color:var(--sub);font-size:.7rem;font-weight:400}
+.correction-trombi-pap{position:absolute;top:0;right:0;padding:2px 4px;border-radius:3px;background:#44474c;color:var(--text);font-size:.62rem}
+.correction-trombi-level-scale{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+.correction-trombi-level-scale span{display:grid;place-items:center;min-height:24px;border:1px solid #62666d;border-radius:3px;color:var(--sub);font-size:.62rem}
+.correction-trombi-table tbody tr:last-child th,.correction-trombi-table tbody tr:last-child td{border-bottom:0}
+@media(max-width:600px){
+	.app.trombi-view{padding:16px 10px}
+	.correction-trombi-toolbar{align-items:flex-start;flex-direction:column}
+	.correction-trombi-matrix{max-height:70vh}
+	.correction-trombi-table thead th:first-child,.correction-trombi-table tbody th{width:160px;min-width:160px}
+	.correction-trombi-table th:not(:first-child),.correction-trombi-table td:not(:first-child){width:136px;min-width:136px}
+}
+@media print{.app.trombi-view{width:auto;max-width:none;margin:0;padding:0}}
 .assignment-empty{padding:8px 0}
 .assignment-layout{display:grid;grid-template-columns:minmax(230px,320px) minmax(0,1fr);gap:28px;align-items:start}
 .assignment-fields{display:grid;gap:12px;min-width:0}
