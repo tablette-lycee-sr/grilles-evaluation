@@ -386,9 +386,9 @@ function isLeaf(n){return !n.enfants||n.enfants.length===0}
 function descendantsLeaves(n){if(isLeaf(n))return[n];return(n.enfants||[]).flatMap(descendantsLeaves)}
 function getWeight(node){const w=config.ponderations?.[node.id];return Number.isFinite(Number(w))&&Number(w)>0?Number(w):1}
 function getCategoryCoefficient(node){const coefficient=config.coefficientsCategories?.[node.id];return Number.isFinite(Number(coefficient))&&Number(coefficient)>0?Number(coefficient):1}
-function getLeafScore(node){const id=leafChoices[node.id];return id&&levels[id]?{score:levels[id].valeur,weight:getWeight(node),node}:null}
-function calculate(node){
-  const leaves=descendantsLeaves(node),scored=leaves.map(getLeafScore).filter(Boolean),total=leaves.length,count=scored.length;
+function getLeafScore(node,choices=leafChoices){const id=choices[node.id];return id&&levels[id]?{score:levels[id].valeur,weight:getWeight(node),node}:null}
+function calculate(node,choices=leafChoices){
+  const leaves=descendantsLeaves(node),scored=leaves.map(leaf=>getLeafScore(leaf,choices)).filter(Boolean),total=leaves.length,count=scored.length;
   if(!count)return{level:null,mean:null,count,total,partial:total>0};
   const weightedTotal=scored.reduce((s,x)=>s+x.score*x.weight,0),weightTotal=scored.reduce((s,x)=>s+x.weight,0),mean=weightedTotal/weightTotal,t=config.seuils||{};
   let level="A";
@@ -398,9 +398,9 @@ function calculate(node){
   return{level,mean,count,total,partial:count<total};
 }
 function effectiveLevel(node){if(isLeaf(node))return leafChoices[node.id]||null;if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];return calculate(node).level}
-function getCategoryPercentage(node){
-  if(Object.hasOwn(manualCategoryPercent,node.id))return manualCategoryPercent[node.id];
-  const mean=calculate(node).mean;
+function getCategoryPercentage(node,choices=leafChoices,percentages=manualCategoryPercent){
+  if(Object.hasOwn(percentages,node.id))return percentages[node.id];
+  const mean=calculate(node,choices).mean;
   return mean===null?null:mean*50;
 }
 function categorySliderStops(){
@@ -742,9 +742,10 @@ function makePrintCategoryLevels(selected,showBonus=false){
   for(const id of ["NA","ECA","A","D"]){const cell=document.createElement("span");cell.className="print-level-cell";const level=document.createElement("span");level.className="print-category-level";if(id==="D"){level.classList.add("d-level");if(dSelected)level.classList.add("visible")}if(dSelected?id==="D":selected===id)level.classList.add("active");level.textContent=id;cell.appendChild(level);levelsEl.appendChild(cell)}
   return levelsEl;
 }
-function printCategoryLevel(node){
-  if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];
-  const percentage=getCategoryPercentage(node);if(percentage===null)return null;
+function printCategoryLevel(node,correction=null){
+  const choices=correction?.manualChoices||manualChoices;
+  if(Object.hasOwn(choices,node.id))return choices[node.id];
+  const percentage=correction?getCategoryPercentage(node,correction.leafChoices||{},correction.manualCategoryPercent||{}):getCategoryPercentage(node);if(percentage===null)return null;
   const mean=percentage/50,thresholds=config.seuils||{};
   if(mean<Number(thresholds.NA_max_exclusif??0.5))return"NA";
   if(mean<Number(thresholds.ECA_max_exclusif??1.5))return"ECA";
@@ -1125,7 +1126,7 @@ function getCorrectionTrombiCategories(){
   const categories=[],coefficients=config.coefficientsCategories||{};
   const visit=nodes=>{
     for(const node of nodes||[]){
-      if(Object.hasOwn(coefficients,node.id))categories.push(node.titre);
+      if(Object.hasOwn(coefficients,node.id))categories.push(node);
       visit(node.enfants);
     }
   };
@@ -1185,16 +1186,16 @@ function createTrombiPortrait(student,fullBleed=false){
   const shoulders=document.createElementNS(namespace,"path");shoulders.setAttribute("d",fullBleed?"M7 130c2-33 19-51 43-51s41 18 43 51z":"M10 88c1-20 10-31 26-31s25 11 26 31z");shoulders.setAttribute("fill","#777d85");
   portrait.append(background,shoulders,head);return portrait;
 }
-function createTrombiLevelScale(){
-  const scale=document.createElement("div");scale.className="correction-trombi-level-scale";scale.setAttribute("aria-label","Aucun niveau saisi");
-  for(const level of ["NA","ECA","A","D"]){const marker=document.createElement("span");marker.textContent=level;scale.append(marker)}
+function createTrombiLevelScale(selected=null){
+  const scale=document.createElement("div");scale.className="correction-trombi-level-scale";scale.setAttribute("aria-label",selected?`Niveau ${selected}`:"Aucun niveau saisi");
+  for(const level of ["NA","ECA","A","D"]){const marker=document.createElement("span");marker.textContent=level;if(level===selected){marker.classList.add("selected");marker.dataset.level=level}scale.append(marker)}
   return scale;
 }
 function renderCorrectionTrombi(){
   const criteria=document.getElementById("correctionTrombiCriteria"),track=document.getElementById("correctionTrombiTrack");
   const empty=document.getElementById("correctionTrombiEmpty"),matrix=document.getElementById("correctionTrombiMatrix"),cards=document.getElementById("correctionTrombiCards");
   const students=activeStudentGroup?.students||[];
-  const categories=getCorrectionTrombiCategories(),criterionLabels=["Appréciation générale",...categories,"Groupe","Sujet","Note"];
+  const categories=getCorrectionTrombiCategories(),criterionLabels=["Appréciation générale",...categories.map(category=>category.titre),"Groupe","Sujet","Note"];
   document.getElementById("correctionTrombiHeading").textContent=activeStudentGroup?.name||"";
   document.getElementById("correctionTrombiSummary").textContent=activeStudentGroup?`${students.length} ${students.length===1?"élève":"élèves"}`:"";
   empty.hidden=students.length>0;matrix.hidden=students.length===0||correctionTrombiMode==="full";cards.hidden=students.length===0||correctionTrombiMode!=="full";
@@ -1237,7 +1238,11 @@ function renderCorrectionTrombi(){
     identity.append(name,metadata);header.append(number,identity);
     if(student.pap){const pap=document.createElement("span");pap.className="correction-trombi-pap";pap.textContent="PAP";header.append(pap)}
     column.append(header,createTrombiLevelScale());
-    for(const category of categories)column.append(createTrombiLevelScale());
+    const correction=studentCorrections[student.id];
+    for(const category of categories){
+      const selected=correction?.categoryEvaluations?.[category.id]?.exceeded?"D":correction?printCategoryLevel(category,correction):null;
+      column.append(createTrombiLevelScale(selected));
+    }
     const details=assignmentStudentDetails[student.id]||{};
     for(const value of [details.sousGroupe,details.sujet,details.note]){
       const cell=document.createElement("div");cell.className="correction-trombi-row-value";cell.textContent=value===null||value===undefined||value===""?"—":String(value);column.append(cell);
