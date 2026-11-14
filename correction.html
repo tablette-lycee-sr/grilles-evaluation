@@ -211,8 +211,8 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <section id="studentGroupWorkspace" hidden>
       <div class="student-group-toolbar">
         <h1 id="studentGroupTitle"></h1>
-        <label class="student-csv-button" for="studentCsvInput">Importer une liste CSV</label>
-        <input id="studentCsvInput" class="sr-only" type="file" accept=".csv,text/csv" aria-label="Importer une liste d’élèves au format CSV">
+        <label class="student-csv-button" for="studentCsvInput">Importer une liste depuis un export Pronote</label>
+        <input id="studentCsvInput" class="sr-only" type="file" accept=".csv,text/csv" aria-label="Importer une liste depuis un export Pronote">
       </div>
       <p id="studentImportStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
       <div class="student-table-wrap">
@@ -1006,12 +1006,17 @@ function addStudentRow(student={}){
   document.querySelector("#studentTableBody tr:last-child input")?.focus();
 }
 function parseStudentCsv(text){
-  const rows=parseCsv(text,[]),normalize=value=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
-  const headers=Object.keys(rows[0]),normalizedHeaders=new Map(headers.map(header=>[normalize(header),header]));
-  const findHeader=aliases=>aliases.map(alias=>normalizedHeaders.get(alias)).find(Boolean);
-  const nameHeader=findHeader(["nom","nomdefamille"]),firstNameHeader=findHeader(["prenom","prenoms"]),classHeader=findHeader(["classe"]);
-  if(!nameHeader||!firstNameHeader||!classHeader)throw new Error("le CSV doit contenir les colonnes Nom, Prénom et Classe.");
-  const students=rows.map(row=>({nom:row[nameHeader]||"",prenom:row[firstNameHeader]||"",classe:row[classHeader]||"",pap:false})).filter(student=>student.nom||student.prenom);
+  const lines=String(text).replace(/^\uFEFF/,"").split(/\r\n|\n|\r/),students=[];
+  for(const line of lines){
+    const nameCell=line.split(";",1)[0].trim();
+    if(!nameCell||/^\d+\s+élèves?\b/i.test(nameCell)||/^moyenne\b/i.test(nameCell))continue;
+    const firstNameToken=[...nameCell.matchAll(/\S+/gu)].find(token=>/\p{Ll}/u.test(token[0]));
+    if(!firstNameToken)continue;
+    const nom=nameCell.slice(0,firstNameToken.index).trim().replace(/\s+/g," ");
+    const prenom=nameCell.slice(firstNameToken.index).trim().replace(/\s+/g," ");
+    if(!nom||!prenom||!/[\p{Lu}]/u.test(nom)||/[\p{Ll}]/u.test(nom))continue;
+    students.push({nom,prenom,classe:"",pap:false});
+  }
   if(!students.length)throw new Error("aucun élève avec un nom ou un prénom n’a été trouvé.");
   return students;
 }
@@ -1124,9 +1129,9 @@ document.getElementById("studentCsvInput").addEventListener("change",event=>{
   reader.onload=()=>{
     try{
       pendingStudentImport=parseStudentCsv(String(reader.result||""));
-      document.getElementById("replaceStudentsMessage").textContent=`Les ${pendingStudentImport.length} élève(s) du fichier remplaceront la liste actuelle du groupe « ${activeStudentGroup.name} ».`;
+      document.getElementById("replaceStudentsMessage").textContent=`Les ${pendingStudentImport.length} élève(s) détecté(s) dans l’export Pronote remplaceront la liste actuelle du groupe « ${activeStudentGroup.name} ».`;
       document.getElementById("replaceStudentsDialog").showModal();
-    }catch(error){status.hidden=false;status.textContent=`Import CSV impossible : ${error.message}`}
+    }catch(error){status.hidden=false;status.textContent=`Import Pronote impossible : ${error.message}`}
   };
   reader.onerror=()=>{status.hidden=false;status.textContent="La lecture du fichier CSV a échoué."};
   reader.readAsText(file,"UTF-8");
