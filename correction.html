@@ -1148,14 +1148,20 @@ function renderStudentTable(){
   updateStudentGroupColors();
 }
 function getCorrectionTrombiCategories(){
-  const categories=[],coefficients=config.coefficientsCategories||{};
-  const visit=nodes=>{
+  const categories=[],coefficients=config.coefficientsCategories||{},roots=grid.elements||[];
+  const mappedIds=new Set(partLayout.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
+  const visit=(nodes,partIndex)=>{
     for(const node of nodes||[]){
-      if(Object.hasOwn(coefficients,node.id))categories.push(node);
-      visit(node.enfants);
+      if(Object.hasOwn(coefficients,node.id))categories.push({node,partIndex});
+      visit(node.enfants,partIndex);
     }
   };
-  visit(grid.elements||[]);return categories;
+  for(const [partIndex,part] of partLayout.entries()){
+    const nodes=part.categories.map(category=>roots.find(root=>root.id===category.nodeId)).filter(Boolean);
+    if(partIndex===0)nodes.push(...roots.filter(root=>!mappedIds.has(root.id)));
+    visit(nodes,partIndex);
+  }
+  return categories;
 }
 function normalizeTrombiPhotoName(value){
   return value.normalize("NFD").replace(/\p{Diacritic}/gu,"").trim().replace(/\s+/g," ").toLocaleLowerCase("fr-FR");
@@ -1238,11 +1244,28 @@ function getSortedTrombiStudents(students){
     return firstValue.localeCompare(secondValue,"fr",{numeric:true,sensitivity:"base"})||compareTrombiStudentNames(first,second);
   });
 }
+function createTrombiCardHeader(student,number,groupColors){
+  const header=document.createElement("div");header.className="correction-trombi-card-header";
+  const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(number);cardNumber.setAttribute("aria-label",`Élève numéro ${number} dans l’ordre alphabétique`);
+  const note=assignmentStudentDetails[student.id]?.note,noteLabel=note===null||note===undefined||note===""?"—":String(note);
+  const cardNote=document.createElement("span");cardNote.className="correction-trombi-card-note";cardNote.textContent=noteLabel;cardNote.style.backgroundColor=getTrombiNoteColor(note);cardNote.setAttribute("aria-label",`Note : ${noteLabel}`);
+  const papBadge=document.createElement("span");papBadge.className="correction-trombi-card-pap";papBadge.textContent=student.pap?"!":"";papBadge.setAttribute("aria-label",student.pap?"PAP":"Pas de PAP");
+  const groupName=assignmentStudentDetails[student.id]?.sousGroupe?.trim()||"";
+  const groupBadge=document.createElement("span");groupBadge.className="correction-trombi-card-group";groupBadge.textContent=groupName||"—";groupBadge.style.backgroundColor=groupName?groupColors.get(normalizeTrombiPhotoName(groupName)):"var(--trombi-card-gray)";groupBadge.setAttribute("aria-label",groupName?`Groupe ${groupName}`:"Aucun groupe");
+  header.append(cardNumber,cardNote,papBadge,groupBadge);return header;
+}
+function createTrombiCardPhoto(student){
+  const portrait=createTrombiPortrait(student,true);portrait.classList.add("correction-trombi-card-portrait");
+  const button=document.createElement("button");button.type="button";button.className="correction-trombi-card-photo correction-trombi-photo-button";button.setAttribute("aria-label",`Corriger ${[student.nom,student.prenom].filter(Boolean).join(" ")}`);button.addEventListener("click",()=>openStudentCorrection(student));button.append(portrait);return button;
+}
+function createTrombiCardName(student){
+  const name=document.createElement("strong");name.className="correction-trombi-card-name";name.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";return name;
+}
 function renderCorrectionTrombi(){
   const criteria=document.getElementById("correctionTrombiCriteria"),track=document.getElementById("correctionTrombiTrack");
   const empty=document.getElementById("correctionTrombiEmpty"),matrix=document.getElementById("correctionTrombiMatrix"),cards=document.getElementById("correctionTrombiCards");
   const students=activeStudentGroup?.students||[];
-  const categories=getCorrectionTrombiCategories(),criterionLabels=["Note",...categories.map(category=>category.titre),"Groupe","Sujet"];
+  const categories=getCorrectionTrombiCategories(),criterionLabels=[...categories.map(category=>category.node.titre),"Sujet"];
   document.getElementById("correctionTrombiHeading").textContent=activeStudentGroup?.name||"";
   document.getElementById("correctionTrombiSummary").textContent=activeStudentGroup?`${students.length} ${students.length===1?"élève":"élèves"}`:"";
   empty.hidden=students.length>0;matrix.hidden=students.length===0||correctionTrombiMode==="full";cards.hidden=students.length===0||correctionTrombiMode!=="full";
@@ -1254,7 +1277,11 @@ function renderCorrectionTrombi(){
   criteria.style.setProperty("--trombi-criterion-count",String(criterionLabels.length));
   track.style.setProperty("--trombi-criterion-count",String(criterionLabels.length));
   const criterionHeading=document.createElement("div");criterionHeading.className="correction-trombi-criterion-heading";criterionHeading.textContent="Critères";criteria.append(criterionHeading);
-  for(const label of criterionLabels){const criterion=document.createElement("div");criterion.className="correction-trombi-criterion";criterion.textContent=label;criteria.append(criterion)}
+  for(const [index,label] of criterionLabels.entries()){
+    const criterion=document.createElement("div");criterion.className="correction-trombi-criterion";criterion.textContent=label;criterion.title=label;
+    if(index>0&&index<categories.length&&categories[index].partIndex!==categories[index-1].partIndex)criterion.classList.add("correction-trombi-part-start");
+    criteria.append(criterion);
+  }
   const alphabeticalStudents=students.slice().sort(compareTrombiStudentNames),studentNumbers=new Map(alphabeticalStudents.map((student,index)=>[student.id,index+1]));
   const sortedStudents=getSortedTrombiStudents(students);
   const groupColors=getTrombiGroupColorMap(alphabeticalStudents);
@@ -1262,38 +1289,23 @@ function renderCorrectionTrombi(){
   for(const [index,student] of sortedStudents.entries()){
     if(index%cardsPerRow===0){cardRow=document.createElement("div");cardRow.className="correction-trombi-card-row";cardRow.setAttribute("role","presentation");cards.append(cardRow)}
     const card=document.createElement("article");card.className="correction-trombi-card";card.setAttribute("role","listitem");
-    const header=document.createElement("div");header.className="correction-trombi-card-header";
-    const cardNumber=document.createElement("span");cardNumber.className="correction-trombi-card-number";cardNumber.textContent=String(studentNumbers.get(student.id));cardNumber.setAttribute("aria-label",`Élève numéro ${studentNumbers.get(student.id)} dans l’ordre alphabétique`);
-    const note=assignmentStudentDetails[student.id]?.note,noteLabel=note===null||note===undefined||note===""?"—":String(note);
-    const cardNote=document.createElement("span");cardNote.className="correction-trombi-card-note";cardNote.textContent=noteLabel;cardNote.style.backgroundColor=getTrombiNoteColor(note);cardNote.setAttribute("aria-label",`Note : ${noteLabel}`);
-    const papBadge=document.createElement("span");papBadge.className="correction-trombi-card-pap";papBadge.textContent=student.pap?"!":"";papBadge.setAttribute("aria-label",student.pap?"PAP":"Pas de PAP");
-    const groupName=assignmentStudentDetails[student.id]?.sousGroupe?.trim()||"";
-    const groupBadge=document.createElement("span");groupBadge.className="correction-trombi-card-group";groupBadge.textContent=groupName||"—";groupBadge.style.backgroundColor=groupName?groupColors.get(normalizeTrombiPhotoName(groupName)):"var(--trombi-card-gray)";groupBadge.setAttribute("aria-label",groupName?`Groupe ${groupName}`:"Aucun groupe");
-    header.append(cardNumber,cardNote,papBadge,groupBadge);
-    const cardPortrait=createTrombiPortrait(student,true);cardPortrait.classList.add("correction-trombi-card-portrait");
-    const photoArea=document.createElement("button");photoArea.type="button";photoArea.className="correction-trombi-card-photo correction-trombi-photo-button";photoArea.setAttribute("aria-label",`Corriger ${[student.nom,student.prenom].filter(Boolean).join(" ")}`);photoArea.addEventListener("click",()=>openStudentCorrection(student));photoArea.append(cardPortrait);
-    const cardName=document.createElement("strong");cardName.className="correction-trombi-card-name";cardName.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
-    card.append(header,photoArea,cardName);cardRow.append(card);
+    card.append(createTrombiCardHeader(student,studentNumbers.get(student.id),groupColors),createTrombiCardPhoto(student),createTrombiCardName(student));cardRow.append(card);
   }
   for(const student of sortedStudents){
     const column=document.createElement("article");column.className="correction-trombi-row-card";column.setAttribute("role","listitem");
     const header=document.createElement("div");header.className="correction-trombi-student-header";
-    const number=document.createElement("span");number.className="correction-trombi-student-number";number.textContent=String(studentNumbers.get(student.id));number.setAttribute("aria-label",`Élève numéro ${studentNumbers.get(student.id)} dans l’ordre alphabétique`);
-    const identity=document.createElement("div");identity.className="correction-trombi-identity";
-    const photoButton=document.createElement("button");photoButton.type="button";photoButton.className="correction-trombi-photo-button";photoButton.setAttribute("aria-label",`Corriger ${[student.nom,student.prenom].filter(Boolean).join(" ")}`);photoButton.addEventListener("click",()=>openStudentCorrection(student));photoButton.append(createTrombiPortrait(student));identity.append(photoButton);
-    const name=document.createElement("strong");name.className="correction-trombi-student-name";name.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
     const metadata=document.createElement("span");metadata.className="correction-trombi-student-metadata";metadata.textContent=student.classe||"Classe non renseignée";
-    identity.append(name,metadata);header.append(number,identity);
-    if(student.pap){const pap=document.createElement("span");pap.className="correction-trombi-pap";pap.textContent="PAP";header.append(pap)}
+    header.append(createTrombiCardHeader(student,studentNumbers.get(student.id),groupColors),createTrombiCardPhoto(student),createTrombiCardName(student),metadata);
     const details=assignmentStudentDetails[student.id]||{};
-    const noteCell=document.createElement("div");noteCell.className="correction-trombi-row-value";noteCell.textContent=details.note===null||details.note===undefined||details.note===""?"—":String(details.note);
-    column.append(header,noteCell);
+    column.append(header);
     const correction=studentCorrections[student.id];
-    for(const category of categories){
+    for(const [index,{node:category,partIndex}] of categories.entries()){
       const selected=correction?.categoryEvaluations?.[category.id]?.exceeded?"D":correction?printCategoryLevel(category,correction):null;
-      column.append(createTrombiLevelScale(selected));
+      const scale=createTrombiLevelScale(selected);
+      if(index>0&&partIndex!==categories[index-1].partIndex)scale.classList.add("correction-trombi-part-start");
+      column.append(scale);
     }
-    for(const value of [details.sousGroupe,details.sujet]){
+    for(const value of [details.sujet]){
       const cell=document.createElement("div");cell.className="correction-trombi-row-value";cell.textContent=value===null||value===undefined||value===""?"—":String(value);column.append(cell);
     }
     track.append(column);
