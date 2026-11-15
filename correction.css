@@ -109,7 +109,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-trombi-summary{flex:none;margin:0;color:var(--sub);font-size:.78rem;white-space:nowrap}
 .correction-trombi-empty{padding:24px 0;border-top:1px solid var(--line)}
 .correction-trombi-empty p{margin:0 0 12px}
-.correction-trombi-matrix{--trombi-header-height:270px;--trombi-row-height:32px;display:grid;grid-template-columns:190px minmax(0,1fr);max-height:calc(100vh - var(--navigation-height) - 154px);overflow-x:hidden;overflow-y:auto;border:1px solid var(--line);background:var(--bg)}
+.correction-trombi-matrix{--trombi-header-height:204px;--trombi-row-height:32px;display:grid;grid-template-columns:190px minmax(0,1fr);max-height:calc(100vh - var(--navigation-height) - 154px);overflow-x:hidden;overflow-y:auto;border:1px solid var(--line);background:var(--bg)}
 .correction-trombi-criteria{position:sticky;left:0;z-index:2;display:grid;grid-template-rows:var(--trombi-header-height) repeat(var(--trombi-criterion-count),var(--trombi-row-height));align-content:start;background:#2d3034;border-right:1px solid var(--line)}
 .correction-trombi-criterion-heading,.correction-trombi-criterion{display:flex;align-items:center;box-sizing:border-box;padding:2px 10px;font-size:.72rem}
 .correction-trombi-criterion-heading{font-weight:700}
@@ -122,7 +122,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-trombi-row-card>.correction-trombi-level-scale{grid-template-columns:repeat(4,24px);justify-content:center;align-items:center;box-sizing:border-box;height:var(--trombi-row-height);padding:0}
 .correction-trombi-row-card>.correction-trombi-level-scale span{min-height:22px}
 .correction-trombi-student-header{display:grid;grid-template-rows:24px minmax(0,1fr) 32px 18px;height:var(--trombi-header-height);overflow:hidden;background:#fff;color:#111}
-.correction-trombi-student-header .correction-trombi-card-photo{height:100%}
+.correction-trombi-student-header .correction-trombi-card-photo{justify-self:center;width:100px;height:100%}
 .correction-trombi-portrait{display:block;width:80px;height:100px;border-radius:4px;object-fit:cover;background:#34373b}
 .correction-trombi-student-metadata{display:block;max-width:100%;overflow:hidden;padding:0 4px;background:#fff;color:#555;font-size:.7rem;font-weight:400;line-height:18px;text-align:center;white-space:nowrap;text-overflow:ellipsis}
 .correction-trombi-cards{display:flex;flex-direction:column;gap:7px;width:100%;min-width:0;max-height:calc(100vh - var(--navigation-height) - 84px);overflow:auto;padding:2px}
