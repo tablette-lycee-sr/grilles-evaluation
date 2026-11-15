@@ -16,7 +16,7 @@ Dans le sous-menu Élèves, l'enregistrement télécharge un fichier CSV contena
 
 Le CSV ne contient ni photos ni données propres au devoir (sous-groupe, sujet, remarque, notes et corrections). La création d'un nouveau devoir réinitialise ces données ; le chargement d'un groupe remplace le groupe actif et ses corrections après confirmation. Le fichier contenant des noms et des informations PAP, conservez-le dans un emplacement approprié aux données personnelles.
 
-La réinitialisation de la liste efface après confirmation son nom, ses élèves et leurs corrections du devoir actif, sans modifier les fichiers enregistrés. Le tableau reste disponible pour saisir un nouveau nom et de nouveaux élèves.
+La réinitialisation de la liste efface après confirmation le groupe actif, ses élèves et leurs corrections du devoir actif, sans modifier les fichiers enregistrés. Il faut ensuite créer ou charger un groupe. Le nom d'un groupe actif peut être modifié en cliquant dessus.
 
 ## Modes de correction
 

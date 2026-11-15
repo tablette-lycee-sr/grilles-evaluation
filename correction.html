@@ -1123,13 +1123,28 @@ function matchesStudentFilter(student,field,filter){
   return filter===EMPTY_STUDENT_FILTER?value.trim()==="":value.toLocaleLowerCase().includes(filter.toLocaleLowerCase());
 }
 function refreshStudentTableForField(field){if(studentSort.field===field||Object.hasOwn(studentFilters,field))renderStudentTable()}
+function renderStudentGroupTitle(){
+  const title=document.getElementById("studentGroupTitle");title.replaceChildren();
+  if(!activeStudentGroup)return;
+  const button=document.createElement("button");button.type="button";button.className="student-group-name-button";button.textContent=activeStudentGroup.name||"Nom du groupe";button.title="Renommer le groupe";button.setAttribute("aria-label",`Renommer le groupe ${activeStudentGroup.name||"sans nom"}`);
+  button.addEventListener("click",()=>{
+    const group=activeStudentGroup,input=document.createElement("input");input.type="text";input.className="student-group-name-input";input.value=group.name;input.setAttribute("aria-label","Nom du groupe d’élèves");title.replaceChildren(input);input.focus();input.select();
+    let finished=false;
+    const finish=(commit,restoreFocus)=>{
+      if(finished||!input.isConnected)return;finished=true;
+      if(activeStudentGroup===group&&commit){const name=input.value.trim();if(name)group.name=name}
+      renderStudentGroupTitle();if(restoreFocus)title.querySelector("button")?.focus();
+      if(commit&&activeStudentGroup===group)saveWorkspace();
+    };
+    input.addEventListener("blur",()=>finish(true,false));
+    input.addEventListener("keydown",event=>{
+      if(event.key==="Enter"||event.key==="Escape"){event.preventDefault();event.stopPropagation();finish(event.key==="Enter",true)}
+    });
+  });
+  title.append(button);
+}
 function renderStudentTable(){
   const body=document.getElementById("studentTableBody"),allStudents=activeStudentGroup?.students||[];body.replaceChildren();
-  const title=document.getElementById("studentGroupTitle");
-  if(activeStudentGroup&&!activeStudentGroup.name&&!title.querySelector("input")){
-    const input=document.createElement("input");input.type="text";input.className="student-group-name-input";input.placeholder="Nom du groupe";input.setAttribute("aria-label","Nom du groupe d’élèves");
-    input.addEventListener("input",()=>{if(activeStudentGroup)activeStudentGroup.name=input.value});title.replaceChildren(input);
-  }
   document.getElementById("studentGroupCount").textContent=`(${allStudents.length} ${allStudents.length===1?"élève":"élèves"})`;
   let visibleStudents=allStudents.filter(student=>Object.entries(studentFilters).every(([field,filter])=>matchesStudentFilter(student,field,filter)));
   if(studentSort.field)visibleStudents.sort((first,second)=>String(studentFieldValue(first,studentSort.field)).localeCompare(String(studentFieldValue(second,studentSort.field)),"fr",{numeric:true,sensitivity:"base"})*studentSort.direction);
@@ -1731,7 +1746,7 @@ function applyLoadedStudentGroup(group){
   document.getElementById("studentName").textContent="";document.getElementById("finalGrade").value="";
   if(document.querySelector(".app").classList.contains("grid-loaded"))render();
   selectedStudentIds.clear();studentFilters={};studentSort={field:"",direction:1};closeStudentColumnMenu();
-  document.getElementById("studentGroupTitle").textContent=group.name;renderStudentTable();setActiveView("eleves");
+  renderStudentGroupTitle();renderStudentTable();setActiveView("eleves");
   const status=document.getElementById("studentGroupFileStatus");status.hidden=false;status.textContent=`Groupe « ${group.name} » chargé : ${group.students.length} élève(s).`;
   saveWorkspace();
 }
@@ -1763,14 +1778,14 @@ document.getElementById("resetStudentListBtn").addEventListener("click",()=>{
 document.getElementById("cancelResetStudentList").addEventListener("click",()=>document.getElementById("resetStudentListDialog").close());
 document.getElementById("confirmResetStudentList").addEventListener("click",()=>{
   if(!activeStudentGroup)return;
-  activeStudentGroup={id:activeStudentGroup.id,name:"",students:[]};
+  activeStudentGroup=null;
   assignmentStudentDetails={};studentCorrections={};activeCorrectionStudentId=null;correctionStudentOrder=[];resetChoices();
   selectedStudentIds.clear();pendingStudentImport=null;pendingStudentGroupImport=null;studentFilters={};studentSort={field:"",direction:1};closeStudentColumnMenu();
   document.getElementById("studentName").textContent="";document.getElementById("finalGrade").value="";
-  document.getElementById("studentGroupTitle").replaceChildren();
+  renderStudentGroupTitle();
   for(const id of ["studentImportStatus","studentGroupFileStatus"]){const status=document.getElementById(id);status.hidden=true;status.textContent=""}
   if(document.querySelector(".app").classList.contains("grid-loaded"))render();
-  document.getElementById("resetStudentListDialog").close();renderStudentTable();setActiveView("eleves");document.querySelector(".student-group-name-input")?.focus();
+  document.getElementById("resetStudentListDialog").close();renderStudentTable();setActiveView("eleves");
 });
 document.getElementById("studentGroupForm").addEventListener("submit",event=>{
   event.preventDefault();const name=document.getElementById("studentGroupNameInput").value.trim();if(!name)return;
@@ -1779,7 +1794,7 @@ document.getElementById("studentGroupForm").addEventListener("submit",event=>{
   if(document.querySelector(".app").classList.contains("grid-loaded"))render();
   selectedStudentIds.clear();
   studentFilters={};studentSort={field:"",direction:1};
-  document.getElementById("studentGroupTitle").textContent=name;renderStudentTable();
+  renderStudentGroupTitle();renderStudentTable();
   document.getElementById("studentGroupDialog").close();setActiveView("eleves");
 });
 document.getElementById("addStudentBtn").addEventListener("click",()=>addStudentRow());
@@ -1912,7 +1927,7 @@ function restoreWorkspace(snapshot){
     for(const [name,value] of Object.entries(assignment)){const field=form.elements.namedItem(name);if(field)field.value=value}
     renderAssignmentGrid();render();
   }
-  if(activeStudentGroup){document.getElementById("studentGroupTitle").textContent=activeStudentGroup.name;renderStudentTable()}
+  if(activeStudentGroup){renderStudentGroupTitle();renderStudentTable()}
   setActiveView("devoir");
 }
 async function initializeWorkspaceStorage(){
