@@ -182,7 +182,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <span class="submenu-action" title="Supprimer un groupe d’élèves (à venir)"><button type="button" disabled aria-label="Supprimer un groupe d’élèves"><svg aria-hidden="true"><use href="#icon-trash"/></svg></button></span>
   </div>
   <div class="submenu" data-submenu="correction">
-    <span class="submenu-action" title="Choisir le mode de correction (à venir)"><button type="button" disabled aria-label="Choisir le mode de correction"><svg aria-hidden="true"><use href="#icon-sliders"/></svg></button></span>
+    <button id="correctionModeButton" type="button" title="Choisir le mode de correction" aria-label="Choisir le mode de correction" aria-haspopup="true" aria-expanded="false"><svg aria-hidden="true"><use href="#icon-sliders"/></svg></button>
     <button type="button" id="submenuSettings" title="Préférences" aria-label="Préférences"><span class="menu-icon" style="--icon:url('icones/settings.svg')" aria-hidden="true"></span></button>
   </div>
   <div class="submenu" data-submenu="export" hidden>
@@ -260,6 +260,10 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <div class="dialog-actions"><button id="cancelDeleteSelectedStudents" class="secondary" type="button">Annuler</button><button id="confirmDeleteSelectedStudents" type="button">Supprimer</button></div>
 </dialog>
 <div id="studentColumnMenu" class="student-column-menu" hidden></div>
+<div id="correctionModeMenu" class="student-column-menu correction-mode-menu" role="group" aria-label="Mode de correction" hidden>
+  <label><input type="radio" name="correctionMode" value="complete" checked>Grille complète</label>
+  <label><input type="radio" name="correctionMode" value="popup">Correction en fenêtre</label>
+</div>
 <dialog id="studentClassDialog">
   <div class="dialog-heading"><h2>Attribuer une classe</h2></div>
   <p id="studentClassStatus" class="catalog-status" role="status" aria-live="polite"></p>
@@ -315,6 +319,16 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 </header>
 <div id="status" class="sr-only" role="status" aria-live="polite"></div>
 <dialog id="correctionStudentInfo" class="correction-student-info" aria-label="Fiche élève"></dialog>
+<dialog id="correctionPopup" class="correction-popup" aria-labelledby="correctionPopupName">
+  <div class="correction-popup-layout">
+    <aside class="correction-popup-student" id="correctionPopupStudent"></aside>
+    <div class="correction-popup-main">
+      <div class="correction-popup-heading"><h2 id="correctionPopupName"></h2><button id="closeCorrectionPopup" class="icon-button" type="button" title="Fermer la correction" aria-label="Fermer la correction"><span class="menu-icon" style="--icon:url('icones/close.svg')" aria-hidden="true"></span></button></div>
+      <div class="correction-popup-categories" id="correctionPopupCategories"></div>
+      <label class="correction-popup-remark">Remarque<textarea id="correctionPopupRemark" rows="2"></textarea></label>
+    </div>
+  </div>
+</dialog>
 <dialog id="resetCorrectionDialog" aria-labelledby="resetCorrectionHeading">
   <div class="dialog-heading"><h2 id="resetCorrectionHeading">Effacer cette correction ?</h2></div>
   <p>Les niveaux, ajustements, bonus et la note de cet élève seront effacés. Cette action est irréversible.</p>
@@ -355,6 +369,7 @@ let correctionStudentOrder = [];
 let selectedStudentIds = new Set();
 let correctionTrombiMode = "full";
 let correctionTrombiSort = "name-asc";
+let correctionInteractionMode = "complete";
 let trombiPhotoUrls = new Map();
 let pendingStudentImport = null;
 let studentFilters = {};
@@ -584,7 +599,7 @@ function renderCategoryEvaluationControls(node){
   select.value=evaluation.motifIds?.[key]||"";select.addEventListener("change",()=>updateCategoryMotif(node.id,key,select.value));controls.appendChild(select);
   return controls;
 }
-function renderCategory(category,node=null){
+function renderCategory(category,node=null,categoryOnly=false){
   const section=document.createElement("section");section.className="section";
   const head=document.createElement("div");head.className="section-head category-head";
   const headingRow=document.createElement("div");headingRow.className="category-heading-row";
@@ -667,8 +682,8 @@ function renderCategory(category,node=null){
     if(!node){const description=document.createElement("p");description.className="small";description.textContent=category.description;head.appendChild(description)}
   }
   section.appendChild(head);
-  if(node)section.appendChild(renderNode(node,0,!isLeaf(node)));
-  else{const placeholder=document.createElement("div");placeholder.className="category-placeholder small";placeholder.textContent=category.description;section.appendChild(placeholder)}
+  if(node&&!categoryOnly)section.appendChild(renderNode(node,0,!isLeaf(node)));
+  else if(!node){const placeholder=document.createElement("div");placeholder.className="category-placeholder small";placeholder.textContent=category.description;section.appendChild(placeholder)}
   return section;
 }
 function calculateFinalScore(){
@@ -706,6 +721,7 @@ function render(){
   updateFinalScore();
   updatePartCounts(roots);
   updateActivePart();
+  if(document.getElementById("correctionPopup").open)renderCorrectionPopupCategories();
 }
 function makePrintLevelTable(levelId){
   const track=document.createElement("div");track.className="print-level-track";track.setAttribute("aria-label","Niveau obtenu : "+(levelId||"non évalué"));
@@ -988,18 +1004,23 @@ function captureActiveCorrection(){
   const details=assignmentStudentDetails[activeCorrectionStudentId]||(assignmentStudentDetails[activeCorrectionStudentId]={sousGroupe:"",sujet:"",remarque:""});
   details.note=note;
 }
-function openStudentCorrection(student){
-  if(!document.querySelector(".app").classList.contains("grid-loaded")){
-    setStatus("Créez d'abord un devoir et choisissez une grille de correction.","error");return;
-  }
-  if(!document.getElementById("correctionTrombiView").hidden)correctionStudentOrder=getSortedTrombiStudents(activeStudentGroup?.students||[]).map(item=>item.id);
+function loadStudentCorrection(student){
   captureActiveCorrection();activeCorrectionStudentId=student.id;
   const correction=structuredClone(studentCorrections[student.id]||{});
   manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};
   leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};
   document.getElementById("studentName").textContent=[student.nom,student.prenom].filter(Boolean).join(" ");
   document.getElementById("finalGrade").value=correction.note||"";
-  document.getElementById("correctionTrombiView").hidden=true;document.querySelector(".app").classList.remove("trombi-view");updateCorrectionStudentNavigation();render();
+  updateCorrectionStudentNavigation();
+}
+function openStudentCorrection(student){
+  if(!document.querySelector(".app").classList.contains("grid-loaded")){
+    setStatus("Créez d'abord un devoir et choisissez une grille de correction.","error");return;
+  }
+  if(!document.getElementById("correctionTrombiView").hidden)correctionStudentOrder=getSortedTrombiStudents(activeStudentGroup?.students||[]).map(item=>item.id);
+  loadStudentCorrection(student);
+  if(correctionInteractionMode==="popup"&&!document.getElementById("correctionTrombiView").hidden){openCorrectionPopup(student);return}
+  document.getElementById("correctionTrombiView").hidden=true;document.querySelector(".app").classList.remove("trombi-view");render();
 }
 function updateCorrectionStudentNavigation(){
   const students=activeStudentGroup?.students||[],studentIds=new Set(students.map(student=>student.id));
@@ -1256,10 +1277,35 @@ function createTrombiCardHeader(student,number,groupColors){
 }
 function createTrombiCardPhoto(student){
   const portrait=createTrombiPortrait(student,true);portrait.classList.add("correction-trombi-card-portrait");
-  const button=document.createElement("button");button.type="button";button.className="correction-trombi-card-photo correction-trombi-photo-button";button.setAttribute("aria-label",`Corriger ${[student.nom,student.prenom].filter(Boolean).join(" ")}`);button.addEventListener("click",()=>openStudentCorrection(student));button.append(portrait);return button;
+  const button=document.createElement("button");button.type="button";button.className="correction-trombi-card-photo correction-trombi-photo-button";button.dataset.studentId=student.id;button.setAttribute("aria-label",`Corriger ${[student.nom,student.prenom].filter(Boolean).join(" ")}`);button.addEventListener("click",()=>openStudentCorrection(student));button.append(portrait);return button;
 }
 function createTrombiCardName(student){
   const name=document.createElement("strong");name.className="correction-trombi-card-name";name.textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";return name;
+}
+function renderCorrectionPopupCategories(){
+  const container=document.getElementById("correctionPopupCategories"),scrollTop=container.scrollTop;
+  const focused=container.contains(document.activeElement)?document.activeElement:null;
+  const focusedCategory=focused?.closest("[data-popup-category]")?.dataset.popupCategory,focusedLabel=focused?.getAttribute("aria-label");
+  container.replaceChildren();
+  for(const {node} of getCorrectionTrombiCategories()){
+    const section=renderCategory({title:node.titre},node,true);section.dataset.popupCategory=node.id;container.append(section);
+  }
+  if(!container.children.length){const empty=document.createElement("p");empty.textContent="Aucune catégorie évaluable dans cette grille.";container.append(empty)}
+  container.scrollTop=scrollTop;
+  if(focusedCategory&&focusedLabel){
+    const section=[...container.querySelectorAll("[data-popup-category]")].find(item=>item.dataset.popupCategory===focusedCategory);
+    [...(section?.querySelectorAll("[aria-label]")||[])].find(item=>item.getAttribute("aria-label")===focusedLabel)?.focus({preventScroll:true});
+  }
+}
+function openCorrectionPopup(student){
+  const dialog=document.getElementById("correctionPopup"),identity=document.getElementById("correctionPopupStudent"),details=assignmentStudentDetails[student.id]||{};
+  identity.replaceChildren();const photo=document.createElement("div");photo.className="correction-popup-photo";photo.append(createTrombiPortrait(student,true));identity.append(photo);
+  const list=document.createElement("dl");
+  for(const [label,value] of [["Classe",student.classe],["Sous-groupe",details.sousGroupe],["Sujet",details.sujet],["PAP",student.pap?"Oui":"Non"]]){
+    const term=document.createElement("dt"),description=document.createElement("dd");term.textContent=label;description.textContent=value||"—";list.append(term,description);
+  }
+  identity.append(list);document.getElementById("correctionPopupName").textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
+  document.getElementById("correctionPopupRemark").value=details.remarque||"";renderCorrectionPopupCategories();dialog.showModal();
 }
 function renderCorrectionTrombi(){
   const criteria=document.getElementById("correctionTrombiCriteria"),track=document.getElementById("correctionTrombiTrack");
@@ -1503,10 +1549,43 @@ document.getElementById("showCorrectionStudentInfo").addEventListener("click",()
   content.append(list);dialog.replaceChildren(photo,content);dialog.showModal();
 });
 document.getElementById("correctionStudentInfo").addEventListener("click",()=>{document.getElementById("correctionStudentInfo").close();document.getElementById("showCorrectionStudentInfo").focus()});
+const correctionPopup=document.getElementById("correctionPopup");
+function closeCorrectionPopup(){
+  if(!correctionPopup.open)return;
+  captureActiveCorrection();correctionPopup.close();renderCorrectionTrombi();saveWorkspace();
+  const container=document.getElementById(correctionTrombiMode==="full"?"correctionTrombiCards":"correctionTrombiTrack");
+  [...container.querySelectorAll("[data-student-id]")].find(button=>button.dataset.studentId===activeCorrectionStudentId)?.focus({preventScroll:true});
+}
+document.getElementById("closeCorrectionPopup").addEventListener("click",closeCorrectionPopup);
+document.getElementById("correctionPopupRemark").addEventListener("input",event=>{
+  if(!activeCorrectionStudentId)return;
+  const details=assignmentStudentDetails[activeCorrectionStudentId]||(assignmentStudentDetails[activeCorrectionStudentId]={sousGroupe:"",sujet:"",remarque:""});details.remarque=event.target.value;
+});
+correctionPopup.addEventListener("click",event=>{
+  if(event.target!==correctionPopup)return;
+  const bounds=correctionPopup.getBoundingClientRect();
+  if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)closeCorrectionPopup();
+});
+correctionPopup.addEventListener("cancel",event=>{event.preventDefault();closeCorrectionPopup()});
 document.getElementById("resetBtn").addEventListener("click",()=>{document.getElementById("resetCorrectionDialog").showModal();document.getElementById("cancelResetCorrection").focus()});
 document.getElementById("cancelResetCorrection").addEventListener("click",()=>document.getElementById("resetCorrectionDialog").close());
 document.getElementById("confirmResetCorrection").addEventListener("click",()=>{resetChoices();document.getElementById("finalGrade").value="";captureActiveCorrection();render();document.getElementById("resetCorrectionDialog").close();setStatus("La correction et la note de cette grille ont été effacées.")});
 document.getElementById("showMetrics").addEventListener("change",event=>document.querySelector(".app").classList.toggle("show-metrics",event.target.checked));
+const correctionModeButton=document.getElementById("correctionModeButton"),correctionModeMenu=document.getElementById("correctionModeMenu");
+function closeCorrectionModeMenu(){correctionModeMenu.hidden=true;correctionModeButton.setAttribute("aria-expanded","false")}
+correctionModeButton.addEventListener("click",()=>{
+  if(!correctionModeMenu.hidden){closeCorrectionModeMenu();return}
+  const bounds=correctionModeButton.getBoundingClientRect();correctionModeMenu.hidden=false;correctionModeButton.setAttribute("aria-expanded","true");
+  correctionModeMenu.style.left=`${Math.max(8,Math.min(bounds.left,window.innerWidth-correctionModeMenu.offsetWidth-8))}px`;
+  correctionModeMenu.style.top=`${Math.min(bounds.bottom+2,Math.max(8,window.innerHeight-correctionModeMenu.offsetHeight-8))}px`;
+  correctionModeMenu.querySelector("input:checked").focus();
+});
+correctionModeMenu.addEventListener("change",event=>{
+  if(event.target.name!=="correctionMode")return;
+  correctionInteractionMode=event.target.value;closeCorrectionModeMenu();correctionModeButton.focus();
+});
+document.addEventListener("click",event=>{if(!correctionModeMenu.contains(event.target)&&event.target!==correctionModeButton&&!correctionModeButton.contains(event.target))closeCorrectionModeMenu()});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!correctionModeMenu.hidden){closeCorrectionModeMenu();correctionModeButton.focus()}});
 document.getElementById("submenuSettings").addEventListener("click",()=>document.getElementById("settingsDialog").showModal());
 document.getElementById("closeSettings").addEventListener("click",()=>document.getElementById("settingsDialog").close());
 document.getElementById("settingsDialog").addEventListener("click",event=>{
@@ -1713,7 +1792,7 @@ function writeWorkspace(database,snapshot,expectedRevision){
 }
 function workspaceSnapshot(){
   captureActiveCorrection();
-  return structuredClone({version:1,gridLoaded:correctionApp.classList.contains("grid-loaded"),grid,config,partLayout,assignment,activeStudentGroup,assignmentStudentDetails,studentCorrections,activeCorrectionStudentId,
+  return structuredClone({version:1,gridLoaded:correctionApp.classList.contains("grid-loaded"),grid,config,partLayout,assignment,activeStudentGroup,assignmentStudentDetails,studentCorrections,activeCorrectionStudentId,correctionInteractionMode,
     currentCorrection:{manualChoices,manualCategoryPercent,categoryEvaluations,leafChoices,bonusChoices,studentName:document.getElementById("studentName").textContent,note:document.getElementById("finalGrade").value}});
 }
 async function saveWorkspace(){
@@ -1737,6 +1816,8 @@ function restoreWorkspace(snapshot){
   if(!snapshot||snapshot.version!==1)throw new Error("Format de sauvegarde inconnu.");
   grid=snapshot.grid;config=snapshot.config;partLayout=snapshot.partLayout;assignment=snapshot.assignment||{};activeStudentGroup=snapshot.activeStudentGroup||null;
   assignmentStudentDetails=snapshot.assignmentStudentDetails||{};studentCorrections=snapshot.studentCorrections||{};activeCorrectionStudentId=snapshot.activeCorrectionStudentId||null;
+  correctionInteractionMode=snapshot.correctionInteractionMode==="popup"?"popup":"complete";
+  correctionModeMenu.querySelector(`input[value="${correctionInteractionMode}"]`).checked=true;
   const correction=snapshot.currentCorrection||{};manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};
   levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
   document.getElementById("studentName").textContent=correction.studentName||"";document.getElementById("finalGrade").value=correction.note||"";

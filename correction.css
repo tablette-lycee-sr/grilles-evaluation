@@ -45,6 +45,27 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .correction-student-info-content dl{display:grid;gap:3px;margin:0}
 .correction-student-info-content dt{color:var(--sub);font-size:.72rem}
 .correction-student-info-content dd{margin:0 0 6px;font-size:.86rem}
+.correction-popup{width:min(1100px,max(75vw,min(440px,calc(100vw - 24px))));height:75vh;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);padding:16px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text);overflow:hidden}
+.correction-popup::backdrop{background:rgba(0,0,0,.65)}
+.correction-popup-layout{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:18px;height:100%;min-height:0}
+.correction-popup-student{min-width:0;overflow-y:auto;overscroll-behavior:contain}
+.correction-popup-photo{width:100%;aspect-ratio:10 / 13;overflow:hidden;background:#34373b}
+.correction-popup-photo .correction-trombi-portrait{width:100%;height:100%;border-radius:0;object-fit:cover}
+.correction-popup-student dl{display:grid;gap:3px;margin:12px 0 0;overflow-wrap:anywhere}
+.correction-popup-student dt{color:var(--sub);font-size:.72rem}
+.correction-popup-student dd{margin:0 0 6px;font-size:.85rem}
+.correction-popup-main{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}
+.correction-popup-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.correction-popup-heading h2{min-width:0;margin:0;overflow-wrap:anywhere;font-size:1.05rem}
+.correction-popup-heading .icon-button{flex:none;width:36px;height:36px}
+.correction-popup-heading .menu-icon{width:20px;height:20px}
+.correction-popup-categories{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
+.correction-popup-categories .category-head{padding:6px 8px}
+.correction-popup-categories .category-heading-row h2{font-size:.9rem;line-height:1.15;overflow-wrap:anywhere}
+.correction-popup-categories .category-metrics,.correction-popup-categories .category-comment{display:none}
+.correction-popup-categories .category-extra-controls{margin:2px 0 4px}
+.correction-popup-remark{display:grid;gap:4px;color:var(--sub);font-size:.78rem}
+.correction-popup-remark textarea{width:100%;min-height:48px;max-height:100px;resize:vertical;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:#1b1d20;color:var(--text);font:inherit}
 @media(min-width:1100px){
 	.app .correction-header{grid-template-columns:minmax(140px,1fr) minmax(0,auto) minmax(140px,1fr)}
 	.correction-header-actions{justify-self:end}
@@ -58,6 +79,11 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 	.correction-header-actions{grid-column:3;grid-row:1;gap:3px}
 	.correction-grade .final-grade{width:64px}
 	.correction-student-info[open]{grid-template-columns:minmax(90px,130px) minmax(0,1fr);gap:12px}
+	.correction-popup{width:calc(100vw - 16px);height:85vh;max-width:calc(100vw - 16px);padding:10px}
+	.correction-popup-layout{grid-template-columns:minmax(70px,100px) minmax(0,1fr);gap:8px}
+	.correction-popup-heading h2{font-size:.9rem}
+	.correction-popup-categories .category-heading-row{flex-wrap:wrap}
+	.correction-popup-categories .category-controls{max-width:100%}
 }
 .app-view{max-width:1080px;margin:var(--navigation-height) auto 0;padding:28px 20px;color:var(--text)}
 .app-view h1{margin:0 0 12px;font-size:1.55rem}
@@ -191,6 +217,9 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .student-header-menu-button .menu-icon{width:17px;height:17px}
 .student-pap-filter{flex:none;width:16px;height:16px;margin:0 4px 0 0;accent-color:var(--accent);cursor:pointer}
 .student-column-menu{position:fixed;z-index:90;width:min(280px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow-y:auto;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.42);color:var(--text)}
+.correction-mode-menu label{display:flex;align-items:center;gap:8px;padding:8px;font-size:.85rem;cursor:pointer}
+.correction-mode-menu label:hover{background:#44474c}
+.correction-mode-menu input{accent-color:var(--accent)}
 .student-column-menu-heading{margin:4px 7px 6px;color:var(--sub);font-size:.72rem;font-weight:700;text-transform:uppercase}
 .student-column-action{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:start;gap:8px;width:100%;padding:8px 7px;border:0;border-radius:4px;background:transparent;color:var(--text);text-align:left}
 .student-column-action:hover{background:#44474c}

@@ -10,6 +10,10 @@ Cette sauvegarde ne synchronise pas les appareils et peut disparaître si les do
 
 Un seul devoir et un seul groupe sont conservés comme espace de travail actif. Leur remplacement ou la suppression d'élèves efface les corrections concernées après confirmation. Si un autre onglet modifie la sauvegarde, un avertissement signale que les nouvelles modifications de l'onglet courant ne sont plus enregistrées.
 
+## Modes de correction
+
+Dans le sous-menu Correction, le choix du mode détermine ce qui s'ouvre au clic sur un portrait : la grille complète ou une fenêtre de correction par catégories. La fenêtre affiche toutes les catégories de la grille, avec un défilement lorsque nécessaire. Un clic à l'extérieur ou la touche Échap la ferme et conserve les évaluations et la remarque de l'élève. Les deux modes utilisent les mêmes données ; le mode choisi est mémorisé localement.
+
 ## Options au niveau des catégories
 
 Le CSV peut contenir des lignes `categorie` pour déclarer un identifiant stable et `coefficient_categorie`. Les lignes `capacite` peuvent renseigner `categorie_id` pour référencer cette catégorie sans dépendre de son titre. Les anciennes colonnes `avertissement_autorise` et `depasse_autorise` sont ignorées : les boutons Avertissement et Dépassé sont disponibles pour toutes les catégories évaluables.
