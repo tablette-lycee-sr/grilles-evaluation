@@ -174,8 +174,9 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   </div>
   <div class="submenu" data-submenu="eleves" hidden>
     <button type="button" id="createStudentGroupBtn" title="Créer un nouveau groupe d’élèves" aria-label="Créer un nouveau groupe d’élèves"><svg aria-hidden="true"><use href="#icon-user-plus"/></svg></button>
-    <span class="submenu-action" title="Charger un groupe d’élèves (à venir)"><button type="button" disabled aria-label="Charger un groupe d’élèves"><svg aria-hidden="true"><use href="#icon-folder-open"/></svg></button></span>
-    <span class="submenu-action" title="Enregistrer le groupe d’élèves actif (à venir)"><button type="button" disabled aria-label="Enregistrer le groupe d’élèves actif"><svg aria-hidden="true"><use href="#icon-save"/></svg></button></span>
+    <button id="loadStudentGroupBtn" type="button" title="Charger un groupe d’élèves" aria-label="Charger un groupe d’élèves"><svg aria-hidden="true"><use href="#icon-folder-open"/></svg></button>
+    <input id="studentGroupCsvInput" class="sr-only" type="file" accept=".csv,text/csv" aria-label="Choisir un fichier de groupe d’élèves">
+    <button id="saveStudentGroupBtn" type="button" title="Enregistrer le groupe d’élèves actif" aria-label="Enregistrer le groupe d’élèves actif" disabled><svg aria-hidden="true"><use href="#icon-save"/></svg></button>
     <button type="button" id="associateStudentPhotosBtn" title="Associer les photos du dossier G:\Notation\Grilles papier\FakeID" aria-label="Associer des photos"><svg aria-hidden="true"><use href="#icon-image-plus"/></svg></button>
     <input id="trombiPhotoFolder" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" webkitdirectory directory multiple aria-label="Choisir un dossier de photos d’élèves">
     <span class="submenu-action" title="Réinitialiser la liste d’élèves (à venir)"><button type="button" disabled aria-label="Réinitialiser la liste d’élèves"><svg aria-hidden="true"><use href="#icon-reset"/></svg></button></span>
@@ -210,6 +211,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   </section>
   <section id="studentsPanel" hidden>
     <p id="studentsEmptyState" class="assignment-empty">Veuillez d'abord sélectionner créer ou charger un groupe d'élèves pour l'affecter au devoir.</p>
+    <p id="studentGroupFileStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
     <section id="studentGroupWorkspace" hidden>
       <div class="student-group-toolbar">
         <div class="student-group-heading"><h1 id="studentGroupTitle"></h1><span id="studentGroupCount" class="student-group-count"></span></div>
@@ -253,6 +255,11 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <div class="dialog-heading"><h2>Remplacer la liste d’élèves ?</h2></div>
   <p id="replaceStudentsMessage">Les élèves actuellement dans le groupe seront remplacés par ceux du fichier CSV.</p>
   <div class="dialog-actions"><button id="cancelReplaceStudents" class="secondary" type="button">Annuler</button><button id="confirmReplaceStudents" type="button">Remplacer</button></div>
+</dialog>
+<dialog id="loadStudentGroupDialog" aria-labelledby="loadStudentGroupHeading">
+  <div class="dialog-heading"><h2 id="loadStudentGroupHeading">Remplacer le groupe actif ?</h2></div>
+  <p id="loadStudentGroupMessage"></p>
+  <div class="dialog-actions"><button id="cancelLoadStudentGroup" class="secondary" type="button">Annuler</button><button id="confirmLoadStudentGroup" type="button">Remplacer</button></div>
 </dialog>
 <dialog id="deleteSelectedStudentsDialog">
   <div class="dialog-heading"><h2>Supprimer les élèves sélectionnés ?</h2></div>
@@ -372,6 +379,7 @@ let correctionTrombiSort = "name-asc";
 let correctionInteractionMode = "complete";
 let trombiPhotoUrls = new Map();
 let pendingStudentImport = null;
+let pendingStudentGroupImport = null;
 let studentFilters = {};
 const EMPTY_STUDENT_FILTER = Symbol("empty student filter");
 let studentSort = {field:"",direction:1};
@@ -851,7 +859,7 @@ function detectCsvDelimiter(text){
   }
   return semicolons>commas?";":",";
 }
-function parseCsv(text,requiredHeaders=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","ponderation","parametre","valeur","coefficient_categorie"]){
+function parseCsv(text,requiredHeaders=["type","partie","categorie","sous_categorie","id","titre","evaluable","commentaire_NA","commentaire_ECA","commentaire_A","ponderation","parametre","valeur","coefficient_categorie"],allowEmpty=false){
   const source=text.replace(/^\uFEFF/,"");const delimiter=detectCsvDelimiter(source);const rows=[];
   let row=[],field="",quoted=false;
   for(let index=0;index<source.length;index++){
@@ -870,7 +878,7 @@ function parseCsv(text,requiredHeaders=["type","partie","categorie","sous_catego
   }
   if(quoted)throw new Error("un guillemet CSV n'est pas refermé.");
   if(field.length||row.length){row.push(field);if(row.some(value=>value.trim()!==""))rows.push(row)}
-  if(rows.length<2)throw new Error("le fichier ne contient aucune donnée.");
+  if(!rows.length||(!allowEmpty&&rows.length<2))throw new Error("le fichier ne contient aucune donnée.");
   const headers=rows.shift().map(value=>value.trim());
   if(new Set(headers).size!==headers.length)throw new Error("les noms de colonnes doivent être uniques.");
   const missing=requiredHeaders.filter(header=>!headers.includes(header));
@@ -1494,10 +1502,23 @@ function parseStudentCsv(text){
   if(!students.length)throw new Error("aucun élève avec un nom ou un prénom n’a été trouvé.");
   return students;
 }
+function serializeStudentGroupCsv(group){
+  const escape=value=>`"${String(value??"").replace(/"/g,'""')}"`;
+  const rows=[["Nom","Prénom","Classe","PAP"],...group.students.map(student=>[student.nom,student.prenom,student.classe,student.pap?"Oui":"Non"])];
+  return `\uFEFF${rows.map(row=>row.map(escape).join(";")).join("\r\n")}\r\n`;
+}
+function parseStudentGroupCsv(text){
+  const rows=parseCsv(text,["Nom","Prénom","Classe","PAP"],true);
+  return rows.map((row,index)=>{
+    const pap=normalizeTrombiPhotoName(row.PAP);
+    if(!["oui","non","true","false","1","0",""].includes(pap))throw new Error(`valeur PAP invalide à la ligne ${index+2} : « ${row.PAP} ».`);
+    return{nom:row.Nom,prenom:row.Prénom,classe:row.Classe,pap:["oui","true","1"].includes(pap)};
+  });
+}
 function applyCsvText(text,fileName){
   const loaded=gridFromCsv(text,fileName);grid=loaded.grid;config=loaded.config;partLayout=loaded.partLayout;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
   studentCorrections={};activeCorrectionStudentId=null;document.getElementById("studentName").textContent="";document.getElementById("finalGrade").value="";
-  for(const details of Object.values(assignmentStudentDetails))delete details.note;
+  assignmentStudentDetails={};
   activateLoadedGrid(grid.titre);resetChoices();render();initializeAssignment();setStatus(`Grille CSV « ${fileName} » chargée. Les choix précédents ont été réinitialisés.`);
   saveWorkspace();
 }
@@ -1609,6 +1630,7 @@ function setActiveView(viewId){
   updateCorrectionStudentNavigation();
   const isCorrection=viewId==="correction",isAssignment=viewId==="devoir";
   const isStudents=viewId==="eleves",hasStudentGroup=Boolean(activeStudentGroup);
+  document.getElementById("saveStudentGroupBtn").disabled=!hasStudentGroup;
   const hasActiveAssignment=correctionApp.classList.contains("grid-loaded");
   navigationButtons.forEach(item=>{
     if(item.dataset.view===viewId)item.setAttribute("aria-current","page");
@@ -1666,7 +1688,7 @@ document.getElementById("showCorrectionTrombi").addEventListener("click",()=>{
 });
 document.getElementById("correctionTrombiGoStudents").addEventListener("click",()=>setActiveView("eleves"));
 document.getElementById("createAssignmentBtn").addEventListener("click",()=>{
-  if(document.querySelector(".app").classList.contains("grid-loaded")&&!window.confirm("Créer un nouveau devoir remplacera le devoir actuel et toutes ses corrections enregistrées dans ce navigateur. Continuer ?"))return;
+  if(document.querySelector(".app").classList.contains("grid-loaded")&&!window.confirm("Créer un nouveau devoir remplacera le devoir actuel, ses corrections, les sous-groupes, sujets et remarques enregistrés dans ce navigateur. Continuer ?"))return;
   const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=true;modalStatus.textContent="";
   document.getElementById("gridCatalogDialog").showModal();
 });
@@ -1684,6 +1706,44 @@ document.getElementById("createStudentGroupBtn").addEventListener("click",()=>{
   if(activeStudentGroup?.students.length&&!window.confirm("Créer un nouveau groupe remplacera la liste actuelle et ses corrections pour ce devoir. Continuer ?"))return;
   document.getElementById("studentGroupForm").reset();document.getElementById("studentGroupDialog").showModal();
   document.getElementById("studentGroupNameInput").focus();
+});
+document.getElementById("saveStudentGroupBtn").addEventListener("click",()=>{
+  if(!activeStudentGroup)return;
+  let baseName=activeStudentGroup.name.replace(/[<>:"/\\|?*\x00-\x1f]/g,"_").replace(/[. ]+$/g,"")||"groupe-eleves";
+  if(/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(baseName))baseName=`_${baseName}`;
+  const fileName=baseName+".csv";
+  const url=URL.createObjectURL(new Blob([serializeStudentGroupCsv(activeStudentGroup)],{type:"text/csv;charset=utf-8"}));
+  const link=document.createElement("a");link.href=url;link.download=fileName;document.body.append(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),60000);
+});
+function applyLoadedStudentGroup(group){
+  activeStudentGroup={id:createStudentId(),name:group.name,students:group.students.map(student=>({id:createStudentId(),...student}))};
+  assignmentStudentDetails={};studentCorrections={};activeCorrectionStudentId=null;correctionStudentOrder=[];resetChoices();
+  document.getElementById("studentName").textContent="";document.getElementById("finalGrade").value="";
+  if(document.querySelector(".app").classList.contains("grid-loaded"))render();
+  selectedStudentIds.clear();studentFilters={};studentSort={field:"",direction:1};closeStudentColumnMenu();
+  document.getElementById("studentGroupTitle").textContent=group.name;renderStudentTable();setActiveView("eleves");
+  const status=document.getElementById("studentGroupFileStatus");status.hidden=false;status.textContent=`Groupe « ${group.name} » chargé : ${group.students.length} élève(s).`;
+  saveWorkspace();
+}
+document.getElementById("loadStudentGroupBtn").addEventListener("click",()=>document.getElementById("studentGroupCsvInput").click());
+document.getElementById("studentGroupCsvInput").addEventListener("change",async event=>{
+  const file=event.target.files?.[0];event.target.value="";if(!file)return;
+  const status=document.getElementById("studentGroupFileStatus"),previousGroup=activeStudentGroup;status.hidden=true;status.textContent="";
+  try{
+    const students=parseStudentGroupCsv(await file.text());
+    if(activeStudentGroup!==previousGroup)throw new Error("le groupe actif a changé pendant la lecture ; recommencez le chargement.");
+    const name=file.name.replace(/\.csv$/i,"").trim()||"Groupe d’élèves";
+    const group={name,students};
+    if(!activeStudentGroup){applyLoadedStudentGroup(group);return}
+    pendingStudentGroupImport=group;
+    document.getElementById("loadStudentGroupMessage").textContent=`Le groupe « ${group.name} » (${students.length} élève(s)) remplacera le groupe actif « ${activeStudentGroup.name} » et effacera ses corrections et les données de ce devoir. Cette action est irréversible.`;
+    document.getElementById("loadStudentGroupDialog").showModal();document.getElementById("cancelLoadStudentGroup").focus();
+  }catch(error){status.hidden=false;status.textContent=`Chargement du groupe impossible : ${error.message}`}
+});
+document.getElementById("cancelLoadStudentGroup").addEventListener("click",()=>{pendingStudentGroupImport=null;document.getElementById("loadStudentGroupDialog").close()});
+document.getElementById("confirmLoadStudentGroup").addEventListener("click",()=>{
+  if(!pendingStudentGroupImport)return;
+  const group=pendingStudentGroupImport;pendingStudentGroupImport=null;document.getElementById("loadStudentGroupDialog").close();applyLoadedStudentGroup(group);
 });
 document.getElementById("cancelStudentGroup").addEventListener("click",()=>document.getElementById("studentGroupDialog").close());
 document.getElementById("studentGroupForm").addEventListener("submit",event=>{
