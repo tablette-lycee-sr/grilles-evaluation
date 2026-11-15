@@ -179,8 +179,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <button id="saveStudentGroupBtn" type="button" title="Enregistrer le groupe d’élèves actif" aria-label="Enregistrer le groupe d’élèves actif" disabled><svg aria-hidden="true"><use href="#icon-save"/></svg></button>
     <button type="button" id="associateStudentPhotosBtn" title="Associer les photos du dossier G:\Notation\Grilles papier\FakeID" aria-label="Associer des photos"><svg aria-hidden="true"><use href="#icon-image-plus"/></svg></button>
     <input id="trombiPhotoFolder" class="sr-only" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" webkitdirectory directory multiple aria-label="Choisir un dossier de photos d’élèves">
-    <span class="submenu-action" title="Réinitialiser la liste d’élèves (à venir)"><button type="button" disabled aria-label="Réinitialiser la liste d’élèves"><svg aria-hidden="true"><use href="#icon-reset"/></svg></button></span>
-    <span class="submenu-action" title="Supprimer un groupe d’élèves (à venir)"><button type="button" disabled aria-label="Supprimer un groupe d’élèves"><svg aria-hidden="true"><use href="#icon-trash"/></svg></button></span>
+    <button id="resetStudentListBtn" type="button" title="Réinitialiser la liste d’élèves" aria-label="Réinitialiser la liste d’élèves" disabled><svg aria-hidden="true"><use href="#icon-reset"/></svg></button>
   </div>
   <div class="submenu" data-submenu="correction">
     <button id="correctionModeButton" type="button" title="Choisir le mode de correction" aria-label="Choisir le mode de correction" aria-haspopup="true" aria-expanded="false"><svg aria-hidden="true"><use href="#icon-sliders"/></svg></button>
@@ -250,6 +249,11 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <label class="group-name-field">Nom du groupe<input id="studentGroupNameInput" name="groupName" type="text" required placeholder="Ex. Terminale HGGSP 3"></label>
     <div class="dialog-actions"><button id="cancelStudentGroup" class="secondary" type="button">Annuler</button><button type="submit">Créer le groupe</button></div>
   </form>
+</dialog>
+<dialog id="resetStudentListDialog" aria-labelledby="resetStudentListHeading">
+  <div class="dialog-heading"><h2 id="resetStudentListHeading">Réinitialiser la liste d’élèves ?</h2></div>
+  <p>Le nom du groupe, les élèves et toutes leurs corrections et données pour ce devoir seront effacés. Les fichiers déjà enregistrés ne seront pas modifiés. Cette action est irréversible.</p>
+  <div class="dialog-actions"><button id="cancelResetStudentList" class="secondary" type="button">Annuler</button><button id="confirmResetStudentList" type="button">Réinitialiser</button></div>
 </dialog>
 <dialog id="replaceStudentsDialog">
   <div class="dialog-heading"><h2>Remplacer la liste d’élèves ?</h2></div>
@@ -1121,6 +1125,11 @@ function matchesStudentFilter(student,field,filter){
 function refreshStudentTableForField(field){if(studentSort.field===field||Object.hasOwn(studentFilters,field))renderStudentTable()}
 function renderStudentTable(){
   const body=document.getElementById("studentTableBody"),allStudents=activeStudentGroup?.students||[];body.replaceChildren();
+  const title=document.getElementById("studentGroupTitle");
+  if(activeStudentGroup&&!activeStudentGroup.name&&!title.querySelector("input")){
+    const input=document.createElement("input");input.type="text";input.className="student-group-name-input";input.placeholder="Nom du groupe";input.setAttribute("aria-label","Nom du groupe d’élèves");
+    input.addEventListener("input",()=>{if(activeStudentGroup)activeStudentGroup.name=input.value});title.replaceChildren(input);
+  }
   document.getElementById("studentGroupCount").textContent=`(${allStudents.length} ${allStudents.length===1?"élève":"élèves"})`;
   let visibleStudents=allStudents.filter(student=>Object.entries(studentFilters).every(([field,filter])=>matchesStudentFilter(student,field,filter)));
   if(studentSort.field)visibleStudents.sort((first,second)=>String(studentFieldValue(first,studentSort.field)).localeCompare(String(studentFieldValue(second,studentSort.field)),"fr",{numeric:true,sensitivity:"base"})*studentSort.direction);
@@ -1631,6 +1640,7 @@ function setActiveView(viewId){
   const isCorrection=viewId==="correction",isAssignment=viewId==="devoir";
   const isStudents=viewId==="eleves",hasStudentGroup=Boolean(activeStudentGroup);
   document.getElementById("saveStudentGroupBtn").disabled=!hasStudentGroup;
+  document.getElementById("resetStudentListBtn").disabled=!hasStudentGroup;
   const hasActiveAssignment=correctionApp.classList.contains("grid-loaded");
   navigationButtons.forEach(item=>{
     if(item.dataset.view===viewId)item.setAttribute("aria-current","page");
@@ -1746,6 +1756,22 @@ document.getElementById("confirmLoadStudentGroup").addEventListener("click",()=>
   const group=pendingStudentGroupImport;pendingStudentGroupImport=null;document.getElementById("loadStudentGroupDialog").close();applyLoadedStudentGroup(group);
 });
 document.getElementById("cancelStudentGroup").addEventListener("click",()=>document.getElementById("studentGroupDialog").close());
+document.getElementById("resetStudentListBtn").addEventListener("click",()=>{
+  if(!activeStudentGroup)return;
+  document.getElementById("resetStudentListDialog").showModal();document.getElementById("cancelResetStudentList").focus();
+});
+document.getElementById("cancelResetStudentList").addEventListener("click",()=>document.getElementById("resetStudentListDialog").close());
+document.getElementById("confirmResetStudentList").addEventListener("click",()=>{
+  if(!activeStudentGroup)return;
+  activeStudentGroup={id:activeStudentGroup.id,name:"",students:[]};
+  assignmentStudentDetails={};studentCorrections={};activeCorrectionStudentId=null;correctionStudentOrder=[];resetChoices();
+  selectedStudentIds.clear();pendingStudentImport=null;pendingStudentGroupImport=null;studentFilters={};studentSort={field:"",direction:1};closeStudentColumnMenu();
+  document.getElementById("studentName").textContent="";document.getElementById("finalGrade").value="";
+  document.getElementById("studentGroupTitle").replaceChildren();
+  for(const id of ["studentImportStatus","studentGroupFileStatus"]){const status=document.getElementById(id);status.hidden=true;status.textContent=""}
+  if(document.querySelector(".app").classList.contains("grid-loaded"))render();
+  document.getElementById("resetStudentListDialog").close();renderStudentTable();setActiveView("eleves");document.querySelector(".student-group-name-input")?.focus();
+});
 document.getElementById("studentGroupForm").addEventListener("submit",event=>{
   event.preventDefault();const name=document.getElementById("studentGroupNameInput").value.trim();if(!name)return;
   activeStudentGroup={id:createStudentId(),name,students:[]};assignmentStudentDetails={};studentCorrections={};activeCorrectionStudentId=null;resetChoices();
