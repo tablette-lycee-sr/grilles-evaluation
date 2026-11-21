@@ -1,0 +1,223 @@
+{
+  "versionFormat": 1,
+  "id": "exemple-oral-et-debat",
+  "titre": "Exemple : oral et débat",
+  "metadonnees": {
+    "version": "1.0.0",
+    "dateCreation": "2026-11-21",
+    "auteur": null,
+    "langue": "fr",
+    "etiquettes": ["exemple", "oral", "débat"],
+    "description": "Grille d'exemple présentant les six méthodes de correction."
+  },
+  "parametres": {
+    "noteMaximum": 20,
+    "plafondBonus": 3,
+    "decimalesNote": 2,
+    "decimalesPourcentage": 2
+  },
+  "parties": [
+    {
+      "id": "presentation",
+      "titre": "Présentation orale",
+      "categories": [
+        {
+          "id": "expression-orale",
+          "titre": "Expression orale",
+          "methode": "capacites",
+          "evaluee": true,
+          "priseEnCompte": "obligatoire",
+          "coefficient": 3,
+          "informationsFonctionnement": "Évaluer les capacités renseignées, en tenant compte de leur poids.",
+          "niveaux": ["NA", "ECA-", "ECA+", "A"],
+          "valeursNiveaux": {"NA": 0, "ECA-": 33, "ECA+": 67, "A": 100},
+          "seuilsPourcentage": {"ECA-": 17, "ECA+": 50, "A": 83},
+          "commentaires": {
+            "niveaux": {
+              "NA": [{"id": "expression-niveau-na", "texte": "L'expression orale ne permet pas de suivre l'exposé."}],
+              "ECA-": [{"id": "expression-niveau-eca-moins", "texte": "L'expression reste difficile à suivre par moments."}],
+              "ECA+": [
+                {"id": "expression-niveau-eca-plus-claire", "texte": "L'expression est globalement claire."},
+                {"id": "expression-niveau-eca-plus-rythme", "texte": "Le rythme est généralement adapté à l'auditoire."}
+              ],
+              "A": [{"id": "expression-niveau-a", "texte": "L'expression est claire et adaptée à l'auditoire."}]
+            },
+            "attention": [{"id": "expression-attention", "texte": "La prise de parole est difficilement audible."}],
+            "depasse": [{"id": "expression-depasse", "texte": "La prise de parole capte particulièrement bien l'auditoire."}]
+          },
+          "capacites": [
+            {
+              "id": "voix-audible",
+              "titre": "Parler de manière audible",
+              "poids": 1,
+              "aideNotation": "Tenir compte du volume et de l'articulation.",
+              "commentaires": {
+                "NA": [{"id": "voix-na", "texte": "La voix est difficilement audible."}],
+                "ECA-": [{"id": "voix-eca-moins", "texte": "Le volume est souvent insuffisant."}],
+                "ECA+": [{"id": "voix-eca-plus", "texte": "La voix est généralement audible."}],
+                "A": [{"id": "voix-a", "texte": "La voix est audible et bien articulée."}]
+              }
+            }
+          ],
+          "sousCategories": [
+            {
+              "id": "construction-du-propos",
+              "titre": "Construction du propos",
+              "capacites": [
+                {
+                  "id": "structurer-propos",
+                  "titre": "Organiser les idées",
+                  "poids": 2,
+                  "aideNotation": "Observer la progression et les transitions.",
+                  "commentaires": {
+                    "NA": [{"id": "structure-na", "texte": "Les idées sont difficiles à suivre."}],
+                    "ECA-": [{"id": "structure-eca-moins", "texte": "L'organisation reste fragile."}],
+                    "ECA+": [{"id": "structure-eca-plus", "texte": "Les idées sont globalement organisées."}],
+                    "A": [{"id": "structure-a", "texte": "Les idées suivent une progression claire."}]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "contenu-expose",
+          "titre": "Contenu de l'exposé",
+          "methode": "bareme",
+          "evaluee": true,
+          "priseEnCompte": "obligatoire",
+          "coefficient": 2,
+          "informationsFonctionnement": "Attribuer les points obtenus à chaque critère.",
+          "niveaux": ["NA", "ECA", "A"],
+          "seuilsPourcentage": {"ECA": 25, "A": 75},
+          "commentaires": {
+            "niveaux": {
+              "NA": [{"id": "contenu-niveau-na", "texte": "Les éléments attendus sont insuffisants."}],
+              "ECA": [{"id": "contenu-niveau-eca", "texte": "Plusieurs éléments attendus sont présents."}],
+              "A": [{"id": "contenu-niveau-a", "texte": "Les éléments attendus sont maîtrisés."}]
+            },
+            "attention": [{"id": "contenu-attention", "texte": "Une partie importante du sujet est absente."}],
+            "depasse": [{"id": "contenu-depasse", "texte": "Le contenu apporte un éclairage particulièrement pertinent."}]
+          },
+          "criteres": [
+            {
+              "id": "precision-informations",
+              "titre": "Précision des informations",
+              "pointsMaximum": 6,
+              "pas": 0.5,
+              "aideNotation": "Apprécier l'exactitude et la précision des informations."
+            },
+            {
+              "id": "qualite-exemples",
+              "titre": "Pertinence des exemples",
+              "pointsMaximum": 4,
+              "pas": 0.5,
+              "aideNotation": "Apprécier le choix et l'explication des exemples."
+            }
+          ]
+        },
+        {
+          "id": "gestion-temps",
+          "titre": "Gestion du temps",
+          "methode": "minuteur",
+          "evaluee": true,
+          "priseEnCompte": "obligatoire",
+          "coefficient": 1,
+          "informationsFonctionnement": "Chronométrer les interventions de l'élève et les rapprocher de la durée cible.",
+          "niveaux": ["NA", "ECA-", "ECA+", "A"],
+          "dureeCibleSecondes": 300,
+          "seuilsSecondes": {
+            "naTropCourt": 120,
+            "entreeA": 240,
+            "sortieA": 360,
+            "naTropLong": 480
+          },
+          "separationsECASecondes": {"tropCourt": 180, "tropLong": 420},
+          "courbe": {
+            "origine": "automatique",
+            "interpolation": "lineaire",
+            "points": [
+              {"secondes": 0, "pourcentage": 0},
+              {"secondes": 10, "pourcentage": 5},
+              {"secondes": 120, "pourcentage": 33},
+              {"secondes": 240, "pourcentage": 100},
+              {"secondes": 360, "pourcentage": 100},
+              {"secondes": 480, "pourcentage": 33},
+              {"secondes": 590, "pourcentage": 5},
+              {"secondes": 600, "pourcentage": 0}
+            ]
+          },
+          "commentaires": {
+            "niveaux": {
+              "NA": [{"id": "temps-niveau-na", "texte": "La durée est très éloignée de la durée attendue."}],
+              "ECA-": [{"id": "temps-niveau-eca-moins", "texte": "La durée reste éloignée de la durée attendue."}],
+              "ECA+": [{"id": "temps-niveau-eca-plus", "texte": "La durée est proche de la durée attendue."}],
+              "A": [{"id": "temps-niveau-a", "texte": "La durée correspond aux attentes."}]
+            },
+            "attention": [{"id": "temps-attention", "texte": "L'élève n'a pas pris la parole."}]
+          }
+        }
+      ]
+    },
+    {
+      "id": "debat",
+      "titre": "Participation au débat",
+      "categories": [
+        {
+          "id": "qualite-arguments",
+          "titre": "Qualité des arguments",
+          "methode": "distribution",
+          "evaluee": true,
+          "priseEnCompte": "obligatoire",
+          "coefficient": 2,
+          "informationsFonctionnement": "Compter les arguments observés pour chaque niveau.",
+          "niveaux": ["NA", "ECA", "A"],
+          "valeursNiveaux": {"NA": 0, "ECA": 50, "A": 100},
+          "seuilsPourcentage": {"ECA": 25, "A": 75},
+          "commentaires": {
+            "niveaux": {
+              "NA": [{"id": "arguments-niveau-na", "texte": "Les arguments demandent à être construits."}],
+              "ECA": [{"id": "arguments-niveau-eca", "texte": "Les arguments sont parfois pertinents mais restent à approfondir."}],
+              "A": [{"id": "arguments-niveau-a", "texte": "Les arguments sont pertinents et justifiés."}]
+            },
+            "attention": [{"id": "arguments-attention", "texte": "Les affirmations manquent de justification."}],
+            "depasse": [{"id": "arguments-depasse", "texte": "Les arguments enrichissent particulièrement le débat."}]
+          }
+        },
+        {
+          "id": "participation-echanges",
+          "titre": "Participation aux échanges",
+          "methode": "compteur",
+          "evaluee": true,
+          "priseEnCompte": "facultative",
+          "coefficient": 2,
+          "informationsFonctionnement": "Compter les prises de parole de l'élève.",
+          "niveaux": ["NA", "ECA", "A"],
+          "seuilsOccurrences": {"ECA": 2, "A": 4, "D": 6},
+          "commentaires": {
+            "niveaux": {
+              "NA": [{"id": "participation-niveau-na", "texte": "La participation est très limitée."}],
+              "ECA": [{"id": "participation-niveau-eca", "texte": "La participation est présente mais irrégulière."}],
+              "A": [{"id": "participation-niveau-a", "texte": "La participation est régulière."}]
+            },
+            "attention": [{"id": "participation-attention", "texte": "Les prises de parole ne sont pas adaptées aux échanges."}],
+            "depasse": [{"id": "participation-depasse", "texte": "La participation contribue activement à la dynamique du débat."}]
+          }
+        },
+        {
+          "id": "role-debat",
+          "titre": "Rôle dans le débat",
+          "methode": "bonus",
+          "evaluee": true,
+          "pointsMaximum": 2,
+          "pas": 0.25,
+          "informationsFonctionnement": "Attribuer des points supplémentaires pour un rôle particulièrement utile au débat.",
+          "commentairesValorisation": [
+            {"id": "role-arbitre", "texte": "Arbitre et rôle moteur."},
+            {"id": "role-ecoute", "texte": "Écoute active et mise en relation des interventions."}
+          ]
+        }
+      ]
+    }
+  ]
+}

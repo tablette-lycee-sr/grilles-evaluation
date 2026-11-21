@@ -27,3 +27,11 @@ Dans le sous-menu Correction, le choix du mode détermine ce qui s'ouvre au clic
 Le CSV peut contenir des lignes `categorie` pour déclarer un identifiant stable et `coefficient_categorie`. Les lignes `capacite` peuvent renseigner `categorie_id` pour référencer cette catégorie sans dépendre de son titre. Les anciennes colonnes `avertissement_autorise` et `depasse_autorise` sont ignorées : les boutons Avertissement et Dépassé sont disponibles pour toutes les catégories évaluables.
 
 Les lignes `motif` utilisent `categorie_id` pour référencer la catégorie, `id` comme identifiant stable et `titre` comme texte. Les menus Avertissement et Dépassé utilisent pour le moment des motifs fictifs, en attendant la définition de leur stockage dans le CSV. Les choix d'avertissement, de dépassement et de motif restent distincts des niveaux de capacité et ne modifient pas la note.
+
+## Grille JSON d'exemple
+
+Le fichier `grille-exemple-oral.json` propose une grille autonome illustrant les six méthodes de correction. Il ne contient aucune correction d'élève. Son format est une base de travail : l'application actuelle ne sait pas encore charger cette grille JSON ni utiliser les nouvelles méthodes.
+
+`versionFormat` identifie la version du format ; `metadonnees.version` identifie celle de la grille. Les champs de `metadonnees` sont facultatifs : ils proposent notamment une date de création, un auteur (`null` lorsqu'il n'est pas renseigné), une langue, des étiquettes et une description. Les identifiants restent stables lorsque les titres changent ; l'ordre des listes détermine l'affichage.
+
+Les pourcentages utilisent l'échelle de 0 à 100 et les durées du Minuteur sont exprimées en secondes. Les commentaires proposés pour un niveau sont des listes : le premier est présélectionné, mais le correcteur pourra en choisir un autre ou aucun. Les données de correction et les choix du correcteur seront enregistrés séparément de la définition de la grille.
