@@ -30,8 +30,10 @@ Les lignes `motif` utilisent `categorie_id` pour référencer la catégorie, `id
 
 ## Grille JSON d'exemple
 
-Le fichier `grille-exemple-oral.json` propose une grille autonome illustrant les six méthodes de correction. Il ne contient aucune correction d'élève. Son format est une base de travail : l'application actuelle ne sait pas encore charger cette grille JSON ni utiliser les nouvelles méthodes.
+Le fichier `grille-exemple-oral.json` propose une grille autonome illustrant les six méthodes de correction. Il ne contient aucune correction d'élève. Il est accessible dans le catalogue lors de la création d'un devoir ; le chargement direct d'un fichier JSON choisi sur l'appareil et l'éditeur de grille restent à développer.
 
 `versionFormat` identifie la version du format ; `metadonnees.version` identifie celle de la grille. Les champs de `metadonnees` sont facultatifs : ils proposent notamment une date de création, un auteur (`null` lorsqu'il n'est pas renseigné), une langue, des étiquettes et une description. Les identifiants restent stables lorsque les titres changent ; l'ordre des listes détermine l'affichage.
 
-Les pourcentages utilisent l'échelle de 0 à 100 et les durées du Minuteur sont exprimées en secondes. Les commentaires proposés pour un niveau sont des listes : le premier est présélectionné, mais le correcteur pourra en choisir un autre ou aucun. Les données de correction et les choix du correcteur seront enregistrés séparément de la définition de la grille.
+Les pourcentages utilisent l'échelle de 0 à 100 et les durées du Minuteur sont exprimées en secondes. Les commentaires proposés pour un niveau sont des listes : le premier est présélectionné, mais le correcteur peut en choisir un autre ou aucun. Les données des méthodes et les choix du correcteur sont sauvegardés localement avec chaque correction, séparément de la définition de la grille.
+
+Les tests du moteur peuvent être lancés avec `node --test tests/methodes.test.cjs` depuis une copie locale du dépôt. Le workspace GitHub virtuel ne peut pas être lu directement par Node.

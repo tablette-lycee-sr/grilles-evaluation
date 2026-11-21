@@ -4,6 +4,11 @@
       "id": "etude-critique-term",
       "titre": "Étude critique — Terminale",
       "fichier": "GrilleEval_Etude-critique-documents_Term.csv"
+    },
+    {
+      "id": "exemple-oral-et-debat",
+      "titre": "Exemple : oral et débat",
+      "fichier": "grille-exemple-oral.json"
     }
   ]
 }

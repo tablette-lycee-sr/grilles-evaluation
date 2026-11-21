@@ -405,6 +405,7 @@ const CATEGORY_MOTIFS={
 };
 let leafChoices = {};
 let bonusChoices = {};
+let methodStates = {};
 let levels = Object.fromEntries(grid.niveaux.map(l=>[l.id,l]));
 const statusEl = document.getElementById("status");
 const contentEl = document.getElementById("content");
@@ -421,7 +422,59 @@ function descendantsLeaves(n){if(isLeaf(n))return[n];return(n.enfants||[]).flatM
 function getWeight(node){const w=config.ponderations?.[node.id];return Number.isFinite(Number(w))&&Number(w)>0?Number(w):1}
 function getCategoryCoefficient(node){const coefficient=config.coefficientsCategories?.[node.id];return Number.isFinite(Number(coefficient))&&Number(coefficient)>0?Number(coefficient):1}
 function getLeafScore(node,choices=leafChoices){const id=choices[node.id];return id&&levels[id]?{score:levels[id].valeur,weight:getWeight(node),node}:null}
+function methodState(node,states=methodStates){return states[node.id]||{}}
+function timerSeconds(state){return Math.max(0,Number(state.elapsedMs||0)+(state.startedAt?Date.now()-state.startedAt:0))/1000}
+function timerPercentage(node,seconds){
+  const points=node.courbe?.points||[];if(!points.length)return null;
+  if(seconds<=points[0].secondes)return points[0].pourcentage;
+  for(let index=1;index<points.length;index++){
+    const previous=points[index-1],next=points[index];
+    if(seconds<=next.secondes){
+      const width=next.secondes-previous.secondes,position=(seconds-previous.secondes)/width;
+      if(node.courbe?.interpolation!=="lisse")return previous.pourcentage+(next.pourcentage-previous.pourcentage)*position;
+      const slopes=points.slice(1).map((point,offset)=>(point.pourcentage-points[offset].pourcentage)/(point.secondes-points[offset].secondes));
+      const tangent=pointIndex=>{
+        if(pointIndex===0)return slopes[0];if(pointIndex===points.length-1)return slopes[slopes.length-1];
+        const left=slopes[pointIndex-1],right=slopes[pointIndex];if(left*right<=0)return 0;
+        const leftWidth=points[pointIndex].secondes-points[pointIndex-1].secondes,rightWidth=points[pointIndex+1].secondes-points[pointIndex].secondes;
+        const first=2*rightWidth+leftWidth,second=rightWidth+2*leftWidth;return(first+second)/(first/left+second/right);
+      };
+      const square=position*position,cube=square*position;
+      const value=(2*cube-3*square+1)*previous.pourcentage+(cube-2*square+position)*width*tangent(index-1)+(-2*cube+3*square)*next.pourcentage+(cube-square)*width*tangent(index);
+      return Math.max(0,Math.min(100,value));
+    }
+  }
+  return points[points.length-1].pourcentage;
+}
+function methodCalculation(node,choices=leafChoices,states=methodStates,evaluations=categoryEvaluations){
+  const state=methodState(node,states),ids=node.niveaux||[],thresholds=node.seuilsPourcentage||{};let percentage=null,count=0,total=0,level=null;
+  if(node.methode==="capacites"){
+    const leaves=descendantsLeaves(node),scored=leaves.filter(leaf=>Object.hasOwn(node.valeursNiveaux||{},choices[leaf.id]));
+    total=leaves.length;count=scored.length;
+    if(count)percentage=scored.reduce((sum,leaf)=>sum+node.valeursNiveaux[choices[leaf.id]]*getWeight(leaf),0)/scored.reduce((sum,leaf)=>sum+getWeight(leaf),0);
+  }else if(node.methode==="bareme"){
+    const criteria=node.criteres||[],scored=criteria.filter(item=>Object.hasOwn(state.scores||{},item.id));total=criteria.length;count=scored.length;
+    if(count)percentage=100*scored.reduce((sum,item)=>sum+Number(state.scores[item.id]),0)/scored.reduce((sum,item)=>sum+Number(item.pointsMaximum),0);
+  }else if(node.methode==="distribution"){
+    count=ids.reduce((sum,id)=>sum+(Number(state.counts?.[id])||0),0);total=count;
+    if(count)percentage=ids.reduce((sum,id)=>sum+(Number(state.counts?.[id])||0)*Number(node.valeursNiveaux[id]),0)/count;
+  }else if(node.methode==="compteur"){
+    const value=Number(state.count)||0;count=1;total=1;percentage=Math.min(100,100*value/Number(node.seuilsOccurrences.A));
+    level=ids[0];for(const id of ids.slice(1))if(value>=Number(node.seuilsOccurrences[id]))level=id;
+  }else if(node.methode==="minuteur"){
+    if(state.startedAt||state.recorded||evaluations[node.id]?.warning){
+      const seconds=timerSeconds(state),limits=node.seuilsSecondes;percentage=timerPercentage(node,seconds);count=1;total=1;
+      if(seconds<limits.naTropCourt||seconds>=limits.naTropLong)level="NA";
+      else if(seconds>=limits.entreeA&&seconds<=limits.sortieA)level="A";
+      else if(ids.includes("ECA-"))level=seconds<limits.entreeA?(seconds<node.separationsECASecondes.tropCourt?"ECA-":"ECA+"):(seconds<=node.separationsECASecondes.tropLong?"ECA+":"ECA-");
+      else level="ECA";
+    }else total=1;
+  }
+  if(percentage!==null&&!level&&ids.length){level=ids[0];for(const id of ids.slice(1))if(percentage>=Number(thresholds[id]))level=id}
+  return{level,mean:percentage===null?null:percentage/50,percentage,count,total,partial:total>0&&count<total};
+}
 function calculate(node,choices=leafChoices){
+  if(node.methode&&node.methode!=="bonus")return methodCalculation(node,choices);
   const leaves=descendantsLeaves(node),scored=leaves.map(leaf=>getLeafScore(leaf,choices)).filter(Boolean),total=leaves.length,count=scored.length;
   if(!count)return{level:null,mean:null,count,total,partial:total>0};
   const weightedTotal=scored.reduce((s,x)=>s+x.score*x.weight,0),weightTotal=scored.reduce((s,x)=>s+x.weight,0),mean=weightedTotal/weightTotal,t=config.seuils||{};
@@ -431,9 +484,10 @@ function calculate(node,choices=leafChoices){
   else level="A";
   return{level,mean,count,total,partial:count<total};
 }
-function effectiveLevel(node){if(isLeaf(node))return leafChoices[node.id]||null;if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];return calculate(node).level}
+function effectiveLevel(node){if(node.methode)return Object.hasOwn(manualChoices,node.id)?manualChoices[node.id]:calculate(node).level;if(isLeaf(node))return leafChoices[node.id]||null;if(Object.hasOwn(manualChoices,node.id))return manualChoices[node.id];return calculate(node).level}
 function getCategoryPercentage(node,choices=leafChoices,percentages=manualCategoryPercent){
   if(Object.hasOwn(percentages,node.id))return percentages[node.id];
+  if(node.methode&&node.methode!=="bonus")return methodCalculation(node,choices).percentage;
   const mean=calculate(node,choices).mean;
   return mean===null?null:mean*50;
 }
@@ -442,8 +496,8 @@ function categorySliderStops(){
   const naStop=stop(config.seuils?.NA_max_exclusif??0.5);
   return{na:naStop,eca:Math.max(naStop,stop(config.seuils?.ECA_max_exclusif??1.5))};
 }
-function chosenOrigin(node){if(isLeaf(node))return leafChoices[node.id]?"manual":"none";if(Object.hasOwn(manualChoices,node.id))return"manual";return calculate(node).level?"auto":"none"}
-function totalBonus(){return Object.values(bonusChoices).reduce((s,v)=>s+(Number(v)||0),0)}
+function chosenOrigin(node){if(node.methode)return Object.hasOwn(manualChoices,node.id)?"manual":calculate(node).level?"auto":"none";if(isLeaf(node))return leafChoices[node.id]?"manual":"none";if(Object.hasOwn(manualChoices,node.id))return"manual";return calculate(node).level?"auto":"none"}
+function totalBonus(){return Object.values(bonusChoices).reduce((s,v)=>s+(Number(v)||0),0)+(grid.elements||[]).filter(node=>node.methode==="bonus"&&(methodState(node).evaluee??node.evaluee)!==false).reduce((sum,node)=>sum+(Number(methodState(node).bonus)||0),0)}
 function bonusCap(){return Math.max(0,Number(config.bonus?.plafond_total??3))}
 function setBonus(node,value){
   const cap=bonusCap(),other=totalBonus()-(Number(bonusChoices[node.id])||0);
@@ -562,18 +616,34 @@ function updatePartCounts(roots){
   for(const part of partLayout){
     const nodes=part.categories.map(category=>roots.find(root=>root.id===category.nodeId)).filter(Boolean);
     if(part.id===partLayout[0].id)nodes.push(...roots.filter(root=>!mappedIds.has(root.id)));
-    const leaves=nodes.flatMap(descendantsLeaves),filled=leaves.filter(node=>leafChoices[node.id]).length;
+    let total=0,filled=0;
+    for(const node of nodes){
+      if(node.methode==="bonus")continue;
+      if(node.methode){const result=methodCalculation(node);if(node.methode==="capacites"||node.methode==="bareme"){total+=result.total;filled+=result.count}else{total++;if(result.percentage!==null)filled++}}
+      else{const leaves=descendantsLeaves(node);total+=leaves.length;filled+=leaves.filter(leaf=>leafChoices[leaf.id]).length}
+    }
     const button=partNavEl.querySelector(`[aria-controls="part-${part.id}"]`);
-    button.querySelector(".part-tab-count").textContent=`${filled}/${leaves.length}`;
-    button.classList.toggle("complete",leaves.length>0&&filled===leaves.length);
-    button.setAttribute("aria-label",`${part.title}, ${filled} capacité(s) renseignée(s) sur ${leaves.length}`);
+    button.querySelector(".part-tab-count").textContent=`${filled}/${total}`;
+    button.classList.toggle("complete",total>0&&filled===total);
+    button.setAttribute("aria-label",`${part.title}, ${filled} élément(s) renseigné(s) sur ${total}`);
   }
 }
 function toggleCategoryEvaluation(nodeId,key){
+  const node=(grid.elements||[]).find(item=>item.id===nodeId);
+  if(node?.methode==="minuteur"&&key==="warning"){
+    const state=methodStates[nodeId]||(methodStates[nodeId]={}),current=categoryEvaluations[nodeId]||{};
+    if(current.warning){delete categoryEvaluations[nodeId];state.recorded=false}
+    else{
+      if(timerSeconds(state)>0&&!window.confirm("Remettre la durée à zéro et signaler que l’élève n’a pas pris la parole ?"))return;
+      delete state.startedAt;state.elapsedMs=0;state.recorded=true;delete manualCategoryPercent[nodeId];
+      categoryEvaluations[nodeId]={warning:true,motifIds:{warning:node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.id||""}};
+    }
+    render();return;
+  }
   const current=categoryEvaluations[nodeId]||{},next={warning:false,exceeded:false,...current,motifIds:{warning:"",exceeded:"",...current.motifIds}};
   const isOpen=current.activeMotifKind===key;
   if(current[key]&&isOpen){next[key]=false;next.activeMotifKind="";next.motifIds[key]=""}
-  else{next[key]=true;next.activeMotifKind=key;if(key==="exceeded")delete manualChoices[nodeId]}
+  else{next[key]=true;next.activeMotifKind=key;if(key==="exceeded"&&!node?.methode)delete manualChoices[nodeId]}
   if(!next.warning&&!next.exceeded)delete categoryEvaluations[nodeId];
   else categoryEvaluations[nodeId]=next;
   render();
@@ -587,6 +657,7 @@ function makeCategoryFlagButton(node,key){
   const labels={warning:"Avertissement",exceeded:"Dépassé"},button=document.createElement("button");
   button.type="button";button.className=`category-flag-button ${key}`;button.title=labels[key];button.setAttribute("aria-label",labels[key]);
   button.setAttribute("aria-pressed",String(Boolean(categoryEvaluations[node.id]?.[key])));
+  if(key==="exceeded"&&node.methode==="compteur"&&(Number(methodState(node).count)||0)>=Number(node.seuilsOccurrences.D)&&!categoryEvaluations[node.id]?.exceeded)button.classList.add("suggested");
   const namespace="http://www.w3.org/2000/svg",icon=document.createElementNS(namespace,"svg");icon.setAttribute("viewBox","0 0 24 24");icon.classList.add("category-flag-icon");
   if(key==="warning"){
     const triangle=document.createElementNS(namespace,"path");triangle.setAttribute("d","M12 2.5 22 21H2Z");triangle.classList.add("category-flag-shape");icon.appendChild(triangle);
@@ -611,7 +682,134 @@ function renderCategoryEvaluationControls(node){
   select.value=evaluation.motifIds?.[key]||"";select.addEventListener("change",()=>updateCategoryMotif(node.id,key,select.value));controls.appendChild(select);
   return controls;
 }
+function methodCommentSelect(node,owner,levelId){
+  const comments=owner===node?node.commentairesNiveaux?.[levelId]:owner.commentairesNiveaux?.[levelId];
+  if(!comments?.length)return null;
+  const state=methodStates[node.id]||(methodStates[node.id]={}),key=`${owner.id}:${levelId}`,selections=state.commentSelections||{};
+  const select=document.createElement("select");select.className="method-comment-select";select.setAttribute("aria-label",`Commentaire ${levelId} pour ${owner.titre}`);
+  const empty=document.createElement("option");empty.value="";empty.textContent="Aucun commentaire";select.appendChild(empty);
+  for(const item of comments){const option=document.createElement("option");option.value=item.id;option.textContent=item.texte;select.appendChild(option)}
+  select.value=Object.hasOwn(selections,key)?selections[key]:comments[0].id;
+  select.addEventListener("change",()=>{state.commentSelections={...state.commentSelections,[key]:select.value};render()});return select;
+}
+function methodButton(label,action,title=label){
+  const button=document.createElement("button");button.type="button";button.className="method-action";button.textContent=label;button.title=title;button.setAttribute("aria-label",title);button.addEventListener("click",action);return button;
+}
+function methodIconButton(icon,action,title){
+  const button=methodButton("",action,title),symbol=document.createElement("span");symbol.className="menu-icon";symbol.style.setProperty("--icon",`url('icones/${icon}.svg')`);symbol.setAttribute("aria-hidden","true");button.appendChild(symbol);return button;
+}
+function renderMethodCapacity(node,capacity){
+  const row=document.createElement("div");row.className="method-capacity";
+  const name=document.createElement("span");name.className="method-capacity-name";name.textContent=capacity.titre;name.title=capacity.aideNotation||"";row.appendChild(name);
+  const controls=document.createElement("div");controls.className="method-capacity-controls";
+  const buttons=document.createElement("div");buttons.className="method-levels";
+  for(const id of node.niveaux){
+    const button=methodButton(id,()=>{if(leafChoices[capacity.id]===id)delete leafChoices[capacity.id];else leafChoices[capacity.id]=id;render()},`${capacity.titre} : ${id}`);
+    button.classList.add("method-level");button.style.setProperty("--level-color",levels[id]?.couleur||"#aaa");button.classList.toggle("manual",leafChoices[capacity.id]===id);button.setAttribute("aria-pressed",String(leafChoices[capacity.id]===id));buttons.appendChild(button);
+  }
+  controls.appendChild(buttons);const comment=methodCommentSelect(node,capacity,leafChoices[capacity.id]);if(comment)controls.appendChild(comment);row.appendChild(controls);return row;
+}
+function renderMethodDetails(node,calculation,categoryOnly){
+  if(node.methode!=="capacites"&&node.methode!=="bareme")return null;
+  const state=methodStates[node.id]||(methodStates[node.id]={}),details=document.createElement("details");details.className="method-details";details.open=state.detailsOpen??!categoryOnly;
+  const summary=document.createElement("summary");summary.textContent=`${calculation.count}/${calculation.total} ${node.methode==="capacites"?"capacités":"critères"}`;details.appendChild(summary);
+  details.addEventListener("toggle",()=>{state.detailsOpen=details.open});
+  if(node.methode==="capacites"){
+    for(const child of node.enfants||[]){
+      if(child.enfants?.length){const group=document.createElement("div");group.className="method-subcategory";const heading=document.createElement("strong");heading.textContent=child.titre;group.appendChild(heading);for(const capacity of child.enfants)group.appendChild(renderMethodCapacity(node,capacity));details.appendChild(group)}
+      else details.appendChild(renderMethodCapacity(node,child));
+    }
+  }else for(const criterion of node.criteres||[]){
+    const row=document.createElement("label");row.className="method-criterion";
+    const name=document.createElement("span");name.textContent=criterion.titre;name.title=criterion.aideNotation||"";row.appendChild(name);
+    const input=document.createElement("input");input.type="number";input.min="0";input.max=String(criterion.pointsMaximum);input.step=String(criterion.pas||1);input.placeholder="—";input.value=Object.hasOwn(state.scores||{},criterion.id)?state.scores[criterion.id]:"";input.setAttribute("aria-label",`${criterion.titre}, sur ${criterion.pointsMaximum}`);
+    input.addEventListener("change",()=>{state.scores=state.scores||{};if(input.value==="")delete state.scores[criterion.id];else state.scores[criterion.id]=Math.max(0,Math.min(Number(criterion.pointsMaximum),Number(input.value)||0));render()});
+    const maximum=document.createElement("span");maximum.textContent=`/ ${criterion.pointsMaximum}`;row.append(input,maximum);details.appendChild(row);
+  }
+  return details;
+}
+function formatDuration(seconds){const minutes=Math.floor(seconds/60),remaining=Math.floor(seconds%60);return `${minutes}′${String(remaining).padStart(2,"0")}″`}
+function renderMethodCategory(node,categoryOnly=false){
+  const state=methodStates[node.id]||(methodStates[node.id]={}),isBonus=node.methode==="bonus",calculation=isBonus?null:methodCalculation(node),section=document.createElement("section");
+  section.className=`method-category method-${node.methode}`;section.dataset.methodNode=node.id;
+  const header=document.createElement("div");header.className="method-header";
+  const icons={capacites:"target",bareme:"rule",distribution:"leaderboard",compteur:"add_circle",minuteur:"hourglass_empty",bonus:"star"};
+  const icon=document.createElement("span");icon.className="menu-icon method-icon";icon.style.setProperty("--icon",`url('icones/${icons[node.methode]}.svg')`);icon.setAttribute("aria-hidden","true");
+  const title=document.createElement("h2");title.textContent=node.titre;header.append(icon,title);
+  const coefficient=document.createElement("span");coefficient.className="method-coefficient";coefficient.textContent=isBonus?"+":String(getCategoryCoefficient(node));if(node.priseEnCompte==="facultative")coefficient.classList.add("optional");coefficient.title=isBonus?"Bonus":node.priseEnCompte==="facultative"?"Catégorie facultative":"Coefficient de catégorie";header.appendChild(coefficient);
+  header.appendChild(methodIconButton("info",()=>window.alert(node.informationsFonctionnement||"Aucune information disponible."),`Informations sur ${node.titre}`));
+  const assessed=document.createElement("label");assessed.className="method-assessed";const check=document.createElement("input");check.type="checkbox";check.checked=(state.evaluee??node.evaluee)!==false;check.setAttribute("aria-label",`Évaluer ${node.titre}`);check.addEventListener("change",()=>{state.evaluee=check.checked;render()});assessed.append(check,document.createTextNode("Évaluée"));header.appendChild(assessed);section.appendChild(header);
+  if(isBonus){
+    const row=document.createElement("div");row.className="method-bonus-row";const slider=document.createElement("input");slider.type="range";slider.min="0";slider.max=String(node.pointsMaximum);slider.step=String(node.pas||.25);slider.value=String(state.bonus||0);slider.setAttribute("aria-label",`Points bonus pour ${node.titre}`);
+    const output=document.createElement("output");output.textContent=`+${Number(state.bonus||0).toLocaleString("fr-FR")}`;slider.addEventListener("input",()=>{state.bonus=Number(slider.value);output.textContent=`+${state.bonus.toLocaleString("fr-FR")}`;updateFinalScore()});row.append(slider,output);section.appendChild(row);
+    const select=document.createElement("select");select.className="method-comment-select";select.setAttribute("aria-label",`Commentaire de bonus pour ${node.titre}`);const empty=document.createElement("option");empty.value="";empty.textContent="Aucun commentaire";select.appendChild(empty);
+    for(const item of node.commentairesValorisation||[]){const option=document.createElement("option");option.value=item.id;option.textContent=item.texte;select.appendChild(option)}select.value=state.bonusComment||"";select.addEventListener("change",()=>{state.bonusComment=select.value});section.appendChild(select);return section;
+  }
+  const controls=document.createElement("div");controls.className="method-controls";
+  const flags=document.createElement("div");flags.className="method-flags";flags.appendChild(makeCategoryFlagButton(node,"warning"));if(node.depasseAutorise!==false)flags.appendChild(makeCategoryFlagButton(node,"exceeded"));controls.appendChild(flags);
+  const main=document.createElement("div");main.className="method-main";const levelRow=document.createElement("div");levelRow.className="method-levels";
+  const selected=Object.hasOwn(manualChoices,node.id)?manualChoices[node.id]:calculation.level;
+  for(const id of node.niveaux){
+    const label=node.methode==="distribution"?`${state.decrement?"−":"+"} ${id}`:id;
+    const button=methodButton(label,()=>{
+      if(node.methode==="distribution"){state.counts=state.counts||{};state.counts[id]=Math.max(0,(Number(state.counts[id])||0)+(state.decrement?-1:1))}
+      else if(manualChoices[node.id]===id)delete manualChoices[node.id];else manualChoices[node.id]=id;
+      render();
+    },`${node.titre} : ${id}`);button.classList.add("method-level");button.dataset.methodLevel=id;button.style.setProperty("--level-color",levels[id]?.couleur||"#aaa");
+    button.classList.toggle("suggested",calculation.level===id);button.classList.toggle("manual",Object.hasOwn(manualChoices,node.id)&&selected===id);button.setAttribute("aria-pressed",String(selected===id));
+    if(node.methode==="distribution"){button.classList.add("distribution-level");const count=document.createElement("small");count.textContent=String(state.counts?.[id]||0);button.appendChild(count)}levelRow.appendChild(button);
+  }
+  main.appendChild(levelRow);
+  const track=document.createElement("div");track.className="method-slider-wrap";
+  const slider=document.createElement("input");slider.type="range";slider.min="0";slider.max="100";slider.step="1";slider.className="method-slider";slider.value=String(getCategoryPercentage(node)??0);slider.setAttribute("aria-label",`Pourcentage retenu pour ${node.titre}`);
+  slider.title="Déplacer pour ajuster ; cliquer sur le curseur déplacé ou appuyer sur Échap pour revenir au calcul";
+  const firstThreshold=node.seuilsPourcentage?.[node.niveaux[1]]??25,lastThreshold=node.seuilsPourcentage?.A??75;
+  slider.style.setProperty("--method-na-stop",`${firstThreshold}%`);slider.style.setProperty("--method-a-stop",`${lastThreshold}%`);
+  const auto=calculation.percentage,manual=Object.hasOwn(manualCategoryPercent,node.id);slider.classList.toggle("manual",manual);
+  const initialValue=getCategoryPercentage(node);slider.setAttribute("aria-valuetext",initialValue===null?"Aucun résultat":`${initialValue.toFixed(2)} %, ${manual?`choix manuel, calcul automatique ${auto===null?"indisponible":`${auto.toFixed(2)} %`}`:"calcul automatique"}`);
+  if(node.methode==="compteur"){slider.disabled=true;slider.classList.add("calculated-only")}
+  else if(node.methode==="minuteur"&&categoryEvaluations[node.id]?.warning){slider.disabled=true;slider.title="L’absence de prise de parole est retenue à 0 %."}
+  else{
+    slider.addEventListener("input",()=>{manualCategoryPercent[node.id]=Number(slider.value);slider.classList.add("manual");refreshMethodDisplay(node);updateFinalScore()});
+    let start=null;slider.addEventListener("pointerdown",event=>{const bounds=slider.getBoundingClientRect(),thumb=bounds.left+(bounds.width-16)*Number(slider.value)/100+8;start={x:event.clientX,onThumb:Math.abs(event.clientX-thumb)<12,manual:Object.hasOwn(manualCategoryPercent,node.id)}});
+    slider.addEventListener("pointerup",event=>{if(start?.manual&&start.onThumb&&Math.abs(event.clientX-start.x)<4){delete manualCategoryPercent[node.id];render()}start=null});
+    slider.addEventListener("keydown",event=>{if(event.key==="Escape"&&Object.hasOwn(manualCategoryPercent,node.id)){delete manualCategoryPercent[node.id];render()}});
+  }
+  track.appendChild(slider);if(manual&&auto!==null){const ghost=document.createElement("span");ghost.className="method-ghost";ghost.style.left=`${auto}%`;ghost.title=`Calcul automatique : ${auto.toFixed(2)} %`;ghost.setAttribute("aria-hidden","true");track.appendChild(ghost)}main.appendChild(track);
+  const output=document.createElement("output");output.className="method-percentage";const retained=getCategoryPercentage(node);output.textContent=retained===null?"—":`${retained.toFixed(2).replace(".",",")} %`;main.appendChild(output);
+  const comment=methodCommentSelect(node,node,selected);if(comment){comment.classList.add("method-category-comment");main.appendChild(comment)}section.dataset.commentLevel=selected||"";controls.appendChild(main);
+  const actions=document.createElement("div");actions.className="method-specific";
+  if(node.methode==="distribution")actions.appendChild(methodButton(state.decrement?"−":"+",()=>{state.decrement=!state.decrement;render()},state.decrement?"Passer à l’incrémentation":"Passer à la décrémentation"));
+  if(node.methode==="compteur"){
+    actions.appendChild(methodButton(`+ ${Number(state.count)||0}`,()=>{state.count=(Number(state.count)||0)+1;render()},`Ajouter une occurrence à ${node.titre}`));
+    actions.appendChild(methodButton("−1",()=>{const before=Number(state.count)||0;state.count=Math.max(0,before-1);if(state.count<before&&state.count<Number(node.seuilsOccurrences.D)&&categoryEvaluations[node.id]?.exceeded){categoryEvaluations[node.id].exceeded=false;categoryEvaluations[node.id].activeMotifKind=""}render()},`Retirer une occurrence de ${node.titre}`));
+  }
+  if(node.methode==="minuteur"){
+    const timer=methodIconButton(state.startedAt?"timer_pause":"timer_play",()=>{if(state.startedAt){state.elapsedMs=timerSeconds(state)*1000;delete state.startedAt}else{if(categoryEvaluations[node.id]?.warning)delete categoryEvaluations[node.id];state.recorded=true;state.startedAt=Date.now()}render()},state.startedAt?"Mettre le minuteur en pause":"Démarrer le minuteur");timer.classList.add("method-timer");const duration=document.createElement("span");duration.className="method-duration";duration.textContent=formatDuration(timerSeconds(state));timer.appendChild(duration);actions.appendChild(timer);
+    const target=document.createElement("span");target.className="method-timer-target";target.textContent=`Cible ${formatDuration(node.dureeCibleSecondes)}`;actions.appendChild(target);
+    actions.appendChild(methodIconButton("restart_alt",()=>{if(!window.confirm("Réinitialiser la durée enregistrée ?"))return;delete state.startedAt;state.elapsedMs=0;state.recorded=false;delete categoryEvaluations[node.id];render()},"Réinitialiser le minuteur"));
+  }
+  controls.appendChild(actions);section.appendChild(controls);
+  if(node.methode==="minuteur"&&categoryEvaluations[node.id]?.warning){const warning=document.createElement("p");warning.className="method-warning-comment";warning.textContent=node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.label||"";section.appendChild(warning)}
+  else{const extra=renderCategoryEvaluationControls(node);if(extra)section.appendChild(extra)}
+  const details=renderMethodDetails(node,calculation,categoryOnly);if(details)section.appendChild(details);return section;
+}
+function refreshMethodDisplay(node){
+  const calculation=methodCalculation(node),retained=getCategoryPercentage(node),manual=Object.hasOwn(manualCategoryPercent,node.id);
+  for(const section of document.querySelectorAll("[data-method-node]"))if(section.dataset.methodNode===node.id){
+    const duration=section.querySelector(".method-duration");if(duration)duration.textContent=formatDuration(timerSeconds(methodState(node)));
+    const output=section.querySelector(".method-percentage");if(output)output.textContent=retained===null?"—":`${retained.toFixed(2).replace(".",",")} %`;
+    const slider=section.querySelector(".method-slider");if(slider){if(!manual)slider.value=String(retained??0);slider.setAttribute("aria-valuetext",retained===null?"Aucun résultat":`${retained.toFixed(2)} %, ${manual?`choix manuel, calcul automatique ${calculation.percentage===null?"indisponible":`${calculation.percentage.toFixed(2)} %`}`:"calcul automatique"}`)}
+    let ghost=section.querySelector(".method-ghost");
+    if(manual&&calculation.percentage!==null){if(!ghost){ghost=document.createElement("span");ghost.className="method-ghost";ghost.setAttribute("aria-hidden","true");section.querySelector(".method-slider-wrap").appendChild(ghost)}ghost.style.left=`${calculation.percentage}%`;ghost.title=`Calcul automatique : ${calculation.percentage.toFixed(2)} %`}
+    else ghost?.remove();
+    const selected=Object.hasOwn(manualChoices,node.id)?manualChoices[node.id]:calculation.level;
+    for(const button of section.querySelectorAll(".method-main > .method-levels > [data-method-level]")){button.classList.toggle("suggested",button.dataset.methodLevel===calculation.level);button.setAttribute("aria-pressed",String(button.dataset.methodLevel===selected))}
+    if(section.dataset.commentLevel!==(selected||"")){const main=section.querySelector(".method-main"),previous=main.querySelector(".method-category-comment"),comment=methodCommentSelect(node,node,selected);previous?.remove();if(comment){comment.classList.add("method-category-comment");main.appendChild(comment)}section.dataset.commentLevel=selected||""}
+  }
+}
 function renderCategory(category,node=null,categoryOnly=false){
+  if(node?.methode)return renderMethodCategory(node,categoryOnly);
   const section=document.createElement("section");section.className="section";
   const head=document.createElement("div");head.className="section-head category-head";
   const headingRow=document.createElement("div");headingRow.className="category-heading-row";
@@ -699,18 +897,22 @@ function renderCategory(category,node=null,categoryOnly=false){
   return section;
 }
 function calculateFinalScore(){
-  const categoryScores=(grid.elements||[]).map(category=>{
+  const categories=(grid.elements||[]).map(category=>{
+    if(category.methode==="bonus"||(methodState(category).evaluee??category.evaluee)===false)return null;
     const percentage=getCategoryPercentage(category);
-    return percentage===null?null:{percentage,coefficient:getCategoryCoefficient(category)};
+    return percentage===null?null:{percentage,coefficient:getCategoryCoefficient(category),optional:category.priseEnCompte==="facultative"};
   }).filter(Boolean);
-  if(!categoryScores.length)return null;
-  const weightedPercent=categoryScores.reduce((sum,category)=>sum+category.percentage*category.coefficient,0);
-  const coefficientTotal=categoryScores.reduce((sum,category)=>sum+category.coefficient,0);
-  return Math.min(20,20*(weightedPercent/(100*coefficientTotal))+totalBonus());
+  const required=categories.filter(category=>!category.optional),optional=categories.filter(category=>category.optional).sort((first,second)=>second.percentage-first.percentage);
+  if(!required.length)return null;
+  let weightedPercent=required.reduce((sum,category)=>sum+category.percentage*category.coefficient,0),coefficientTotal=required.reduce((sum,category)=>sum+category.coefficient,0);
+  for(const category of optional)if(category.percentage>weightedPercent/coefficientTotal){weightedPercent+=category.percentage*category.coefficient;coefficientTotal+=category.coefficient}
+  return Math.min(20,20*(weightedPercent/(100*coefficientTotal))+Math.min(bonusCap(),totalBonus()));
 }
 function updateFinalScore(){
   const score=calculateFinalScore(),formatted=score===null?"—/20":`${score.toFixed(2).replace(".",",")}/20`;
-  document.getElementById("finalScore").textContent=formatted;
+  const partial=(grid.elements||[]).some(node=>node.methode&&node.methode!=="bonus"&&node.priseEnCompte!=="facultative"&&(methodState(node).evaluee??node.evaluee)!==false&&(()=>{const result=methodCalculation(node);return result.percentage===null||result.partial})());
+  const output=document.getElementById("finalScore");output.textContent=formatted+(score!==null&&partial?" *":"");output.title=partial?"Note provisoire : des catégories obligatoires sont incomplètes.":"Note calculée";
+  output.setAttribute("aria-label",partial?`Note provisoire : ${formatted}`:`Note calculée : ${formatted}`);
 }
 function render(){
   contentEl.innerHTML="";
@@ -780,6 +982,7 @@ function makePrintCategoryLevels(selected,showBonus=false){
 function printCategoryLevel(node,correction=null){
   const choices=correction?.manualChoices||manualChoices;
   if(Object.hasOwn(choices,node.id))return choices[node.id];
+  if(node.methode)return node.methode==="bonus"?null:methodCalculation(node,correction?.leafChoices||leafChoices,correction?.methodStates||methodStates,correction?.categoryEvaluations||categoryEvaluations).level;
   const percentage=correction?getCategoryPercentage(node,correction.leafChoices||{},correction.manualCategoryPercent||{}):getCategoryPercentage(node);if(percentage===null)return null;
   const mean=percentage/50,thresholds=config.seuils||{};
   if(mean<Number(thresholds.NA_max_exclusif??0.5))return"NA";
@@ -809,12 +1012,41 @@ function renderPrintChildren(node){
   }
   return fragment;
 }
+function selectedMethodComment(node,owner,level){
+  const options=owner.commentairesNiveaux?.[level]||[],selections=methodState(node).commentSelections||{},key=`${owner.id}:${level}`;
+  const selected=Object.hasOwn(selections,key)?selections[key]:options[0]?.id;
+  return options.find(item=>item.id===selected)?.texte||"";
+}
+function renderPrintMethod(node){
+  const section=document.createElement("section");section.className="print-category print-method";
+  const state=methodState(node),evaluation=categoryEvaluations[node.id]||{},heading=document.createElement("h3");heading.className="print-category-heading";
+  const selected=node.methode==="bonus"?null:effectiveLevel(node),percentage=node.methode==="bonus"?null:getCategoryPercentage(node);
+  const summary=document.createElement("span");summary.textContent=node.methode==="bonus"?`+${Number(state.bonus||0).toLocaleString("fr-FR")} pt`:`${selected||"Non évaluée"} · ${percentage===null?"—":`${percentage.toFixed(2).replace(".",",")} %`}`;
+  const title=document.createElement("span");title.textContent=node.titre;heading.append(title,summary);section.appendChild(heading);
+  const addLine=text=>{if(!text)return;const line=document.createElement("div");line.className="print-method-line";line.textContent=text;section.appendChild(line)};
+  if((state.evaluee??node.evaluee)===false)addLine("Catégorie non évaluée");
+  const comment=selected&&selectedMethodComment(node,node,selected);if(comment)addLine(comment);
+  for(const [key,kind] of [["warning","PROBLEME"],["exceeded","VALORISATION"]])if(evaluation[key]){
+    const motif=(node.commentMotifs||[]).find(item=>item.kind===kind&&item.id===(evaluation.motifIds?.[key]||evaluation.motifId));
+    addLine(`${key==="warning"?"Attention":"Dépassé"}${motif?` : ${motif.label}`:""}`);
+  }
+  if(node.methode==="capacites")for(const capacity of descendantsLeaves(node)){
+    const level=leafChoices[capacity.id],text=level&&selectedMethodComment(node,capacity,level);
+    addLine(`${capacity.titre} : ${level||"Non évaluée"}${text?` — ${text}`:""}`);
+  }
+  if(node.methode==="bareme")for(const criterion of node.criteres||[]){const value=Object.hasOwn(state.scores||{},criterion.id)?String(state.scores[criterion.id]).replace(".",","):"—";addLine(`${criterion.titre} : ${value} / ${criterion.pointsMaximum}`)}
+  if(node.methode==="distribution")addLine(node.niveaux.map(id=>`${id} : ${Number(state.counts?.[id])||0}`).join(" · "));
+  if(node.methode==="compteur")addLine(`Nombre : ${Number(state.count)||0}`);
+  if(node.methode==="minuteur")addLine(`Durée : ${state.recorded||state.startedAt?formatDuration(timerSeconds(state)):"—"} / ${formatDuration(node.dureeCibleSecondes)}`);
+  if(node.methode==="bonus"){const item=(node.commentairesValorisation||[]).find(option=>option.id===state.bonusComment);if(item)addLine(item.texte)}
+  return section;
+}
 function renderPrintReport(){
   const report=document.getElementById("printReport");report.replaceChildren();
   const header=document.createElement("div");header.className="print-header";
   const top=document.createElement("div");top.className="print-header-top";
   const student=document.createElement("div");student.className="print-header-name";student.textContent=`Élève : ${document.getElementById("studentName").textContent.trim()||"—"}`;
-  const grade=document.createElement("span");grade.className="print-header-grade";grade.textContent=`Note : ${document.getElementById("finalGrade").value.trim()||"—"}`;
+  const grade=document.createElement("span");grade.className="print-header-grade";const gradeValue=document.getElementById("finalGrade").value.trim();grade.textContent=gradeValue?`Note : ${gradeValue}`:`Note proposée : ${document.getElementById("finalScore").textContent||"—"}`;
   top.append(student,grade);header.appendChild(top);
   const bottom=document.createElement("div");bottom.className="print-header-bottom";
   const details=document.createElement("div");details.className="print-header-details";
@@ -830,6 +1062,7 @@ function renderPrintReport(){
     const section=document.createElement("section");section.className="print-part";
     const title=document.createElement("h2");title.className="print-part-title";title.textContent=part.title;section.appendChild(title);
     for(const node of categories){
+      if(node.methode){section.appendChild(renderPrintMethod(node));continue}
       const category=document.createElement("section");category.className="print-category";
       const heading=document.createElement("h3");heading.className="print-category-heading";
       const label=document.createElement("span");label.className="print-category-label";
@@ -1008,21 +1241,88 @@ function gridFromCsv(text,fileName){
   config.grille=id;
   return{grid,config,partLayout:[...parts.values()]};
 }
-function resetChoices(){manualChoices={};manualCategoryPercent={};categoryEvaluations={};leafChoices={};bonusChoices={}}
+function gridFromJson(text){
+  const source=JSON.parse(text),methods=new Set(["capacites","bareme","distribution","compteur","minuteur","bonus"]),ids=new Set();
+  if(source.versionFormat!==1||!source.id||!source.titre||!Array.isArray(source.parties)||!source.parties.length)throw new Error("format de grille JSON invalide ou non pris en charge.");
+  const config=structuredClone(DEFAULT_CONFIG);config.ponderations={};config.coefficientsCategories={};config.bonus.plafond_total=Number(source.parametres?.plafondBonus??3);
+  if(!Number.isFinite(config.bonus.plafond_total)||config.bonus.plafond_total<0)throw new Error("plafond de bonus invalide.");
+  const elements=[],partLayout=[],seenId=(id,label)=>{if(typeof id!=="string"||!id.trim()||ids.has(id))throw new Error(`identifiant invalide ou répété pour ${label} : « ${id||""} ».`);ids.add(id)};
+  const levelDefinitions={NA:{id:"NA",libelle:"Non acquis",valeur:0,couleur:"#e45b60"},"ECA-":{id:"ECA-",libelle:"En cours d'acquisition −",valeur:.66,couleur:"#e8c64a"},ECA:{id:"ECA",libelle:"En cours d'acquisition",valeur:1,couleur:"#e8c64a"},"ECA+":{id:"ECA+",libelle:"En cours d'acquisition +",valeur:1.34,couleur:"#e8c64a"},A:{id:"A",libelle:"Acquis",valeur:2,couleur:"#49bd7b"}};
+  const firstComments=comments=>Object.fromEntries(Object.entries(comments||{}).map(([id,items])=>[id,Array.isArray(items)?items[0]?.texte||"":String(items||"")]));
+  const capacity=item=>{seenId(item.id,"la capacité");if(!item.titre||!Number.isFinite(Number(item.poids))||Number(item.poids)<=0)throw new Error(`capacité invalide : « ${item.id} ».`);config.ponderations[item.id]=Number(item.poids);return{...item,evaluable:true,commentairesNiveaux:item.commentaires||{},commentaires:firstComments(item.commentaires)}};
+  for(const part of source.parties){
+    seenId(part.id,"la partie");if(!part.titre||!Array.isArray(part.categories))throw new Error("partie JSON invalide.");
+    const layout={id:part.id,title:part.titre,categories:[]};partLayout.push(layout);
+    for(const category of part.categories){
+      seenId(category.id,"la catégorie");if(!category.titre||!methods.has(category.methode))throw new Error(`catégorie JSON invalide : « ${category.id} ».`);
+      if(typeof category.evaluee!=="boolean")throw new Error(`statut d'évaluation invalide : « ${category.id} ».`);
+      const children=(category.capacites||[]).map(capacity);
+      for(const group of category.sousCategories||[]){seenId(group.id,"la sous-catégorie");children.push({...group,evaluable:false,enfants:(group.capacites||[]).map(capacity)})}
+      if(category.methode!=="bonus"){
+        const coefficient=Number(category.coefficient);if(!Number.isFinite(coefficient)||coefficient<=0)throw new Error(`coefficient invalide : « ${category.id} ».`);
+        config.coefficientsCategories[category.id]=coefficient;
+        if(!["NA,ECA,A","NA,ECA-,ECA+,A"].includes((category.niveaux||[]).join(",")))throw new Error(`niveaux invalides : « ${category.id} ».`);
+        if(!["obligatoire","facultative"].includes(category.priseEnCompte))throw new Error(`prise en compte invalide : « ${category.id} ».`);
+      }
+      if(category.methode==="capacites"&&!children.length)throw new Error(`aucune capacité : « ${category.id} ».`);
+      if(["capacites","distribution"].includes(category.methode)){
+        const values=category.niveaux.map(id=>Number(category.valeursNiveaux?.[id]));
+        if(values.some((value,index)=>!Number.isFinite(value)||value<0||value>100||(index>0&&value<values[index-1])))throw new Error(`valeurs de niveau invalides : « ${category.id} ».`);
+      }
+      if(["capacites","bareme","distribution"].includes(category.methode)){
+        const thresholds=category.niveaux.slice(1).map(id=>Number(category.seuilsPourcentage?.[id]));
+        if(thresholds.some((value,index)=>!Number.isInteger(value)||value<0||value>100||(index>0&&value<=thresholds[index-1])))throw new Error(`seuils de niveau invalides : « ${category.id} ».`);
+      }
+      if(category.methode==="bareme"){
+        if(!Array.isArray(category.criteres)||!category.criteres.length)throw new Error(`aucun critère : « ${category.id} ».`);
+        for(const criterion of category.criteres){seenId(criterion.id,"le critère");const maximum=Number(criterion.pointsMaximum),step=Number(criterion.pas);if(!criterion.titre||!Number.isFinite(maximum)||maximum<=0||!Number.isFinite(step)||step<=0)throw new Error(`critère invalide : « ${criterion.id} ».`)}
+      }
+      if(category.methode==="compteur"){
+        const thresholds=[...category.niveaux.slice(1),"D"].map(id=>Number(category.seuilsOccurrences?.[id]));
+        if(thresholds.some((value,index)=>!Number.isInteger(value)||value<=0||(index>0&&value<=thresholds[index-1])))throw new Error(`seuils du compteur invalides : « ${category.id} ».`);
+      }
+      if(category.methode==="minuteur"){
+        if(elements.some(item=>item.methode==="minuteur"))throw new Error("une grille ne peut contenir qu'un minuteur.");
+        const limits=category.seuilsSecondes||{},target=Number(category.dureeCibleSecondes),short=Number(limits.naTropCourt),start=Number(limits.entreeA),end=Number(limits.sortieA),long=Number(limits.naTropLong),points=category.courbe?.points;
+        if(![target,short,start,end,long].every(Number.isFinite)||!(0<short&&short<start&&start<=target&&target<=end&&end<long)||!Array.isArray(points)||points.length<2)throw new Error(`paramètres du minuteur invalides : « ${category.id} ».`);
+        if(category.niveaux.includes("ECA-")&&!(short<Number(category.separationsECASecondes?.tropCourt)&&Number(category.separationsECASecondes?.tropCourt)<start&&end<Number(category.separationsECASecondes?.tropLong)&&Number(category.separationsECASecondes?.tropLong)<long))throw new Error(`séparations ECA du minuteur invalides : « ${category.id} ».`);
+        if(points.some((point,index)=>!Number.isFinite(point.secondes)||!Number.isFinite(point.pourcentage)||point.pourcentage<0||point.pourcentage>100||(index>0&&point.secondes<=points[index-1].secondes)))throw new Error(`courbe du minuteur invalide : « ${category.id} ».`);
+        if(!["lineaire","lisse"].includes(category.courbe.interpolation)||points[0].secondes!==0||points[0].pourcentage!==0||!points.some(point=>point.secondes===start&&point.pourcentage===100)||!points.some(point=>point.secondes===end&&point.pourcentage===100)||points.some((point,index)=>point.secondes>=start&&point.secondes<=end&&point.pourcentage!==100||index>0&&point.secondes<=start&&point.pourcentage<points[index-1].pourcentage||index>0&&points[index-1].secondes>=end&&point.pourcentage>points[index-1].pourcentage))throw new Error(`progression de la courbe invalide : « ${category.id} ».`);
+      }
+      if(category.methode==="bonus"&&(!Number.isFinite(Number(category.pointsMaximum))||Number(category.pointsMaximum)<=0||!Number.isFinite(Number(category.pas))||Number(category.pas)<=0)){
+        throw new Error(`paramètres du bonus invalides : « ${category.id} ».`);
+      }
+      const comments=category.commentaires||{},commentMotifs=[...(comments.attention||[]).map(item=>({id:item.id,label:item.texte,kind:"PROBLEME"})),...(comments.depasse||[]).map(item=>({id:item.id,label:item.texte,kind:"VALORISATION"}))];
+      const node={...category,evaluable:false,enfants:children,commentairesNiveaux:comments.niveaux||{},commentaires:firstComments(comments.niveaux),commentMotifs,depasseAutorise:category.methode!=="minuteur"};
+      elements.push(node);layout.categories.push({nodeId:node.id,title:node.titre});
+    }
+  }
+  if(!elements.length)throw new Error("la grille ne contient aucune catégorie.");
+  return{grid:{...source,niveaux:Object.values(levelDefinitions),elements,typeDevoir:source.titre,niveauDevoir:source.metadonnees?.niveau||""},config,partLayout};
+}
+function resetChoices(){manualChoices={};manualCategoryPercent={};categoryEvaluations={};leafChoices={};bonusChoices={};methodStates={}}
+function pauseMethodTimers(){for(const state of Object.values(methodStates))if(state.startedAt){state.elapsedMs=timerSeconds(state)*1000;delete state.startedAt}}
+function snapshotMethodStates(){
+  const snapshot=structuredClone(methodStates);
+  for(const state of Object.values(snapshot))if(state.startedAt){state.elapsedMs=timerSeconds(state)*1000;delete state.startedAt}
+  return snapshot;
+}
 function captureActiveCorrection(){
   if(!activeCorrectionStudentId)return;
   const note=document.getElementById("finalGrade").value;
-  studentCorrections[activeCorrectionStudentId]=structuredClone({manualChoices,manualCategoryPercent,categoryEvaluations,leafChoices,bonusChoices,note});
+  studentCorrections[activeCorrectionStudentId]=structuredClone({manualChoices,manualCategoryPercent,categoryEvaluations,leafChoices,bonusChoices,methodStates:snapshotMethodStates(),note});
   const details=assignmentStudentDetails[activeCorrectionStudentId]||(assignmentStudentDetails[activeCorrectionStudentId]={sousGroupe:"",sujet:"",remarque:""});
   details.note=note;
 }
 function loadStudentCorrection(student){
-  captureActiveCorrection();activeCorrectionStudentId=student.id;
-  const correction=structuredClone(studentCorrections[student.id]||{});
-  manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};
-  leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};
+  if(activeCorrectionStudentId!==student.id){
+    pauseMethodTimers();captureActiveCorrection();activeCorrectionStudentId=student.id;
+    const correction=structuredClone(studentCorrections[student.id]||{});
+    manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};
+    leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};methodStates=correction.methodStates||{};
+    document.getElementById("finalGrade").value=correction.note||"";
+  }
   document.getElementById("studentName").textContent=[student.nom,student.prenom].filter(Boolean).join(" ");
-  document.getElementById("finalGrade").value=correction.note||"";
   updateCorrectionStudentNavigation();
 }
 function openStudentCorrection(student){
@@ -1205,7 +1505,7 @@ function getCorrectionTrombiCategories(){
   const mappedIds=new Set(partLayout.flatMap(part=>part.categories.filter(category=>category.nodeId).map(category=>category.nodeId)));
   const visit=(nodes,partIndex)=>{
     for(const node of nodes||[]){
-      if(Object.hasOwn(coefficients,node.id))categories.push({node,partIndex});
+      if(Object.hasOwn(coefficients,node.id)||node.methode==="bonus")categories.push({node,partIndex});
       visit(node.enfants,partIndex);
     }
   };
@@ -1276,9 +1576,11 @@ function createTrombiPortrait(student,fullBleed=false){
   const shoulders=document.createElementNS(namespace,"path");shoulders.setAttribute("d",fullBleed?"M7 130c2-33 19-51 43-51s41 18 43 51z":"M10 88c1-20 10-31 26-31s25 11 26 31z");shoulders.setAttribute("fill","#777d85");
   portrait.append(background,shoulders,head);return portrait;
 }
-function createTrombiLevelScale(selected=null){
+function createTrombiLevelScale(selected=null,node=null,correction=null){
   const scale=document.createElement("div");scale.className="correction-trombi-level-scale";scale.setAttribute("aria-label",selected?`Niveau ${selected}`:"Aucun niveau saisi");
-  for(const level of ["NA","ECA","A","D"]){const marker=document.createElement("span");marker.textContent=level;if(level===selected){marker.classList.add("selected");marker.dataset.level=level}scale.append(marker)}
+  if(node?.methode==="bonus"){const marker=document.createElement("span");marker.textContent=`+${Number(correction?.methodStates?.[node.id]?.bonus||0).toLocaleString("fr-FR")}`;scale.style.gridTemplateColumns="1fr";scale.append(marker);return scale}
+  const scaleLevels=node?.niveaux?[...node.niveaux,...(node.depasseAutorise===false?[]:["D"])]:["NA","ECA","A","D"];scale.style.gridTemplateColumns=`repeat(${scaleLevels.length}, minmax(0, 1fr))`;
+  for(const level of scaleLevels){const marker=document.createElement("span");marker.textContent=level;if(level===selected){marker.classList.add("selected");marker.dataset.level=level;if(level.startsWith("ECA"))marker.style.setProperty("--trombi-level-color","var(--yellow)")}scale.append(marker)}
   return scale;
 }
 function compareTrombiStudentNames(first,second){
@@ -1337,7 +1639,7 @@ function openCorrectionPopup(student){
     const term=document.createElement("dt"),description=document.createElement("dd");term.textContent=label;description.textContent=value||"—";list.append(term,description);
   }
   identity.append(list);document.getElementById("correctionPopupName").textContent=[student.nom,student.prenom].filter(Boolean).join(" ")||"Élève sans nom";
-  document.getElementById("correctionPopupRemark").value=details.remarque||"";renderCorrectionPopupCategories();dialog.showModal();
+  document.getElementById("correctionPopupRemark").value=details.remarque||"";renderCorrectionPopupCategories();dialog.show();
 }
 function renderCorrectionTrombi(){
   const criteria=document.getElementById("correctionTrombiCriteria"),track=document.getElementById("correctionTrombiTrack");
@@ -1379,7 +1681,7 @@ function renderCorrectionTrombi(){
     const correction=studentCorrections[student.id];
     for(const [index,{node:category,partIndex}] of categories.entries()){
       const selected=correction?.categoryEvaluations?.[category.id]?.exceeded?"D":correction?printCategoryLevel(category,correction):null;
-      const scale=createTrombiLevelScale(selected);
+      const scale=createTrombiLevelScale(selected,category,correction);
       if(index>0&&partIndex!==categories[index-1].partIndex)scale.classList.add("correction-trombi-part-start");
       column.append(scale);
     }
@@ -1539,13 +1841,14 @@ function parseStudentGroupCsv(text){
     return{nom:row.Nom,prenom:row.Prénom,classe:row.Classe,pap:["oui","true","1"].includes(pap)};
   });
 }
-function applyCsvText(text,fileName){
-  const loaded=gridFromCsv(text,fileName);grid=loaded.grid;config=loaded.config;partLayout=loaded.partLayout;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
+function applyLoadedGrid(loaded,fileName){
+  grid=loaded.grid;config=loaded.config;partLayout=loaded.partLayout;levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
   studentCorrections={};activeCorrectionStudentId=null;document.getElementById("studentName").textContent="";document.getElementById("finalGrade").value="";
   assignmentStudentDetails={};
-  activateLoadedGrid(grid.titre);resetChoices();render();initializeAssignment();setStatus(`Grille CSV « ${fileName} » chargée. Les choix précédents ont été réinitialisés.`);
+  activateLoadedGrid(grid.titre);resetChoices();render();initializeAssignment();setStatus(`Grille « ${fileName} » chargée. Les choix précédents ont été réinitialisés.`);
   saveWorkspace();
 }
+function applyCsvText(text,fileName){applyLoadedGrid(gridFromCsv(text,fileName),fileName)}
 async function loadRepositoryGrid(entry,button){
   button.disabled=true;const modalStatus=document.getElementById("gridCatalogStatus");modalStatus.hidden=false;modalStatus.textContent=`Chargement de la grille « ${entry.titre} »…`;
   try{
@@ -1553,7 +1856,9 @@ async function loadRepositoryGrid(entry,button){
     if(url.origin!==location.origin)throw new Error("le fichier doit être hébergé sur le même site.");
     const response=await fetch(url,{cache:"no-store"});
     if(!response.ok)throw new Error(`réponse HTTP ${response.status}.`);
-    applyCsvText(await response.text(),entry.fichier);
+    const text=await response.text();
+    if(entry.fichier.toLowerCase().endsWith(".json"))applyLoadedGrid(gridFromJson(text),entry.fichier);
+    else applyCsvText(text,entry.fichier);
     document.getElementById("gridCatalogDialog").close();setActiveView("devoir");
   }catch(error){modalStatus.textContent=`Impossible de charger « ${entry.titre} » : ${error.message}`}
   finally{button.disabled=false}
@@ -1564,13 +1869,13 @@ async function loadGridCatalog(){
     const response=await fetch(new URL("grilles.json",document.baseURI),{cache:"no-cache"});
     if(!response.ok)throw new Error(`réponse HTTP ${response.status}.`);
     const catalog=await response.json();
-    const entries=(catalog.grilles||[]).filter(entry=>entry?.fichier==="GrilleEval_Etude-critique-documents_Term.csv");
-    if(!entries.length)throw new Error("la grille complète d’analyse de documents est introuvable.");
+    const entries=catalog.grilles||[];
+    if(!entries.length)throw new Error("aucune grille n'est disponible.");
     const buttons=entries.map(entry=>{
-      if(!entry||typeof entry.titre!=="string"||typeof entry.fichier!=="string"||!entry.fichier.toLowerCase().endsWith(".csv"))throw new Error("une entrée du catalogue est invalide.");
+      if(!entry||typeof entry.titre!=="string"||typeof entry.fichier!=="string"||!/\.(csv|json)$/i.test(entry.fichier))throw new Error("une entrée du catalogue est invalide.");
       const button=document.createElement("button");button.type="button";button.className="grid-modal-choice";
       const title=document.createElement("span");title.textContent=entry.titre;
-      const detail=document.createElement("small");detail.textContent="Analyse de documents · grille complète";
+      const detail=document.createElement("small");detail.textContent=entry.fichier.toLowerCase().endsWith(".json")?"Grille à méthodes multiples":"Grille CSV";
       const copy=document.createElement("span");copy.append(title,detail);button.append(copy);
       const icon=document.createElement("span");icon.className="menu-icon";icon.style.setProperty("--icon","url('icones/check.svg')");icon.setAttribute("aria-hidden","true");button.append(icon);
       button.addEventListener("click",()=>loadRepositoryGrid(entry,button));return button;
@@ -1597,7 +1902,7 @@ document.getElementById("correctionStudentInfo").addEventListener("click",()=>{d
 const correctionPopup=document.getElementById("correctionPopup");
 function closeCorrectionPopup(){
   if(!correctionPopup.open)return;
-  captureActiveCorrection();correctionPopup.close();renderCorrectionTrombi();saveWorkspace();
+  pauseMethodTimers();captureActiveCorrection();correctionPopup.close();renderCorrectionTrombi();saveWorkspace();
   const container=document.getElementById(correctionTrombiMode==="full"?"correctionTrombiCards":"correctionTrombiTrack");
   [...container.querySelectorAll("[data-student-id]")].find(button=>button.dataset.studentId===activeCorrectionStudentId)?.focus({preventScroll:true});
 }
@@ -1612,6 +1917,11 @@ correctionPopup.addEventListener("click",event=>{
   if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)closeCorrectionPopup();
 });
 correctionPopup.addEventListener("cancel",event=>{event.preventDefault();closeCorrectionPopup()});
+document.addEventListener("pointerdown",event=>{
+  if(!correctionPopup.open||correctionApp.hidden||correctionPopup.contains(event.target)||event.target.closest(".app-navigation"))return;
+  closeCorrectionPopup();
+});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&correctionPopup.open&&!correctionApp.hidden){event.preventDefault();closeCorrectionPopup()}});
 document.getElementById("resetBtn").addEventListener("click",()=>{document.getElementById("resetCorrectionDialog").showModal();document.getElementById("cancelResetCorrection").focus()});
 document.getElementById("cancelResetCorrection").addEventListener("click",()=>document.getElementById("resetCorrectionDialog").close());
 document.getElementById("confirmResetCorrection").addEventListener("click",()=>{resetChoices();document.getElementById("finalGrade").value="";captureActiveCorrection();render();document.getElementById("resetCorrectionDialog").close();setStatus("La correction et la note de cette grille ont été effacées.")});
@@ -1708,7 +2018,7 @@ trombiPhotoFolder.addEventListener("change",()=>{
   renderCorrectionTrombi();
 });
 document.getElementById("showCorrectionTrombi").addEventListener("click",()=>{
-  captureActiveCorrection();
+  pauseMethodTimers();captureActiveCorrection();
   document.getElementById("correctionTrombiView").hidden=false;correctionApp.classList.add("trombi-view");renderCorrectionTrombi();
 });
 document.getElementById("correctionTrombiGoStudents").addEventListener("click",()=>setActiveView("eleves"));
@@ -1894,7 +2204,7 @@ function writeWorkspace(database,snapshot,expectedRevision){
 function workspaceSnapshot(){
   captureActiveCorrection();
   return structuredClone({version:1,gridLoaded:correctionApp.classList.contains("grid-loaded"),grid,config,partLayout,assignment,activeStudentGroup,assignmentStudentDetails,studentCorrections,activeCorrectionStudentId,correctionInteractionMode,
-    currentCorrection:{manualChoices,manualCategoryPercent,categoryEvaluations,leafChoices,bonusChoices,studentName:document.getElementById("studentName").textContent,note:document.getElementById("finalGrade").value}});
+    currentCorrection:{manualChoices,manualCategoryPercent,categoryEvaluations,leafChoices,bonusChoices,methodStates:snapshotMethodStates(),studentName:document.getElementById("studentName").textContent,note:document.getElementById("finalGrade").value}});
 }
 async function saveWorkspace(){
   if(!workspaceStorageReady||!workspaceDatabase)return;
@@ -1919,7 +2229,7 @@ function restoreWorkspace(snapshot){
   assignmentStudentDetails=snapshot.assignmentStudentDetails||{};studentCorrections=snapshot.studentCorrections||{};activeCorrectionStudentId=snapshot.activeCorrectionStudentId||null;
   correctionInteractionMode=snapshot.correctionInteractionMode==="popup"?"popup":"complete";
   correctionModeMenu.querySelector(`input[value="${correctionInteractionMode}"]`).checked=true;
-  const correction=snapshot.currentCorrection||{};manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};
+  const correction=snapshot.currentCorrection||{};manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};methodStates=correction.methodStates||{};
   levels=Object.fromEntries(grid.niveaux.map(level=>[level.id,level]));
   document.getElementById("studentName").textContent=correction.studentName||"";document.getElementById("finalGrade").value=correction.note||"";
   if(snapshot.gridLoaded){
@@ -1941,5 +2251,12 @@ async function initializeWorkspaceStorage(){
 }
 for(const eventName of ["input","change","click","submit","pointerup","pointercancel","keydown"])document.addEventListener(eventName,saveWorkspace);
 initializeWorkspaceStorage();
+let methodTimerTicks=0;
+window.setInterval(()=>{
+  const active=(grid.elements||[]).filter(node=>node.methode==="minuteur"&&methodState(node).startedAt);
+  if(!active.length)return;
+  for(const node of active)refreshMethodDisplay(node);
+  updateFinalScore();if(++methodTimerTicks%5===0)saveWorkspace();
+},1000);
 </script>
 </body></html>
