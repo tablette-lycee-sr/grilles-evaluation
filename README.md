@@ -30,10 +30,16 @@ Les lignes `motif` utilisent `categorie_id` pour référencer la catégorie, `id
 
 ## Grille JSON d'exemple
 
-Le fichier `grille-exemple-oral.json` propose une grille autonome illustrant les six méthodes de correction. Il ne contient aucune correction d'élève. Il est accessible dans le catalogue lors de la création d'un devoir ; le chargement direct d'un fichier JSON choisi sur l'appareil et l'éditeur de grille restent à développer.
+Le fichier `grille-exemple-oral.json` propose une grille autonome illustrant les six méthodes de correction. Il ne contient aucune correction d'élève. Lors de la création d'un devoir, une grille peut être choisie dans le catalogue officiel ou chargée depuis un fichier JSON sur l'appareil.
 
 `versionFormat` identifie la version du format ; `metadonnees.version` identifie celle de la grille. Les champs de `metadonnees` sont facultatifs : ils proposent notamment une date de création, un auteur (`null` lorsqu'il n'est pas renseigné), une langue, des étiquettes et une description. Les identifiants restent stables lorsque les titres changent ; l'ordre des listes détermine l'affichage.
 
 Les pourcentages utilisent l'échelle de 0 à 100 et les durées du Minuteur sont exprimées en secondes. Les commentaires proposés pour un niveau sont des listes : le premier est présélectionné, mais le correcteur peut en choisir un autre ou aucun. Les données des méthodes et les choix du correcteur sont sauvegardés localement avec chaque correction, séparément de la définition de la grille.
 
-Les tests du moteur peuvent être lancés avec `node --test tests/methodes.test.cjs` depuis une copie locale du dépôt. Le workspace GitHub virtuel ne peut pas être lu directement par Node.
+## Éditeur de grille
+
+Le bouton « Créer une grille de correction » du sous-menu Devoir ouvre l'éditeur. Il permet de créer des parties, des catégories et leurs éléments, de choisir parmi les six méthodes et de renseigner leurs paramètres et commentaires. Le Minuteur propose un éditeur de courbe ; l'éditeur peut également ouvrir une grille JSON existante pour la modifier.
+
+Les poignées déplacent les éléments à l'intérieur des niveaux compatibles avec leur méthode ; au clavier, utiliser Alt avec les flèches. L'ordre des capacités et des sous-catégories est conservé dans le fichier exporté. La barre verticale permet d'exporter la grille après validation ; elle peut ensuite être sélectionnée lors de la création d'un devoir. Une grille non exportée est conservée seulement pendant la session et sera perdue au rechargement de la page.
+
+Les tests peuvent être lancés avec `node --test` depuis une copie locale du dépôt. Le workspace GitHub virtuel ne peut pas être lu directement par Node.

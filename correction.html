@@ -171,6 +171,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <button type="button" id="resetAssignmentBtn" title="Effacer le devoir en cours" aria-label="Effacer le devoir en cours"><span class="menu-icon" style="--icon:url('icones/replay.svg')" aria-hidden="true"></span></button>
     <span class="submenu-spacer" aria-hidden="true"></span>
     <span class="submenu-action" title="Télécharger une grille de correction (à venir)"><button type="button" disabled aria-label="Télécharger une grille de correction"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button></span>
+    <button type="button" id="createGridEditorBtn" title="Créer une grille de correction" aria-label="Créer une grille de correction"><span class="menu-icon" style="--icon:url('icones/wand_stars.svg')" aria-hidden="true"></span></button>
   </div>
   <div class="submenu" data-submenu="eleves" hidden>
     <button type="button" id="createStudentGroupBtn" title="Créer un nouveau groupe d’élèves" aria-label="Créer un nouveau groupe d’élèves"><svg aria-hidden="true"><use href="#icon-user-plus"/></svg></button>
@@ -283,10 +284,37 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 </dialog>
 <dialog id="gridCatalogDialog">
   <div class="dialog-heading"><h2>Choisir une grille de correction</h2></div>
-  <p class="catalog-description">Grille disponible</p>
+  <p class="catalog-description">Catalogue officiel</p>
   <p id="gridCatalogStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
   <div id="gridModalCatalog" class="grid-modal-catalog">Chargement du catalogue…</div>
+  <button id="loadLocalGridBtn" type="button"><span class="menu-icon" style="--icon:url('icones/file_open.svg')" aria-hidden="true"></span> Choisir une grille sur cet appareil</button>
+  <input id="localGridInput" class="sr-only" type="file" accept=".json,application/json" aria-label="Choisir une grille JSON">
   <div class="dialog-actions"><button id="cancelGridCatalog" class="secondary" type="button">Annuler</button></div>
+</dialog>
+<dialog id="gridEditorDialog" class="grid-editor" aria-labelledby="gridEditorHeading">
+  <div class="grid-editor-layout">
+    <nav class="grid-editor-toolbar" aria-label="Actions de la grille">
+      <button id="gridEditorAddPart" type="button" title="Ajouter une partie" aria-label="Ajouter une partie"><span class="menu-icon" style="--icon:url('icones/add.svg')" aria-hidden="true"></span></button>
+      <button id="gridEditorMetadata" type="button" title="Informations de la grille" aria-label="Informations de la grille"><span class="menu-icon" style="--icon:url('icones/info.svg')" aria-hidden="true"></span></button>
+      <button id="gridEditorImport" type="button" title="Modifier une grille JSON" aria-label="Modifier une grille JSON"><span class="menu-icon" style="--icon:url('icones/file_open.svg')" aria-hidden="true"></span></button>
+      <input id="gridEditorImportInput" class="sr-only" type="file" accept=".json,application/json" aria-label="Choisir une grille à modifier">
+      <button id="gridEditorExport" type="button" title="Exporter la grille JSON" aria-label="Exporter la grille JSON"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button>
+      <button id="gridEditorClose" type="button" title="Fermer l'éditeur" aria-label="Fermer l'éditeur"><span class="menu-icon" style="--icon:url('icones/close.svg')" aria-hidden="true"></span></button>
+    </nav>
+    <div class="grid-editor-content">
+      <header class="grid-editor-heading"><div><h2 id="gridEditorHeading">Créer une grille de correction</h2><p id="gridEditorTitle"></p></div></header>
+      <p id="gridEditorStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
+      <div id="gridEditorTree" class="grid-editor-tree" aria-label="Structure de la grille"></div>
+    </div>
+  </div>
+</dialog>
+<dialog id="gridEditorFormDialog" class="grid-editor-form-dialog" aria-labelledby="gridEditorFormHeading">
+  <form id="gridEditorForm">
+    <div class="dialog-heading"><h2 id="gridEditorFormHeading"></h2><button id="gridEditorFormCancel" class="icon-button" type="button" title="Fermer" aria-label="Fermer"><span class="menu-icon" style="--icon:url('icones/close.svg')" aria-hidden="true"></span></button></div>
+    <div id="gridEditorFormFields" class="grid-editor-form-fields"></div>
+    <p id="gridEditorFormStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
+    <div class="dialog-actions"><button id="gridEditorFormSave" type="submit">Enregistrer</button></div>
+  </form>
 </dialog>
 <dialog id="resetAssignmentDialog">
   <div class="dialog-heading"><h2>Effacer le devoir en cours ?</h2></div>
@@ -418,7 +446,7 @@ function setStatus(message, kind=""){
 }
 function allNodes(nodes,result=[]){for(const n of nodes||[]){result.push(n);allNodes(n.enfants,result)}return result}
 function isLeaf(n){return !n.enfants||n.enfants.length===0}
-function descendantsLeaves(n){if(isLeaf(n))return[n];return(n.enfants||[]).flatMap(descendantsLeaves)}
+function descendantsLeaves(n){if(Array.isArray(n.enfants))return n.enfants.flatMap(descendantsLeaves);return[n]}
 function getWeight(node){const w=config.ponderations?.[node.id];return Number.isFinite(Number(w))&&Number(w)>0?Number(w):1}
 function getCategoryCoefficient(node){const coefficient=config.coefficientsCategories?.[node.id];return Number.isFinite(Number(coefficient))&&Number(coefficient)>0?Number(coefficient):1}
 function getLeafScore(node,choices=leafChoices){const id=choices[node.id];return id&&levels[id]?{score:levels[id].valeur,weight:getWeight(node),node}:null}
@@ -716,7 +744,7 @@ function renderMethodDetails(node,calculation,categoryOnly){
   details.addEventListener("toggle",()=>{state.detailsOpen=details.open});
   if(node.methode==="capacites"){
     for(const child of node.enfants||[]){
-      if(child.enfants?.length){const group=document.createElement("div");group.className="method-subcategory";const heading=document.createElement("strong");heading.textContent=child.titre;group.appendChild(heading);for(const capacity of child.enfants)group.appendChild(renderMethodCapacity(node,capacity));details.appendChild(group)}
+      if(Array.isArray(child.enfants)){const group=document.createElement("div");group.className="method-subcategory";const heading=document.createElement("strong");heading.textContent=child.titre;group.appendChild(heading);for(const capacity of child.enfants)group.appendChild(renderMethodCapacity(node,capacity));details.appendChild(group)}
       else details.appendChild(renderMethodCapacity(node,child));
     }
   }else for(const criterion of node.criteres||[]){
@@ -1249,7 +1277,8 @@ function gridFromJson(text){
   const elements=[],partLayout=[],seenId=(id,label)=>{if(typeof id!=="string"||!id.trim()||ids.has(id))throw new Error(`identifiant invalide ou répété pour ${label} : « ${id||""} ».`);ids.add(id)};
   const levelDefinitions={NA:{id:"NA",libelle:"Non acquis",valeur:0,couleur:"#e45b60"},"ECA-":{id:"ECA-",libelle:"En cours d'acquisition −",valeur:.66,couleur:"#e8c64a"},ECA:{id:"ECA",libelle:"En cours d'acquisition",valeur:1,couleur:"#e8c64a"},"ECA+":{id:"ECA+",libelle:"En cours d'acquisition +",valeur:1.34,couleur:"#e8c64a"},A:{id:"A",libelle:"Acquis",valeur:2,couleur:"#49bd7b"}};
   const firstComments=comments=>Object.fromEntries(Object.entries(comments||{}).map(([id,items])=>[id,Array.isArray(items)?items[0]?.texte||"":String(items||"")]));
-  const capacity=item=>{seenId(item.id,"la capacité");if(!item.titre||!Number.isFinite(Number(item.poids))||Number(item.poids)<=0)throw new Error(`capacité invalide : « ${item.id} ».`);config.ponderations[item.id]=Number(item.poids);return{...item,evaluable:true,commentairesNiveaux:item.commentaires||{},commentaires:firstComments(item.commentaires)}};
+  const validateComments=(items,label)=>{if(!Array.isArray(items))throw new Error(`liste de commentaires invalide : « ${label} ».`);const commentIds=new Set();for(const item of items){if(typeof item?.id!=="string"||!item.id.trim()||commentIds.has(item.id)||typeof item.texte!=="string"||!item.texte.trim())throw new Error(`commentaire invalide ou répété : « ${label} ».`);commentIds.add(item.id)}};
+  const capacity=item=>{seenId(item.id,"la capacité");if(!item.titre||!Number.isFinite(Number(item.poids))||Number(item.poids)<=0)throw new Error(`capacité invalide : « ${item.id} ».`);for(const [level,items] of Object.entries(item.commentaires||{}))validateComments(items,`${item.id} : ${level}`);config.ponderations[item.id]=Number(item.poids);return{...item,evaluable:true,commentairesNiveaux:item.commentaires||{},commentaires:firstComments(item.commentaires)}};
   for(const part of source.parties){
     seenId(part.id,"la partie");if(!part.titre||!Array.isArray(part.categories))throw new Error("partie JSON invalide.");
     const layout={id:part.id,title:part.titre,categories:[]};partLayout.push(layout);
@@ -1257,14 +1286,18 @@ function gridFromJson(text){
       seenId(category.id,"la catégorie");if(!category.titre||!methods.has(category.methode))throw new Error(`catégorie JSON invalide : « ${category.id} ».`);
       if(typeof category.evaluee!=="boolean")throw new Error(`statut d'évaluation invalide : « ${category.id} ».`);
       const children=(category.capacites||[]).map(capacity);
-      for(const group of category.sousCategories||[]){seenId(group.id,"la sous-catégorie");children.push({...group,evaluable:false,enfants:(group.capacites||[]).map(capacity)})}
+      for(const group of category.sousCategories||[]){seenId(group.id,"la sous-catégorie");if(!group.titre||!Array.isArray(group.capacites))throw new Error(`sous-catégorie invalide : « ${group.id} ».`);children.push({...group,evaluable:false,enfants:group.capacites.map(capacity)})}
+      if(category.ordreEnfants!==undefined){
+        if(!Array.isArray(category.ordreEnfants)||category.ordreEnfants.length!==children.length||new Set(category.ordreEnfants).size!==children.length||category.ordreEnfants.some(id=>!children.some(child=>child.id===id)))throw new Error(`ordre des éléments invalide : « ${category.id} ».`);
+        const order=new Map(category.ordreEnfants.map((id,index)=>[id,index]));children.sort((first,second)=>order.get(first.id)-order.get(second.id));
+      }
       if(category.methode!=="bonus"){
         const coefficient=Number(category.coefficient);if(!Number.isFinite(coefficient)||coefficient<=0)throw new Error(`coefficient invalide : « ${category.id} ».`);
         config.coefficientsCategories[category.id]=coefficient;
         if(!["NA,ECA,A","NA,ECA-,ECA+,A"].includes((category.niveaux||[]).join(",")))throw new Error(`niveaux invalides : « ${category.id} ».`);
         if(!["obligatoire","facultative"].includes(category.priseEnCompte))throw new Error(`prise en compte invalide : « ${category.id} ».`);
       }
-      if(category.methode==="capacites"&&!children.length)throw new Error(`aucune capacité : « ${category.id} ».`);
+      if(category.methode==="capacites"&&!children.some(child=>Array.isArray(child.enfants)?child.enfants.length>0:true))throw new Error(`aucune capacité : « ${category.id} ».`);
       if(["capacites","distribution"].includes(category.methode)){
         const values=category.niveaux.map(id=>Number(category.valeursNiveaux?.[id]));
         if(values.some((value,index)=>!Number.isFinite(value)||value<0||value>100||(index>0&&value<values[index-1])))throw new Error(`valeurs de niveau invalides : « ${category.id} ».`);
@@ -1292,7 +1325,12 @@ function gridFromJson(text){
       if(category.methode==="bonus"&&(!Number.isFinite(Number(category.pointsMaximum))||Number(category.pointsMaximum)<=0||!Number.isFinite(Number(category.pas))||Number(category.pas)<=0)){
         throw new Error(`paramètres du bonus invalides : « ${category.id} ».`);
       }
-      const comments=category.commentaires||{},commentMotifs=[...(comments.attention||[]).map(item=>({id:item.id,label:item.texte,kind:"PROBLEME"})),...(comments.depasse||[]).map(item=>({id:item.id,label:item.texte,kind:"VALORISATION"}))];
+      const comments=category.commentaires||{};
+      for(const [level,items] of Object.entries(comments.niveaux||{}))validateComments(items,`${category.id} : ${level}`);
+      if(comments.attention!==undefined)validateComments(comments.attention,`${category.id} : Attention`);
+      if(comments.depasse!==undefined)validateComments(comments.depasse,`${category.id} : Dépassé`);
+      if(category.commentairesValorisation!==undefined)validateComments(category.commentairesValorisation,`${category.id} : Bonus`);
+      const commentMotifs=[...(comments.attention||[]).map(item=>({id:item.id,label:item.texte,kind:"PROBLEME"})),...(comments.depasse||[]).map(item=>({id:item.id,label:item.texte,kind:"VALORISATION"}))];
       const node={...category,evaluable:false,enfants:children,commentairesNiveaux:comments.niveaux||{},commentaires:firstComments(comments.niveaux),commentMotifs,depasseAutorise:category.methode!=="minuteur"};
       elements.push(node);layout.categories.push({nodeId:node.id,title:node.titre});
     }
@@ -2028,6 +2066,16 @@ document.getElementById("createAssignmentBtn").addEventListener("click",()=>{
   document.getElementById("gridCatalogDialog").showModal();
 });
 document.getElementById("cancelGridCatalog").addEventListener("click",()=>document.getElementById("gridCatalogDialog").close());
+document.getElementById("loadLocalGridBtn").addEventListener("click",()=>document.getElementById("localGridInput").click());
+document.getElementById("localGridInput").addEventListener("change",async event=>{
+  const file=event.target.files?.[0];event.target.value="";if(!file)return;
+  const status=document.getElementById("gridCatalogStatus");status.hidden=false;
+  try{
+    const loaded=gridFromJson(await file.text());
+    if(!document.getElementById("gridCatalogDialog").open)return;
+    applyLoadedGrid(loaded,file.name);document.getElementById("gridCatalogDialog").close();setActiveView("devoir");
+  }catch(error){status.textContent=`Impossible de charger « ${file.name} » : ${error.message}`}
+});
 document.getElementById("resetAssignmentBtn").addEventListener("click",()=>document.getElementById("resetAssignmentDialog").showModal());
 document.getElementById("cancelResetAssignment").addEventListener("click",()=>document.getElementById("resetAssignmentDialog").close());
 document.getElementById("confirmResetAssignment").addEventListener("click",()=>{
@@ -2259,4 +2307,5 @@ window.setInterval(()=>{
   updateFinalScore();if(++methodTimerTicks%5===0)saveWorkspace();
 },1000);
 </script>
+<script src="editeur-grille.js"></script>
 </body></html>
