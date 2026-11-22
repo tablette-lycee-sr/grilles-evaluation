@@ -757,83 +757,199 @@ function renderMethodDetails(node,calculation,categoryOnly){
   return details;
 }
 function formatDuration(seconds){const minutes=Math.floor(seconds/60),remaining=Math.floor(seconds%60);return `${minutes}′${String(remaining).padStart(2,"0")}″`}
-function renderMethodCategory(node,categoryOnly=false){
-  const state=methodStates[node.id]||(methodStates[node.id]={}),isBonus=node.methode==="bonus",calculation=isBonus?null:methodCalculation(node),section=document.createElement("section");
-  section.className=`method-category method-${node.methode}`;section.dataset.methodNode=node.id;
-  const header=document.createElement("div");header.className="method-header";
-  const icons={capacites:"target",bareme:"rule",distribution:"leaderboard",compteur:"add_circle",minuteur:"hourglass_empty",bonus:"star"};
-  const icon=document.createElement("span");icon.className="menu-icon method-icon";icon.style.setProperty("--icon",`url('icones/${icons[node.methode]}.svg')`);icon.setAttribute("aria-hidden","true");
-  const title=document.createElement("h2");title.textContent=node.titre;header.append(icon,title);
-  const coefficient=document.createElement("span");coefficient.className="method-coefficient";coefficient.textContent=isBonus?"+":String(getCategoryCoefficient(node));if(node.priseEnCompte==="facultative")coefficient.classList.add("optional");coefficient.title=isBonus?"Bonus":node.priseEnCompte==="facultative"?"Catégorie facultative":"Coefficient de catégorie";header.appendChild(coefficient);
-  header.appendChild(methodIconButton("info",()=>window.alert(node.informationsFonctionnement||"Aucune information disponible."),`Informations sur ${node.titre}`));
-  const assessed=document.createElement("label");assessed.className="method-assessed";const check=document.createElement("input");check.type="checkbox";check.checked=(state.evaluee??node.evaluee)!==false;check.setAttribute("aria-label",`Évaluer ${node.titre}`);check.addEventListener("change",()=>{state.evaluee=check.checked;render()});assessed.append(check,document.createTextNode("Évaluée"));header.appendChild(assessed);section.appendChild(header);
-  if(isBonus){
-    const row=document.createElement("div");row.className="method-bonus-row";const slider=document.createElement("input");slider.type="range";slider.min="0";slider.max=String(node.pointsMaximum);slider.step=String(node.pas||.25);slider.value=String(state.bonus||0);slider.setAttribute("aria-label",`Points bonus pour ${node.titre}`);
-    const output=document.createElement("output");output.textContent=`+${Number(state.bonus||0).toLocaleString("fr-FR")}`;slider.addEventListener("input",()=>{state.bonus=Number(slider.value);output.textContent=`+${state.bonus.toLocaleString("fr-FR")}`;updateFinalScore()});row.append(slider,output);section.appendChild(row);
-    const select=document.createElement("select");select.className="method-comment-select";select.setAttribute("aria-label",`Commentaire de bonus pour ${node.titre}`);const empty=document.createElement("option");empty.value="";empty.textContent="Aucun commentaire";select.appendChild(empty);
-    for(const item of node.commentairesValorisation||[]){const option=document.createElement("option");option.value=item.id;option.textContent=item.texte;select.appendChild(option)}select.value=state.bonusComment||"";select.addEventListener("change",()=>{state.bonusComment=select.value});section.appendChild(select);return section;
+/* ---- Rendu des catégories par méthode (mise en page des schémas d'évaluation) ---- */
+const METHOD_CARD={capacites:"a",bareme:"a",distribution:"d",compteur:"c",minuteur:"m",bonus:"b"};
+const METHOD_ICONS={capacites:"target",bareme:"rule",distribution:"leaderboard",compteur:"add_circle",minuteur:"hourglass_empty",bonus:"star"};
+const METHOD_RING={NA:"var(--rouge)","ECA-":"var(--orange)",ECA:"var(--orange)","ECA+":"var(--orange)",A:"var(--vert)"};
+const METHOD_SEGMENT={NA:"var(--jauge-rouge)","ECA-":"var(--jauge-orange)",ECA:"var(--jauge-jaune)","ECA+":"var(--jauge-jaune)",A:"var(--jauge-vert)"};
+const METHOD_COUNT_COLOR={NA:"rouge","ECA-":"orange",ECA:"orange","ECA+":"jaune",A:"vert"};
+function methodEl(tag,className,text){const element=document.createElement(tag);if(className)element.className=className;if(text!==undefined)element.textContent=text;return element}
+function methodBt(className,action,title,text){const button=methodEl("button",`bt ${className}`,text);button.type="button";button.title=title;button.setAttribute("aria-label",title);button.addEventListener("click",action);return button}
+function methodIcon(name,className=""){const symbol=methodEl("span",`menu-icon ${className}`.trim());symbol.style.setProperty("--icon",`url('icones/${name}.svg')`);symbol.setAttribute("aria-hidden","true");return symbol}
+function methodChamp(select){const wrap=methodEl("div","champ"),arrow=methodEl("span","deroulant");arrow.setAttribute("aria-hidden","true");arrow.appendChild(methodEl("i","fleche-bas"));wrap.append(select,arrow);return wrap}
+function methodPercentText(value){return `${value.toFixed(2).replace(".",",")} %`}
+function formatTarget(seconds){const minutes=Math.floor(seconds/60),rest=Math.round(seconds%60);return rest?`${minutes}′${String(rest).padStart(2,"0")}″`:`${minutes}′`}
+function methodLerp(value,from,to,start,end){return to===from?end:start+(end-start)*Math.min(1,Math.max(0,(value-from)/(to-from)))}
+/* Positions (en %) des séparations de la jauge : seuils de pourcentage, seuils du compteur rapportés au seuil A, repères fixes pour le minuteur et le bonus. */
+function methodGaugeStops(node){
+  if(node.methode==="minuteur")return[33.5,72.5];
+  if(node.methode==="bonus")return[30,66];
+  if(node.methode==="compteur"){
+    const occurrences=node.seuilsOccurrences||{},top=Number(occurrences.A)||1,stops=[];
+    node.niveaux.slice(1).forEach((id,index)=>{const value=Math.min(92,100*Number(occurrences[id])/top);stops.push(Math.min(96,Math.max(value,index?stops[index-1]+4:0)))});
+    return stops;
   }
-  const controls=document.createElement("div");controls.className="method-controls";
-  const flags=document.createElement("div");flags.className="method-flags";flags.appendChild(makeCategoryFlagButton(node,"warning"));if(node.depasseAutorise!==false)flags.appendChild(makeCategoryFlagButton(node,"exceeded"));controls.appendChild(flags);
-  const main=document.createElement("div");main.className="method-main";const levelRow=document.createElement("div");levelRow.className="method-levels";
+  return node.niveaux.slice(1).map(id=>Number(node.seuilsPourcentage?.[id]));
+}
+function methodGaugeColors(node){
+  if(node.methode==="bonus")return["var(--jauge-neutre)","var(--jauge-bleu-fonce)","var(--bleu)"];
+  if(node.methode==="minuteur")return[METHOD_SEGMENT.NA,METHOD_SEGMENT.ECA,METHOD_SEGMENT.A];
+  return node.niveaux.map(id=>METHOD_SEGMENT[id]);
+}
+function methodGradient(colors,stops){
+  const parts=[];
+  colors.forEach((color,index)=>{
+    if(index===colors.length-1)parts.push(`${color} 0`);
+    else parts.push(`${color} 0 calc(${stops[index]}% - var(--demi))`,`#000 0 calc(${stops[index]}% + var(--demi))`);
+  });
+  return `linear-gradient(90deg,${parts.join(",")})`;
+}
+/* Jauge en U du minuteur : piste haute (trop court → plateau A), piste basse parcourue en sens inverse (plateau A → trop long). */
+function methodTimerPlacement(node,seconds){
+  const limits=node.seuilsSecondes,target=Number(node.dureeCibleSecondes),[first,second]=methodGaugeStops(node);
+  const last=Number(node.courbe?.points?.at(-1)?.secondes)||limits.naTropLong*1.5;
+  let x;
+  if(seconds<limits.naTropCourt)x=methodLerp(seconds,0,limits.naTropCourt,0,first);
+  else if(seconds<limits.entreeA)x=methodLerp(seconds,limits.naTropCourt,limits.entreeA,first,second);
+  else if(seconds<=target)x=methodLerp(seconds,limits.entreeA,target,second,100);
+  else if(seconds<=limits.sortieA)x=methodLerp(seconds,target,limits.sortieA,100,second);
+  else if(seconds<limits.naTropLong)x=methodLerp(seconds,limits.sortieA,limits.naTropLong,second,first);
+  else x=methodLerp(seconds,limits.naTropLong,Math.max(last,limits.naTropLong+1),first,0);
+  return{x,side:seconds>target?"bas":"haut"};
+}
+function methodGaugeMap(node,seconds){
+  if(node.methode!=="minuteur")return{side:"haut",toX:percent=>percent,toPercent:x=>x};
+  const limits=node.seuilsSecondes,[first,second]=methodGaugeStops(node),side=seconds>Number(node.dureeCibleSecondes)?"bas":"haut";
+  const edge=timerPercentage(node,side==="bas"?limits.naTropLong:limits.naTropCourt)??33;
+  return{side,
+    toX:percent=>percent>=100?100:percent<=edge?methodLerp(percent,0,edge,0,first):methodLerp(percent,edge,100,first,second),
+    toPercent:x=>x>=second?100:x<=first?methodLerp(x,0,first,0,edge):methodLerp(x,first,second,edge,100)};
+}
+function updateMethodGauge(section,node,dragX=null){
+  const calculation=methodCalculation(node),retained=getCategoryPercentage(node),manual=Object.hasOwn(manualCategoryPercent,node.id);
+  const seconds=node.methode==="minuteur"?timerSeconds(methodState(node)):0,map=methodGaugeMap(node,seconds);
+  const gauge=section.querySelector(".jauge"),main=gauge.querySelector(".curseur--principal"),ghost=gauge.querySelector(".curseur--fantome"),slider=gauge.querySelector(".method-slider");
+  const place=(element,x,side)=>{element.style.setProperty("--valeur",`${Math.min(100,Math.max(0,x))}%`);element.dataset.side=side};
+  const auto=calculation.percentage===null?null:node.methode==="minuteur"?methodTimerPlacement(node,seconds):{x:calculation.percentage,side:"haut"};
+  if(manual&&retained!==null){place(main,dragX??map.toX(retained),map.side);main.classList.add("curseur--plein");main.classList.remove("curseur--vide")}
+  else{place(main,auto?auto.x:0,auto?auto.side:"haut");main.classList.remove("curseur--plein");main.classList.toggle("curseur--vide",!auto)}
+  ghost.hidden=!(manual&&auto);if(!ghost.hidden)place(ghost,auto.x,auto.side);
+  slider.classList.toggle("manual",manual);
+  if(dragX===null&&!(manual&&document.activeElement===slider))slider.value=String(manual&&retained!==null?map.toX(retained):(auto?auto.x:0));
+  const autoText=calculation.percentage===null?"indisponible":methodPercentText(calculation.percentage);
+  const valueText=retained===null?"Aucun résultat":`${methodPercentText(retained)}${manual?`, choix manuel, calcul automatique ${autoText}`:", calcul automatique"}`;
+  slider.setAttribute("aria-valuetext",valueText);gauge.title=retained===null?"Aucun résultat":`${methodPercentText(retained)}${manual&&auto?` (calcul automatique : ${autoText})`:""}`;
+  const output=section.querySelector(".method-percentage");if(output)output.textContent=retained===null?"—":methodPercentText(retained);
   const selected=Object.hasOwn(manualChoices,node.id)?manualChoices[node.id]:calculation.level;
+  for(const button of section.querySelectorAll(".boutons [data-method-level]")){
+    const id=button.dataset.methodLevel;
+    button.classList.toggle("bouton--anneau",id===calculation.level);
+    button.classList.toggle("bouton--actif",node.methode!=="distribution"&&Object.hasOwn(manualChoices,node.id)&&manualChoices[node.id]===id);
+    button.setAttribute("aria-pressed",String(selected===id));
+  }
+  return selected;
+}
+function renderMethodCategory(node,categoryOnly=false){
+  const state=methodStates[node.id]||(methodStates[node.id]={}),isBonus=node.methode==="bonus",calculation=isBonus?null:methodCalculation(node);
+  const evaluated=(state.evaluee??node.evaluee)!==false,levelCount=isBonus?0:node.niveaux.length;
+  const section=methodEl("section",`method-category method-${node.methode}${levelCount===4?" method-n4":""}${evaluated?"":" method-hors-note"}`);section.dataset.methodNode=node.id;
+  const card=methodEl("div",`carte carte--${METHOD_CARD[node.methode]}`);section.appendChild(card);
+  const title=methodEl("h2","titre"),titleText=methodEl("span","titre-texte",node.titre);titleText.title=node.titre;title.append(methodIcon(METHOD_ICONS[node.methode]),titleText);card.appendChild(title);
+  /* colonne de gauche : coefficient (bouton évaluée / non évaluée) et aide */
+  const optional=node.priseEnCompte==="facultative",kind=isBonus?"Bonus":optional?"Catégorie facultative":"Coefficient de catégorie";
+  const noteTitle=`${kind} : ${evaluated?"évaluée":"non évaluée"} (cliquer pour ${evaluated?"l’exclure de":"l’inclure dans"} la note)`;
+  const note=methodBt(`note${isBonus?" note--plus":""}${optional&&!isBonus?" note--pointille":""}${evaluated?"":" note--exclue"}`,()=>{state.evaluee=!evaluated;render()},noteTitle,isBonus?"+":optional?`(${getCategoryCoefficient(node)})`:String(getCategoryCoefficient(node)));
+  note.setAttribute("aria-pressed",String(evaluated));
+  const help=methodBt("aide",()=>window.alert(node.informationsFonctionnement||"Aucune information disponible."),`Informations sur ${node.titre}`);help.appendChild(methodIcon("info"));
+  const left=methodEl("div","gauche");left.append(note,help);card.appendChild(left);
+  if(isBonus){
+    const stops=methodGaugeStops(node),gauge=methodEl("div","jauge jauge--bleu");gauge.style.setProperty("--degrade",methodGradient(methodGaugeColors(node),stops));
+    const slider=methodEl("input","method-slider");slider.type="range";slider.min="0";slider.max=String(node.pointsMaximum);slider.step=String(node.pas||.25);slider.value=String(state.bonus||0);slider.setAttribute("aria-label",`Points bonus pour ${node.titre}`);
+    const cursor=methodEl("i","curseur curseur--plein"),output=methodEl("output","valeur-texte");
+    const place=()=>{const value=Number(state.bonus)||0;cursor.style.setProperty("--valeur",`${Math.min(100,100*value/Number(node.pointsMaximum))}%`);output.textContent=`+${value.toLocaleString("fr-FR")}`;slider.setAttribute("aria-valuetext",output.textContent)};
+    slider.addEventListener("input",()=>{state.bonus=Number(slider.value);place();updateFinalScore()});
+    gauge.append(slider,cursor,output);place();card.appendChild(gauge);
+    const select=methodEl("select","method-comment-select");select.setAttribute("aria-label",`Commentaire de bonus pour ${node.titre}`);
+    const empty=methodEl("option","","Aucun commentaire");empty.value="";select.appendChild(empty);
+    for(const item of node.commentairesValorisation||[]){const option=methodEl("option","",item.texte);option.value=item.id;select.appendChild(option)}
+    select.value=state.bonusComment||"";select.addEventListener("change",()=>{state.bonusComment=select.value});card.appendChild(methodChamp(select));
+    return section;
+  }
+  /* rangée de boutons : avertissement, niveaux, dépassé */
+  const selected=Object.hasOwn(manualChoices,node.id)?manualChoices[node.id]:calculation.level,row=methodEl("div","boutons");
+  const warning=Boolean(categoryEvaluations[node.id]?.warning),alert=methodBt(`alerte${warning?" alerte--erreur":""}`,()=>toggleCategoryEvaluation(node.id,"warning"),"Avertissement","!");alert.setAttribute("aria-pressed",String(warning));row.appendChild(alert);
   for(const id of node.niveaux){
-    const label=node.methode==="distribution"?`${state.decrement?"−":"+"} ${id}`:id;
-    const button=methodButton(label,()=>{
-      if(node.methode==="distribution"){state.counts=state.counts||{};state.counts[id]=Math.max(0,(Number(state.counts[id])||0)+(state.decrement?-1:1))}
+    const distribution=node.methode==="distribution";
+    const action=()=>{
+      if(distribution){state.counts=state.counts||{};state.counts[id]=Math.max(0,(Number(state.counts[id])||0)+(state.decrement?-1:1))}
       else if(manualChoices[node.id]===id)delete manualChoices[node.id];else manualChoices[node.id]=id;
       render();
-    },`${node.titre} : ${id}`);button.classList.add("method-level");button.dataset.methodLevel=id;button.style.setProperty("--level-color",levels[id]?.couleur||"#aaa");
-    button.classList.toggle("suggested",calculation.level===id);button.classList.toggle("manual",Object.hasOwn(manualChoices,node.id)&&selected===id);button.setAttribute("aria-pressed",String(selected===id));
-    if(node.methode==="distribution"){button.classList.add("distribution-level");const count=document.createElement("small");count.textContent=String(state.counts?.[id]||0);button.appendChild(count)}levelRow.appendChild(button);
+    };
+    const button=methodBt(`bouton${distribution?` bouton--violet bouton--plus${state.decrement?" bouton--moins":""}`:""}`,action,`${node.titre} : ${id}`,id);
+    button.dataset.methodLevel=id;button.style.setProperty("--couleur-anneau",METHOD_RING[id]||"var(--gris)");button.setAttribute("aria-pressed",String(selected===id));row.appendChild(button);
   }
-  main.appendChild(levelRow);
-  const track=document.createElement("div");track.className="method-slider-wrap";
-  const slider=document.createElement("input");slider.type="range";slider.min="0";slider.max="100";slider.step="1";slider.className="method-slider";slider.value=String(getCategoryPercentage(node)??0);slider.setAttribute("aria-label",`Pourcentage retenu pour ${node.titre}`);
+  if(node.depasseAutorise!==false){
+    const exceeded=Boolean(categoryEvaluations[node.id]?.exceeded),suggested=node.methode==="compteur"&&(Number(state.count)||0)>=Number(node.seuilsOccurrences.D)&&!exceeded;
+    const circle=methodBt(`rond${exceeded?" rond--bleu":""}${suggested?" rond--anneau":""}`,()=>toggleCategoryEvaluation(node.id,"exceeded"),"Dépassé","D");circle.setAttribute("aria-pressed",String(exceeded));row.appendChild(circle);
+  }
+  card.appendChild(row);
+  /* jauge : segments aux seuils, curseur (calculé, manuel ou fantôme) et curseur natif invisible pour la saisie */
+  const stops=methodGaugeStops(node),timerWarning=node.methode==="minuteur"&&categoryEvaluations[node.id]?.warning;
+  const gauge=methodEl("div",`jauge${node.methode==="minuteur"?" jauge--u":""}${node.methode==="compteur"||timerWarning?" jauge--lecture":""}`);gauge.style.setProperty("--degrade",methodGradient(methodGaugeColors(node),stops));
+  if(node.methode==="minuteur")gauge.append(methodEl("i","piste haut"),methodEl("i","piste bas"),methodEl("i","retour-u"));
+  const slider=methodEl("input","method-slider");slider.type="range";slider.min="0";slider.max="100";slider.step="1";slider.setAttribute("aria-label",`Pourcentage retenu pour ${node.titre}`);
   slider.title="Déplacer pour ajuster ; cliquer sur le curseur déplacé ou appuyer sur Échap pour revenir au calcul";
-  const firstThreshold=node.seuilsPourcentage?.[node.niveaux[1]]??25,lastThreshold=node.seuilsPourcentage?.A??75;
-  slider.style.setProperty("--method-na-stop",`${firstThreshold}%`);slider.style.setProperty("--method-a-stop",`${lastThreshold}%`);
-  const auto=calculation.percentage,manual=Object.hasOwn(manualCategoryPercent,node.id);slider.classList.toggle("manual",manual);
-  const initialValue=getCategoryPercentage(node);slider.setAttribute("aria-valuetext",initialValue===null?"Aucun résultat":`${initialValue.toFixed(2)} %, ${manual?`choix manuel, calcul automatique ${auto===null?"indisponible":`${auto.toFixed(2)} %`}`:"calcul automatique"}`);
-  if(node.methode==="compteur"){slider.disabled=true;slider.classList.add("calculated-only")}
-  else if(node.methode==="minuteur"&&categoryEvaluations[node.id]?.warning){slider.disabled=true;slider.title="L’absence de prise de parole est retenue à 0 %."}
+  const ghost=methodEl("i","curseur curseur--fantome");ghost.hidden=true;ghost.setAttribute("aria-hidden","true");
+  const main=methodEl("i","curseur curseur--principal");main.setAttribute("aria-hidden","true");
+  gauge.append(slider,ghost,main);
+  if(node.methode==="distribution"){
+    const widths=[stops[0],...stops.slice(1).map((value,index)=>value-stops[index]),100-stops.at(-1)],counts=methodEl("div","repartition");
+    counts.style.gridTemplateColumns=widths.map(width=>`${width}fr`).join(" ");
+    node.niveaux.forEach(id=>counts.appendChild(methodEl("span",METHOD_COUNT_COLOR[id],String(state.counts?.[id]||0))));gauge.appendChild(counts);
+  }
+  if(node.methode==="compteur"){slider.disabled=true;slider.title="Pourcentage calculé à partir du nombre d’occurrences"}
+  else if(timerWarning){slider.disabled=true;slider.title="L’absence de prise de parole est retenue à 0 %."}
   else{
-    slider.addEventListener("input",()=>{manualCategoryPercent[node.id]=Number(slider.value);slider.classList.add("manual");refreshMethodDisplay(node);updateFinalScore()});
-    let start=null;slider.addEventListener("pointerdown",event=>{const bounds=slider.getBoundingClientRect(),thumb=bounds.left+(bounds.width-16)*Number(slider.value)/100+8;start={x:event.clientX,onThumb:Math.abs(event.clientX-thumb)<12,manual:Object.hasOwn(manualCategoryPercent,node.id)}});
+    const map=()=>methodGaugeMap(node,node.methode==="minuteur"?timerSeconds(methodState(node)):0);
+    slider.addEventListener("input",()=>{const x=Number(slider.value);manualCategoryPercent[node.id]=map().toPercent(x);refreshMethodDisplay(node,x);updateFinalScore()});
+    let start=null;
+    slider.addEventListener("pointerdown",event=>{const bounds=main.getBoundingClientRect();start={x:event.clientX,onThumb:Math.abs(event.clientX-(bounds.left+bounds.width/2))<bounds.width/2+4,manual:Object.hasOwn(manualCategoryPercent,node.id)}});
     slider.addEventListener("pointerup",event=>{if(start?.manual&&start.onThumb&&Math.abs(event.clientX-start.x)<4){delete manualCategoryPercent[node.id];render()}start=null});
     slider.addEventListener("keydown",event=>{if(event.key==="Escape"&&Object.hasOwn(manualCategoryPercent,node.id)){delete manualCategoryPercent[node.id];render()}});
   }
-  track.appendChild(slider);if(manual&&auto!==null){const ghost=document.createElement("span");ghost.className="method-ghost";ghost.style.left=`${auto}%`;ghost.title=`Calcul automatique : ${auto.toFixed(2)} %`;ghost.setAttribute("aria-hidden","true");track.appendChild(ghost)}main.appendChild(track);
-  const output=document.createElement("output");output.className="method-percentage";const retained=getCategoryPercentage(node);output.textContent=retained===null?"—":`${retained.toFixed(2).replace(".",",")} %`;main.appendChild(output);
-  const comment=methodCommentSelect(node,node,selected);if(comment){comment.classList.add("method-category-comment");main.appendChild(comment)}section.dataset.commentLevel=selected||"";controls.appendChild(main);
-  const actions=document.createElement("div");actions.className="method-specific";
-  if(node.methode==="distribution")actions.appendChild(methodButton(state.decrement?"−":"+",()=>{state.decrement=!state.decrement;render()},state.decrement?"Passer à l’incrémentation":"Passer à la décrémentation"));
+  const percentage=methodEl("output","method-percentage vh");gauge.appendChild(percentage);card.appendChild(gauge);
+  /* bloc de droite propre à chaque méthode */
+  const details=renderMethodDetails(node,calculation,categoryOnly);
+  if(node.methode==="capacites"||node.methode==="bareme"){
+    const toggle=methodBt("capacite",()=>{details.open=!details.open;toggle.setAttribute("aria-expanded",String(details.open))},`Afficher ou masquer ${node.methode==="capacites"?"les capacités":"les critères"} de ${node.titre}`);
+    toggle.setAttribute("aria-expanded",String(details.open));
+    toggle.append(methodEl("div","ratio",`${calculation.count}/${calculation.total}`),methodEl("div","libelle",node.methode==="capacites"?"capacités":"critères"),methodEl("i","fleche-bas"));card.appendChild(toggle);
+  }
+  if(node.methode==="distribution"){
+    const toggle=methodBt(`bascule${state.decrement?" moins":""}`,()=>{state.decrement=!state.decrement;render()},state.decrement?"Passer à l’incrémentation":"Passer à la décrémentation");
+    toggle.setAttribute("aria-pressed",String(Boolean(state.decrement)));toggle.append(methodEl("i","pastille"),methodEl("b","moitie plus","+"),methodEl("b","moitie tiret","−"));card.appendChild(toggle);
+  }
   if(node.methode==="compteur"){
-    actions.appendChild(methodButton(`+ ${Number(state.count)||0}`,()=>{state.count=(Number(state.count)||0)+1;render()},`Ajouter une occurrence à ${node.titre}`));
-    actions.appendChild(methodButton("−1",()=>{const before=Number(state.count)||0;state.count=Math.max(0,before-1);if(state.count<before&&state.count<Number(node.seuilsOccurrences.D)&&categoryEvaluations[node.id]?.exceeded){categoryEvaluations[node.id].exceeded=false;categoryEvaluations[node.id].activeMotifKind=""}render()},`Retirer une occurrence de ${node.titre}`));
+    const right=methodEl("div","droite");
+    right.appendChild(methodBt("compteur",()=>{state.count=(Number(state.count)||0)+1;render()},`Ajouter une occurrence à ${node.titre}`,String(Number(state.count)||0)));
+    right.appendChild(methodBt("delta",()=>{const before=Number(state.count)||0;state.count=Math.max(0,before-1);if(state.count<before&&state.count<Number(node.seuilsOccurrences.D)&&categoryEvaluations[node.id]?.exceeded){categoryEvaluations[node.id].exceeded=false;categoryEvaluations[node.id].activeMotifKind=""}render()},`Retirer une occurrence de ${node.titre}`,"−1"));
+    card.appendChild(right);
   }
   if(node.methode==="minuteur"){
-    const timer=methodIconButton(state.startedAt?"timer_pause":"timer_play",()=>{if(state.startedAt){state.elapsedMs=timerSeconds(state)*1000;delete state.startedAt}else{if(categoryEvaluations[node.id]?.warning)delete categoryEvaluations[node.id];state.recorded=true;state.startedAt=Date.now()}render()},state.startedAt?"Mettre le minuteur en pause":"Démarrer le minuteur");timer.classList.add("method-timer");const duration=document.createElement("span");duration.className="method-duration";duration.textContent=formatDuration(timerSeconds(state));timer.appendChild(duration);actions.appendChild(timer);
-    const target=document.createElement("span");target.className="method-timer-target";target.textContent=`Cible ${formatDuration(node.dureeCibleSecondes)}`;actions.appendChild(target);
-    actions.appendChild(methodIconButton("restart_alt",()=>{if(!window.confirm("Réinitialiser la durée enregistrée ?"))return;delete state.startedAt;state.elapsedMs=0;state.recorded=false;delete categoryEvaluations[node.id];render()},"Réinitialiser le minuteur"));
+    const running=Boolean(state.startedAt),pill=methodBt("pilule",()=>{if(state.startedAt){state.elapsedMs=timerSeconds(state)*1000;delete state.startedAt}else{if(categoryEvaluations[node.id]?.warning)delete categoryEvaluations[node.id];state.recorded=true;state.startedAt=Date.now()}render()},running?"Mettre le minuteur en pause":"Démarrer le minuteur");
+    pill.append(methodIcon(running?"timer_pause":"timer_play"),methodEl("span","method-duration",formatDuration(timerSeconds(state))));card.appendChild(pill);
+    const back=methodEl("div","retour"),target=methodEl("div","duree",formatTarget(node.dureeCibleSecondes));target.title=`Durée cible : ${formatDuration(node.dureeCibleSecondes)}`;
+    const reset=methodBt("raz",()=>{if(!window.confirm("Réinitialiser la durée enregistrée ?"))return;delete state.startedAt;state.elapsedMs=0;state.recorded=false;delete categoryEvaluations[node.id];render()},"Réinitialiser le minuteur","0");reset.appendChild(methodIcon("restart_alt"));
+    back.append(target,reset);card.appendChild(back);
   }
-  controls.appendChild(actions);section.appendChild(controls);
-  if(node.methode==="minuteur"&&categoryEvaluations[node.id]?.warning){const warning=document.createElement("p");warning.className="method-warning-comment";warning.textContent=node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.label||"";section.appendChild(warning)}
+  /* sous la carte : commentaire de niveau, motif d'avertissement / de dépassement, détail des capacités ou critères */
+  const slot=methodEl("div","method-comment-slot"),comment=methodCommentSelect(node,node,selected);if(comment)slot.appendChild(methodChamp(comment));
+  section.dataset.commentLevel=selected||"";section.appendChild(slot);
+  if(timerWarning){const text=methodEl("p","method-warning-comment",node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.label||"");section.appendChild(text)}
   else{const extra=renderCategoryEvaluationControls(node);if(extra)section.appendChild(extra)}
-  const details=renderMethodDetails(node,calculation,categoryOnly);if(details)section.appendChild(details);return section;
+  if(details)section.appendChild(details);
+  updateMethodGauge(section,node);
+  return section;
 }
-function refreshMethodDisplay(node){
-  const calculation=methodCalculation(node),retained=getCategoryPercentage(node),manual=Object.hasOwn(manualCategoryPercent,node.id);
+function refreshMethodDisplay(node,dragX=null){
+  if(node.methode==="bonus")return;
   for(const section of document.querySelectorAll("[data-method-node]"))if(section.dataset.methodNode===node.id){
     const duration=section.querySelector(".method-duration");if(duration)duration.textContent=formatDuration(timerSeconds(methodState(node)));
-    const output=section.querySelector(".method-percentage");if(output)output.textContent=retained===null?"—":`${retained.toFixed(2).replace(".",",")} %`;
-    const slider=section.querySelector(".method-slider");if(slider){if(!manual)slider.value=String(retained??0);slider.setAttribute("aria-valuetext",retained===null?"Aucun résultat":`${retained.toFixed(2)} %, ${manual?`choix manuel, calcul automatique ${calculation.percentage===null?"indisponible":`${calculation.percentage.toFixed(2)} %`}`:"calcul automatique"}`)}
-    let ghost=section.querySelector(".method-ghost");
-    if(manual&&calculation.percentage!==null){if(!ghost){ghost=document.createElement("span");ghost.className="method-ghost";ghost.setAttribute("aria-hidden","true");section.querySelector(".method-slider-wrap").appendChild(ghost)}ghost.style.left=`${calculation.percentage}%`;ghost.title=`Calcul automatique : ${calculation.percentage.toFixed(2)} %`}
-    else ghost?.remove();
-    const selected=Object.hasOwn(manualChoices,node.id)?manualChoices[node.id]:calculation.level;
-    for(const button of section.querySelectorAll(".method-main > .method-levels > [data-method-level]")){button.classList.toggle("suggested",button.dataset.methodLevel===calculation.level);button.setAttribute("aria-pressed",String(button.dataset.methodLevel===selected))}
-    if(section.dataset.commentLevel!==(selected||"")){const main=section.querySelector(".method-main"),previous=main.querySelector(".method-category-comment"),comment=methodCommentSelect(node,node,selected);previous?.remove();if(comment){comment.classList.add("method-category-comment");main.appendChild(comment)}section.dataset.commentLevel=selected||""}
+    const selected=updateMethodGauge(section,node,dragX);
+    if(section.dataset.commentLevel!==(selected||"")){
+      const slot=section.querySelector(".method-comment-slot"),comment=methodCommentSelect(node,node,selected);
+      slot.replaceChildren();if(comment)slot.appendChild(methodChamp(comment));section.dataset.commentLevel=selected||"";
+    }
   }
 }
 function renderCategory(category,node=null,categoryOnly=false){
