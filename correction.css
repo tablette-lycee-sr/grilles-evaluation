@@ -297,49 +297,48 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 }
 @media print{body .app{padding:0}}
 
+:root{--methode-u:clamp(1px,calc((100vw - 44px) / 328.5),1.5px);--carte-w:calc(328.5 * var(--methode-u))}
 /* =====================================================================
-   Catégories par méthode — mise en page des schémas d'évaluation
-   --u = unité de base : changer sa valeur agrandit ou réduit toute la carte proportionnellement.
+   CatÃ©gories par mÃ©thode â€” mise en page des schÃ©mas d'Ã©valuation
+   --u = unitÃ© de base : changer sa valeur agrandit ou rÃ©duit toute la carte proportionnellement.
    ===================================================================== */
 .method-category{
-  --u:1.5px;
+  --u:var(--methode-u,1.5px);
   --fond:#2d3034;--bouton:#44474c;--gris:#858585;--noir:#000;--blanc:#fff;
   --violet:#a44cbd;--bleu:#4ba0d6;--vert:#17a13f;--rouge:#ff3131;--orange:#ffbd59;--jaune:#ffd737;--fleche:#1f1f1f;
   --jauge-rouge:#a14732;--jauge-orange:#b9702c;--jauge-jaune:#c3a91e;--jauge-vert:#099332;--jauge-neutre:#464647;--jauge-bleu-fonce:#095994;
-  --carte-l:calc(278 * var(--u));--marge:calc(3 * var(--u));--liseré:calc(1 * var(--u));--rayon:calc(10 * var(--u));--ecart:calc(3 * var(--u));
+  --carte-l:calc(328.5 * var(--u));--centre:calc(212 * var(--u));--droite:calc(65.5 * var(--u));--marge:calc(3 * var(--u));--liserÃ©:calc(1 * var(--u));--rayon:calc(10 * var(--u));--ecart:calc(3 * var(--u));
   --col:calc(37 * var(--u));--bouton-h:calc(22 * var(--u));--anneau-h:calc(24 * var(--u));--anneau:calc(3 * var(--u));
   --jauge-l:calc(117 * var(--u));--jauge-h:calc(7 * var(--u));--curseur:calc(13 * var(--u));--titre-h:calc(24 * var(--u));
   --t-titre:calc(15 * var(--u));--t-bouton:calc(8 * var(--u));--t-note:calc(10.5 * var(--u));--t-valeur:calc(12 * var(--u));--t-grand:calc(14.5 * var(--u));
-  margin:14px 0;color:var(--blanc);
+  width:var(--carte-l);max-width:100%;margin:0 0 14px;color:var(--blanc);
 }
-.method-category.method-n4{--carte-l:calc(319 * var(--u));--jauge-l:calc(157 * var(--u))}
-@media(max-width:560px){.method-category{--u:1.05px}}
+.method-category.method-n4{--jauge-l:calc(157 * var(--u))}
 .method-category *,.method-category *::before,.method-category *::after{box-sizing:border-box}
 .method-category .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* ---- Carte : coque commune + une grille par méthode ---- */
+/* ---- Carte : coque commune + une grille par mÃ©thode ---- */
 .method-category .carte{
-  width:var(--carte-l);max-width:100%;padding:var(--marge);display:grid;column-gap:var(--ecart);
-  border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--fond);color:var(--blanc);
+  width:100%;padding:var(--marge);display:grid;column-gap:var(--ecart);
+  grid-template-columns:var(--col) var(--centre) var(--droite);
+  grid-template-rows:var(--titre-h) calc(28 * var(--u)) calc(26 * var(--u)) auto auto;
+  grid-template-areas:"titre titre titre" "gauche boutons droite" "gauche jauge droite" "champ champ champ" "motif motif motif";
+  border:var(--liserÃ©) solid var(--noir);border-radius:var(--rayon);background:var(--fond);color:var(--blanc);
 }
+.method-category .carte--m{grid-template-rows:var(--titre-h) calc(29 * var(--u)) calc(29 * var(--u)) auto auto;grid-template-areas:"titre titre titre" "gauche boutons droite" "gauche jauge retour" "champ champ champ" "motif motif motif"}
+.method-category .carte--b{grid-template-rows:var(--titre-h) calc(28 * var(--u)) calc(15 * var(--u)) auto auto;grid-template-areas:"titre titre titre" "gauche jauge ." "gauche . ." "champ champ champ" "motif motif motif"}
 .method-category.method-hors-note .carte{border-color:var(--gris);border-style:dashed}
-.method-category .carte--a{grid-template-columns:var(--col) 1fr var(--col);grid-template-rows:calc(28 * var(--u)) calc(22 * var(--u)) calc(20 * var(--u));grid-template-areas:"titre titre droite" "gauche boutons droite" "gauche jauge droite"}
-.method-category .carte--d{grid-template-columns:var(--col) 1fr var(--col);grid-template-rows:var(--titre-h) calc(36 * var(--u)) calc(26 * var(--u));grid-template-areas:"titre titre titre" "gauche boutons droite" "gauche jauge droite"}
-.method-category .carte--c{grid-template-columns:var(--col) 1fr var(--col);grid-template-rows:calc(28 * var(--u)) calc(22 * var(--u)) calc(20 * var(--u)) calc(6 * var(--u));grid-template-areas:"titre titre droite" "gauche boutons droite" "gauche jauge droite" "gauche . droite"}
-.method-category .carte--m{grid-template-columns:var(--col) 1fr calc(65.5 * var(--u));grid-template-rows:var(--titre-h) calc(29 * var(--u)) calc(29 * var(--u));grid-template-areas:"titre titre titre" "gauche boutons droite" "gauche jauge droite-bas";--marge-jauge:0px}
-.method-category .carte--b{grid-template-columns:var(--col) 1fr;column-gap:calc(7 * var(--u));grid-template-rows:var(--titre-h) calc(19 * var(--u)) calc(24 * var(--u));grid-template-areas:"titre titre" "gauche jauge" "gauche champ"}
-.method-category.method-minuteur.method-n4 .carte--m{--marge-jauge:0px}
 
-/* ---- Remise à plat des boutons (la classe .bt précède toutes les variantes) ---- */
+/* ---- Remise Ã  plat des boutons (la classe .bt prÃ©cÃ¨de toutes les variantes) ---- */
 .method-category .bt{appearance:none;-webkit-appearance:none;margin:0;padding:0;border:0;border-radius:0;background:none;color:inherit;font:inherit;line-height:1.2;text-align:center;cursor:pointer;touch-action:manipulation}
 
-/* ---- Titre + icône ---- */
+/* ---- Titre + icÃ´ne ---- */
 .method-category .titre{grid-area:titre;display:flex;align-items:center;gap:calc(6 * var(--u));min-width:0;margin:0;font-size:var(--t-titre);font-weight:400;line-height:1.2}
 .method-category .titre .menu-icon{width:calc(24 * var(--u));height:calc(24 * var(--u));color:var(--gris)}
 .method-category .titre-texte{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ---- Colonne de gauche : coefficient + aide ---- */
-.method-category .gauche{grid-area:gauche;align-self:end;height:calc(43 * var(--u));display:flex;flex-direction:column;gap:calc(2 * var(--u))}
+.method-category .gauche{grid-area:gauche;align-self:center;height:calc(43 * var(--u));display:flex;flex-direction:column;gap:calc(2 * var(--u))}
 .method-category .note{height:calc(17 * var(--u));display:grid;place-items:center;border:calc(1 * var(--u)) solid var(--gris);border-radius:calc(9 * var(--u));font-size:var(--t-note);font-variant-numeric:tabular-nums}
 .method-category .note--pointille{border-style:dashed}
 .method-category .note--plus{font-size:calc(13 * var(--u))}
@@ -347,8 +346,8 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .method-category .aide{flex:1;display:grid;place-items:center;border-radius:var(--rayon);background:var(--gris);color:var(--fond)}
 .method-category .aide .menu-icon{width:calc(20 * var(--u));height:calc(20 * var(--u))}
 
-/* ---- Rangée de boutons ---- */
-.method-category .boutons{grid-area:boutons;justify-self:end;align-self:center;display:flex;align-items:center;gap:var(--ecart)}
+/* ---- RangÃ©e de boutons ---- */
+.method-category .boutons{grid-area:boutons;justify-self:center;align-self:center;display:flex;align-items:center;gap:var(--ecart)}
 .method-category .alerte{position:relative;width:calc(23 * var(--u));height:calc(20 * var(--u));padding-bottom:calc(3 * var(--u));display:flex;align-items:flex-end;justify-content:center;background:var(--bouton);clip-path:polygon(50% 0,100% 100%,0 100%);font-size:calc(9 * var(--u));font-weight:700;line-height:1}
 .method-category .alerte--erreur{background:var(--rouge);color:var(--noir)}
 .method-category .alerte--erreur::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--blanc);clip-path:polygon(50% 30%,77% 85%,23% 85%)}
@@ -358,27 +357,27 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .method-category .bouton--violet{background:var(--violet)}
 .method-category .bouton--anneau{height:var(--anneau-h);border:var(--anneau) solid var(--couleur-anneau,var(--vert))}
 .method-category .bouton--plus::before{content:"+";position:absolute;left:calc(4 * var(--u));top:calc(-3 * var(--u));font-size:calc(16 * var(--u));line-height:1}
-.method-category .bouton--moins::before{content:"−"}
+.method-category .bouton--moins::before{content:"âˆ’"}
 .method-category .bouton--anneau.bouton--plus::before{left:calc(2 * var(--u));top:calc(-5 * var(--u))}
 .method-category .rond{width:calc(24 * var(--u));height:var(--bouton-h);display:grid;place-items:center;border-radius:50%;background:var(--bouton);font-size:var(--t-bouton);color:var(--blanc)}
+.method-category .rond--vide{visibility:hidden}
 .method-category .rond--bleu{background:var(--bleu)}
 .method-category .rond--anneau{width:calc(25 * var(--u));height:calc(23 * var(--u));border:var(--anneau) solid var(--bleu)}
 
-/* ---- Jauge : segments, séparateurs noirs, curseurs ---- */
+/* ---- Jauge : segments, sÃ©parateurs noirs, curseurs ---- */
 .method-category .jauge{
   --demi:calc(.5 * var(--u));
   --degrade:linear-gradient(90deg,var(--jauge-rouge) 0 calc(30% - var(--demi)),#000 0 calc(30% + var(--demi)),var(--jauge-jaune) 0 calc(66% - var(--demi)),#000 0 calc(66% + var(--demi)),var(--jauge-vert) 0);
-  grid-area:jauge;justify-self:end;align-self:center;margin-right:var(--marge-jauge,calc(27 * var(--u)));
+  grid-area:jauge;justify-self:center;align-self:center;margin:0;
   position:relative;width:var(--jauge-l);height:var(--jauge-h);border-radius:calc(4 * var(--u));background:var(--degrade);
 }
-.method-category .jauge--bleu{margin-right:0}
 .method-category .curseur{position:absolute;top:50%;left:var(--valeur,0%);width:var(--curseur);height:var(--curseur);transform:translate(-50%,-50%);border:calc(2 * var(--u)) solid var(--blanc);border-radius:50%;background:var(--bouton);pointer-events:none}
 .method-category .curseur[hidden]{display:none}
 .method-category .curseur--plein{background:var(--blanc)}
 .method-category .curseur--fantome{border-color:rgba(255,255,255,.45);background:rgba(68,71,76,.55)}
 .method-category .curseur--vide{opacity:.4}
 .method-category .jauge:has(.method-slider:focus-visible){outline:2px solid var(--blanc);outline-offset:calc(5 * var(--u))}
-/* curseur natif : invisible, il ne sert qu'à la saisie (souris, toucher, clavier) */
+/* curseur natif : invisible, il ne sert qu'Ã  la saisie (souris, toucher, clavier) */
 .method-category .method-slider{position:absolute;z-index:3;left:0;top:calc(-8 * var(--u));width:100%;height:calc(100% + 16 * var(--u));margin:0;padding:0;appearance:none;-webkit-appearance:none;background:transparent;outline:0;touch-action:pan-y;cursor:pointer}
 .method-category .method-slider::-webkit-slider-runnable-track{height:100%;background:transparent}
 .method-category .method-slider::-moz-range-track{height:100%;background:transparent}
@@ -391,18 +390,18 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .method-category .repartition .orange{color:var(--orange)}
 .method-category .repartition .jaune{color:var(--jaune)}
 .method-category .repartition .vert{color:var(--vert)}
-.method-category .carte--d .jauge{align-self:start}
+.method-category .carte--d .jauge{align-self:start;margin-top:calc(4 * var(--u))}
 
-/* ---- Carte violette « 2/3 capacités » (ouvre le détail) ---- */
-.method-category .capacite{grid-area:droite;align-self:end;height:calc(52 * var(--u));padding:calc(4 * var(--u)) 0 calc(3 * var(--u));display:flex;flex-direction:column;align-items:center;border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--violet);color:var(--noir)}
+/* ---- Carte violette Â« 2/3 capacitÃ©s Â» (ouvre le dÃ©tail) ---- */
+.method-category .capacite{grid-area:droite;align-self:center;justify-self:end;width:var(--col);height:calc(54 * var(--u));padding:calc(4 * var(--u)) 0 calc(3 * var(--u));display:flex;flex-direction:column;align-items:center;border:var(--liserÃ©) solid var(--noir);border-radius:var(--rayon);background:var(--violet);color:var(--noir)}
 .method-category .capacite .ratio{font-size:var(--t-grand);line-height:1.1;font-variant-numeric:tabular-nums}
 .method-category .capacite .libelle{margin-top:calc(1 * var(--u));font-size:calc(7 * var(--u));line-height:1.2}
 .method-category .fleche-bas{display:block;width:calc(17 * var(--u));height:calc(8 * var(--u));background:var(--fleche);clip-path:polygon(0 0,100% 0,50% 100%);transition:transform .15s}
 .method-category .capacite .fleche-bas{margin-top:auto}
 .method-category .capacite[aria-expanded="true"] .fleche-bas{transform:rotate(180deg)}
 
-/* ---- Distribution : bouton + / − (segmenté vertical) ---- */
-.method-category .bascule{--m:0;grid-area:droite;align-self:end;position:relative;overflow:hidden;width:var(--col);height:calc(36 * var(--u));border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--gris);font-weight:700;line-height:1;user-select:none}
+/* ---- Distribution : bouton + / âˆ’ (segmentÃ© vertical) ---- */
+.method-category .bascule{--m:0;grid-area:droite;align-self:center;justify-self:end;position:relative;overflow:hidden;width:var(--col);height:calc(54 * var(--u));border:var(--liserÃ©) solid var(--noir);border-radius:var(--rayon);background:var(--gris);font-weight:700;line-height:1;user-select:none}
 .method-category .bascule.moins{--m:1}
 .method-category .bascule .pastille{position:absolute;left:calc(3 * var(--u));right:calc(3 * var(--u));top:calc(3 * var(--u));height:calc(50% - 3 * var(--u));border-radius:calc(7 * var(--u));background:var(--bouton);transform:translateY(calc(var(--m) * 100%));transition:transform .18s}
 .method-category .bascule .moitie{position:absolute;left:calc(3 * var(--u));right:calc(3 * var(--u));height:calc(50% - 3 * var(--u));display:grid;place-items:center;font-size:calc(16 * var(--u));transition:color .18s}
@@ -411,14 +410,14 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .method-category .bascule.moins .plus{color:var(--noir)}
 .method-category .bascule.moins .tiret{color:var(--blanc)}
 
-/* ---- Compteur : carré « + 12 » et pastille « −1 » ---- */
-.method-category .droite{grid-area:droite;align-self:end;display:flex;flex-direction:column;gap:calc(2 * var(--u))}
-.method-category .compteur{position:relative;width:var(--col);height:calc(36 * var(--u));display:grid;place-items:center;border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--violet);color:var(--noir);font-size:calc(15 * var(--u));font-variant-numeric:tabular-nums}
+/* ---- Compteur : carrÃ© Â« + 12 Â» et pastille Â« âˆ’1 Â» ---- */
+.method-category .droite{grid-area:droite;align-self:center;justify-self:end;width:var(--col);display:flex;flex-direction:column;gap:calc(2 * var(--u))}
+.method-category .compteur{position:relative;width:var(--col);height:calc(34 * var(--u));display:grid;place-items:center;border:var(--liserÃ©) solid var(--noir);border-radius:var(--rayon);background:var(--violet);color:var(--noir);font-size:calc(15 * var(--u));font-variant-numeric:tabular-nums}
 .method-category .compteur::before{content:"+";position:absolute;left:calc(3 * var(--u));top:calc(-3 * var(--u));font-size:calc(15 * var(--u));line-height:1}
-.method-category .delta{height:calc(18 * var(--u));display:grid;place-items:center;border:var(--liseré) solid var(--noir);border-radius:calc(9 * var(--u));background:var(--gris);color:var(--noir);font-size:var(--t-grand)}
+.method-category .delta{height:calc(18 * var(--u));display:grid;place-items:center;border:var(--liserÃ©) solid var(--noir);border-radius:calc(9 * var(--u));background:var(--gris);color:var(--noir);font-size:var(--t-grand)}
 
-/* ---- Minuteur : pastille, jauge en U, durée cible, remise à zéro ---- */
-.method-category .pilule{grid-area:droite;align-self:center;height:calc(28 * var(--u));padding:0 calc(4 * var(--u));display:flex;align-items:center;justify-content:space-between;gap:calc(2 * var(--u));border:var(--liseré) solid var(--noir);border-radius:calc(14 * var(--u));background:var(--violet);color:var(--noir);font-size:var(--t-valeur);font-variant-numeric:tabular-nums}
+/* ---- Minuteur : pastille, jauge en U, durÃ©e cible, remise Ã  zÃ©ro ---- */
+.method-category .pilule{grid-area:droite;align-self:center;justify-self:end;width:var(--droite);height:calc(28 * var(--u));padding:0 calc(4 * var(--u));display:flex;align-items:center;justify-content:space-between;gap:calc(2 * var(--u));border:var(--liserÃ©) solid var(--noir);border-radius:calc(14 * var(--u));background:var(--violet);color:var(--noir);font-size:var(--t-valeur);font-variant-numeric:tabular-nums}
 .method-category .pilule .menu-icon{width:calc(24 * var(--u));height:calc(24 * var(--u));color:var(--fleche)}
 .method-category .jauge--u{height:calc(20 * var(--u));border-radius:0;background:none}
 .method-category .jauge--u .piste{position:absolute;left:0;width:calc(100% - 9 * var(--u));height:calc(6 * var(--u));border-radius:calc(3 * var(--u)) 0 0 calc(3 * var(--u));background:var(--degrade);pointer-events:none}
@@ -427,32 +426,71 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .method-category .jauge--u .retour-u{position:absolute;top:0;right:0;bottom:0;width:calc(10 * var(--u));border:calc(6 * var(--u)) solid var(--jauge-vert);border-left:0;border-radius:0 calc(10 * var(--u)) calc(10 * var(--u)) 0;pointer-events:none}
 .method-category .jauge--u .curseur{top:calc(3 * var(--u))}
 .method-category .jauge--u .curseur[data-side="bas"]{top:calc(17 * var(--u))}
-.method-category .retour{grid-area:droite-bas;padding-left:calc(6 * var(--u));display:flex;justify-content:space-between;min-width:0}
+.method-category .retour{grid-area:retour;padding-left:calc(6 * var(--u));display:flex;justify-content:space-between;min-width:0}
 .method-category .duree{align-self:center;color:var(--vert);font-size:var(--t-valeur);font-weight:700;white-space:nowrap}
-.method-category .raz{align-self:end;width:var(--col);height:calc(18.5 * var(--u));display:flex;align-items:center;justify-content:center;gap:calc(1 * var(--u));border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--gris);color:var(--noir);font-size:var(--t-note)}
+.method-category .raz{align-self:end;width:var(--col);height:calc(18.5 * var(--u));display:flex;align-items:center;justify-content:center;gap:calc(1 * var(--u));border:var(--liserÃ©) solid var(--noir);border-radius:var(--rayon);background:var(--gris);color:var(--noir);font-size:var(--t-note)}
 .method-category .raz .menu-icon{width:calc(16 * var(--u));height:calc(16 * var(--u))}
 
 /* ---- Bonus : jauge bleue, valeur, commentaire ---- */
-.method-category .carte--b .jauge{justify-self:start;align-self:start;margin:calc(2 * var(--u)) 0 0 calc(44 * var(--u))}
+.method-category .carte--b .jauge{align-self:center;margin:0}
 .method-category .valeur-texte{position:absolute;left:calc(100% + 7 * var(--u));top:50%;transform:translateY(-50%);color:var(--bleu);font-size:var(--t-valeur);font-weight:700;line-height:1;white-space:nowrap}
 
-/* ---- Liste déroulante de commentaire (sous la carte ; dans la carte pour le Bonus) ---- */
-.method-category .method-comment-slot{width:var(--carte-l);max-width:100%}
-.method-category .method-comment-slot:empty{display:none}
-.method-category .champ{position:relative;display:flex;align-items:center;min-width:0;height:calc(24 * var(--u));margin-top:calc(5 * var(--u));border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--bouton);font-size:calc(10 * var(--u))}
-.method-category .carte--b .champ{grid-area:champ;margin-top:0;font-size:var(--t-valeur)}
-.method-category .champ select{appearance:none;-webkit-appearance:none;width:100%;height:100%;min-width:0;margin:0;padding:0 calc(32 * var(--u)) 0 calc(13 * var(--u));border:0;border-radius:var(--rayon);background:transparent;color:var(--blanc);font:inherit;text-overflow:ellipsis;cursor:pointer}
+/* ---- Champ de commentaire dans la boÃ®te : texte Ã©ditable + liste de commentaires prÃ©dÃ©finis ---- */
+.method-category .champ{position:relative;display:flex;align-items:stretch;min-width:0;min-height:calc(24 * var(--u));margin-top:calc(5 * var(--u));border:var(--liserÃ©) solid var(--noir);border-radius:var(--rayon);background:var(--bouton);font-size:calc(10 * var(--u))}
+.method-category .carte>.champ{grid-area:champ}
+.method-category .carte>.champ--motif{grid-area:motif}
+.method-category .champ:focus-within{outline:2px solid var(--blanc);outline-offset:2px}
+.method-category .champ-texte{flex:1;width:100%;min-width:0;min-height:calc(22 * var(--u));margin:0;padding:calc(5 * var(--u)) calc(30 * var(--u)) calc(5 * var(--u)) calc(10 * var(--u));border:0;border-radius:var(--rayon);background:transparent;color:var(--blanc);font:inherit;line-height:1.3;resize:none;overflow:hidden;field-sizing:content;cursor:text}
+.method-category .champ-texte:focus{outline:0;background:rgba(255,255,255,.07)}
+.method-category .champ-texte::placeholder{color:var(--gris)}
+.method-category .champ select:not(.champ-liste){appearance:none;-webkit-appearance:none;width:100%;min-width:0;margin:0;padding:0 calc(32 * var(--u)) 0 calc(10 * var(--u));border:0;border-radius:var(--rayon);background:transparent;color:var(--blanc);font:inherit;line-height:calc(22 * var(--u));text-overflow:ellipsis;cursor:pointer}
+.method-category .champ select:not(.champ-liste):focus-visible{outline:0}
 .method-category .champ select option{background:#2d3034;color:#fff}
-.method-category .champ select:focus-visible{outline:2px solid var(--blanc);outline-offset:2px}
-.method-category .champ .deroulant{position:absolute;right:calc(-1 * var(--u));top:calc(-1 * var(--u));bottom:calc(-1 * var(--u));width:calc(26 * var(--u));display:grid;place-items:center;border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--violet);pointer-events:none}
+.method-category .champ .deroulant{position:absolute;right:calc(-1 * var(--u));top:calc(-1 * var(--u));bottom:calc(-1 * var(--u));width:calc(26 * var(--u));display:grid;place-items:center;border:var(--liserÃ©) solid var(--noir);border-radius:var(--rayon);background:var(--violet);pointer-events:none}
+.method-category .champ-liste{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;pointer-events:auto;cursor:pointer;font:inherit}
+.method-category .carte>.method-warning-comment{grid-area:motif;margin:calc(5 * var(--u)) 0 0;color:#f0c3c4;font-size:calc(10 * var(--u))}
 
-/* ---- Sous la carte : détail des capacités / critères, motifs ---- */
+/* ---- DÃ©tail des capacitÃ©s / critÃ¨res : tiroir rattachÃ© sous la boÃ®te, mÃªme largeur ---- */
 .method-category .method-details>summary{display:none}
-.method-category .method-details{width:min(100%,640px)}
-.method-category .method-level{height:calc(20 * var(--u));border-radius:calc(8 * var(--u));border:calc(2 * var(--u)) solid transparent;background:var(--bouton);font-size:calc(8 * var(--u))}
+.method-category .method-details{width:100%;margin:0;padding:calc(4 * var(--u)) calc(8 * var(--u)) calc(8 * var(--u));border:var(--liserÃ©) solid var(--noir);border-top:0;border-radius:0 0 var(--rayon) var(--rayon);background:#3c4046;box-shadow:inset 0 calc(5 * var(--u)) calc(6 * var(--u)) -calc(2 * var(--u)) rgba(0,0,0,.35)}
+.method-category .carte:has(+ .method-details[open]){border-bottom-left-radius:0;border-bottom-right-radius:0}
+.method-category .method-capacity{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:calc(4 * var(--u)) calc(8 * var(--u));align-items:center;margin:0;padding:calc(6 * var(--u)) 0;border-top:1px solid rgba(255,255,255,.1);font-size:calc(10 * var(--u))}
+.method-category .method-details>summary+.method-capacity,.method-category .method-subcategory>strong+.method-capacity{border-top:0}
+.method-category .method-capacity-controls{display:contents}
+.method-category .method-levels{grid-column:2;grid-row:1;display:flex;gap:calc(3 * var(--u))}
+.method-category .method-capacity .champ{grid-column:1 / -1;grid-row:2;margin-top:0;background:#2d3034}
+.method-category .method-level{flex:none;width:calc(37 * var(--u));min-width:0;min-height:0;height:calc(20 * var(--u));padding:0;border-radius:calc(8 * var(--u));border:calc(2 * var(--u)) solid transparent;background:var(--bouton);color:var(--blanc);font-size:calc(8 * var(--u))}
 .method-category .method-level.manual{background:var(--jaune);border-color:var(--jaune);color:var(--noir);font-weight:700}
-.method-category .method-action{border-radius:calc(8 * var(--u))}
-.method-category .category-extra-controls{width:var(--carte-l);max-width:100%;margin-top:calc(5 * var(--u))}
-.method-category .method-warning-comment{width:var(--carte-l);max-width:100%}
-.method-category .category-extra-controls{justify-content:flex-start}
-.method-category .category-extra-controls select{width:100%;height:calc(24 * var(--u));padding:0 calc(10 * var(--u));border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--bouton);color:var(--blanc);font-size:calc(10 * var(--u))}
+.method-category .method-subcategory{margin-top:calc(6 * var(--u))}
+.method-category .method-subcategory>strong{display:block;padding-top:calc(4 * var(--u));color:#c9cdd2;font-size:calc(9 * var(--u));letter-spacing:.03em;text-transform:uppercase}
+.method-category .method-criterion{grid-template-columns:minmax(0,1fr) calc(70 * var(--u)) auto;margin:0;padding:calc(6 * var(--u)) 0;border-top:1px solid rgba(255,255,255,.1);font-size:calc(10 * var(--u))}
+.method-category .method-details>summary+.method-criterion{border-top:0}
+.method-category .method-criterion input{padding:calc(3 * var(--u)) calc(6 * var(--u));border:var(--liserÃ©) solid var(--noir);border-radius:calc(6 * var(--u));background:#2d3034;color:var(--blanc);font:inherit;font-size:calc(11 * var(--u))}
+
+/* =====================================================================
+   FenÃªtre de correction individuelle : 90 % de la largeur, bandeau Ã©lÃ¨ve, grand bouton de fermeture
+   ===================================================================== */
+.correction-popup{width:min(90vw,calc(100vw - 24px))}
+.correction-popup-layout{grid-template-columns:minmax(120px,190px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"student heading" "student categories" "student remark";gap:8px 18px}
+.correction-popup-main{display:contents}
+.correction-popup-student{grid-area:student}
+.correction-popup-heading{grid-area:heading;align-items:flex-start}
+.correction-popup-heading h2{font-size:1.35rem;line-height:1.2}
+.correction-popup-heading .icon-button{width:52px;height:52px;border-radius:12px;border:1px solid var(--line);background:#34373b}
+.correction-popup-heading .icon-button:hover{background:#44474c}
+.correction-popup-heading .menu-icon{width:30px;height:30px}
+.correction-popup-categories{grid-area:categories;display:grid;grid-template-columns:repeat(auto-fill,var(--carte-w));justify-content:center;align-content:start;align-items:start;gap:14px 18px}
+.correction-popup-categories>p{grid-column:1 / -1}
+.correction-popup-remark{grid-area:remark}
+@media(orientation:portrait),(max-width:699px){
+	.correction-popup-layout{grid-template-columns:64px minmax(0,1fr) 52px;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"photo name close" "photo info close" "categories categories categories" "remark remark remark";gap:2px 12px}
+	.correction-popup-student,.correction-popup-heading{display:contents}
+	.correction-popup-photo{grid-area:photo;align-self:start;width:64px}
+	.correction-popup-heading h2{grid-area:name;align-self:end;font-size:1.5rem;line-height:1.15}
+	.correction-popup-student dl{grid-area:info;align-self:start;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:0 8px;margin:0}
+	.correction-popup-student dt{font-size:.7rem}
+	.correction-popup-student dd{margin:0;font-size:.8rem}
+	.correction-popup-heading .icon-button{grid-area:close;align-self:start}
+	.correction-popup-categories{margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+}
+.method-category .method-details:not([open]){display:none}

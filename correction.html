@@ -710,16 +710,6 @@ function renderCategoryEvaluationControls(node){
   select.value=evaluation.motifIds?.[key]||"";select.addEventListener("change",()=>updateCategoryMotif(node.id,key,select.value));controls.appendChild(select);
   return controls;
 }
-function methodCommentSelect(node,owner,levelId){
-  const comments=owner===node?node.commentairesNiveaux?.[levelId]:owner.commentairesNiveaux?.[levelId];
-  if(!comments?.length)return null;
-  const state=methodStates[node.id]||(methodStates[node.id]={}),key=`${owner.id}:${levelId}`,selections=state.commentSelections||{};
-  const select=document.createElement("select");select.className="method-comment-select";select.setAttribute("aria-label",`Commentaire ${levelId} pour ${owner.titre}`);
-  const empty=document.createElement("option");empty.value="";empty.textContent="Aucun commentaire";select.appendChild(empty);
-  for(const item of comments){const option=document.createElement("option");option.value=item.id;option.textContent=item.texte;select.appendChild(option)}
-  select.value=Object.hasOwn(selections,key)?selections[key]:comments[0].id;
-  select.addEventListener("change",()=>{state.commentSelections={...state.commentSelections,[key]:select.value};render()});return select;
-}
 function methodButton(label,action,title=label){
   const button=document.createElement("button");button.type="button";button.className="method-action";button.textContent=label;button.title=title;button.setAttribute("aria-label",title);button.addEventListener("click",action);return button;
 }
@@ -735,13 +725,13 @@ function renderMethodCapacity(node,capacity){
     const button=methodButton(id,()=>{if(leafChoices[capacity.id]===id)delete leafChoices[capacity.id];else leafChoices[capacity.id]=id;render()},`${capacity.titre} : ${id}`);
     button.classList.add("method-level");button.style.setProperty("--level-color",levels[id]?.couleur||"#aaa");button.classList.toggle("manual",leafChoices[capacity.id]===id);button.setAttribute("aria-pressed",String(leafChoices[capacity.id]===id));buttons.appendChild(button);
   }
-  controls.appendChild(buttons);const comment=methodCommentSelect(node,capacity,leafChoices[capacity.id]);if(comment)controls.appendChild(comment);row.appendChild(controls);return row;
+  controls.appendChild(buttons);const comment=methodLevelCommentField(node,capacity,leafChoices[capacity.id]);if(comment)controls.appendChild(comment);row.appendChild(controls);return row;
 }
 function renderMethodDetails(node,calculation,categoryOnly){
   if(node.methode!=="capacites"&&node.methode!=="bareme")return null;
-  const state=methodStates[node.id]||(methodStates[node.id]={}),details=document.createElement("details");details.className="method-details";details.open=state.detailsOpen??!categoryOnly;
+  const state=methodStates[node.id]||(methodStates[node.id]={}),details=document.createElement("details");details.className="method-details";const openKey=categoryOnly?"popupDetailsOpen":"detailsOpen";details.open=state[openKey]??!categoryOnly;
   const summary=document.createElement("summary");summary.textContent=`${calculation.count}/${calculation.total} ${node.methode==="capacites"?"capacités":"critères"}`;details.appendChild(summary);
-  details.addEventListener("toggle",()=>{state.detailsOpen=details.open});
+  details.addEventListener("toggle",()=>{state[openKey]=details.open});
   if(node.methode==="capacites"){
     for(const child of node.enfants||[]){
       if(Array.isArray(child.enfants)){const group=document.createElement("div");group.className="method-subcategory";const heading=document.createElement("strong");heading.textContent=child.titre;group.appendChild(heading);for(const capacity of child.enfants)group.appendChild(renderMethodCapacity(node,capacity));details.appendChild(group)}
@@ -767,6 +757,37 @@ function methodEl(tag,className,text){const element=document.createElement(tag);
 function methodBt(className,action,title,text){const button=methodEl("button",`bt ${className}`,text);button.type="button";button.title=title;button.setAttribute("aria-label",title);button.addEventListener("click",action);return button}
 function methodIcon(name,className=""){const symbol=methodEl("span",`menu-icon ${className}`.trim());symbol.style.setProperty("--icon",`url('icones/${name}.svg')`);symbol.setAttribute("aria-hidden","true");return symbol}
 function methodChamp(select){const wrap=methodEl("div","champ"),arrow=methodEl("span","deroulant");arrow.setAttribute("aria-hidden","true");arrow.appendChild(methodEl("i","fleche-bas"));wrap.append(select,arrow);return wrap}
+function methodCommentField({options,selectedId,custom,text,label,onSelect,onText}){
+  const wrap=methodEl("div","champ"),area=methodEl("textarea","champ-texte");
+  area.rows=1;area.value=text;area.placeholder="Aucun commentaire";area.spellcheck=true;area.setAttribute("aria-label",label);
+  const fit=()=>{if(!area.scrollHeight)return;area.style.height="auto";area.style.height=`${area.scrollHeight}px`};
+  area.addEventListener("keydown",event=>{if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();area.blur()}});
+  wrap.appendChild(area);
+  let select=null;
+  if(options?.length){
+    const arrow=methodEl("span","deroulant");arrow.appendChild(methodEl("i","fleche-bas"));
+    select=methodEl("select","champ-liste");select.setAttribute("aria-label",`Choisir un commentaire prédéfini : ${label}`);
+    const none=methodEl("option","","Aucun commentaire");none.value="";select.appendChild(none);
+    for(const item of options){const option=methodEl("option","",item.texte);option.value=item.id;select.appendChild(option)}
+    select.value=selectedId??"";if(custom)select.selectedIndex=-1;
+    select.addEventListener("change",()=>onSelect(select.value));arrow.appendChild(select);wrap.appendChild(arrow);
+  }
+  area.addEventListener("input",()=>{onText(area.value);if(select)select.selectedIndex=-1;fit()});
+  requestAnimationFrame(fit);
+  return wrap;
+}
+function methodLevelCommentField(node,owner,levelId){
+  if(!levelId)return null;
+  const state=methodStates[node.id]||(methodStates[node.id]={}),options=owner.commentairesNiveaux?.[levelId]||[],key=`${owner.id}:${levelId}`;
+  const custom=Object.hasOwn(state.commentTexts||{},key);
+  if(!options.length&&!custom)return null;
+  const selected=Object.hasOwn(state.commentSelections||{},key)?state.commentSelections[key]:(options[0]?.id??"");
+  const text=custom?state.commentTexts[key]:(options.find(item=>item.id===selected)?.texte||"");
+  const field=methodCommentField({options,selectedId:selected,custom,text,label:`Commentaire ${levelId} pour ${owner.titre}`,
+    onSelect:id=>{state.commentSelections={...state.commentSelections,[key]:id};if(state.commentTexts)delete state.commentTexts[key];render()},
+    onText:value=>{state.commentTexts={...state.commentTexts,[key]:value}}});
+  return field;
+}
 function methodPercentText(value){return `${value.toFixed(2).replace(".",",")} %`}
 function formatTarget(seconds){const minutes=Math.floor(seconds/60),rest=Math.round(seconds%60);return rest?`${minutes}′${String(rest).padStart(2,"0")}″`:`${minutes}′`}
 function methodLerp(value,from,to,start,end){return to===from?end:start+(end-start)*Math.min(1,Math.max(0,(value-from)/(to-from)))}
@@ -852,6 +873,7 @@ function renderMethodCategory(node,categoryOnly=false){
   note.setAttribute("aria-pressed",String(evaluated));
   const help=methodBt("aide",()=>window.alert(node.informationsFonctionnement||"Aucune information disponible."),`Informations sur ${node.titre}`);help.appendChild(methodIcon("info"));
   const left=methodEl("div","gauche");left.append(note,help);card.appendChild(left);
+  const afterCard=[];
   if(isBonus){
     const stops=methodGaugeStops(node),gauge=methodEl("div","jauge jauge--bleu");gauge.style.setProperty("--degrade",methodGradient(methodGaugeColors(node),stops));
     const slider=methodEl("input","method-slider");slider.type="range";slider.min="0";slider.max=String(node.pointsMaximum);slider.step=String(node.pas||.25);slider.value=String(state.bonus||0);slider.setAttribute("aria-label",`Points bonus pour ${node.titre}`);
@@ -859,10 +881,10 @@ function renderMethodCategory(node,categoryOnly=false){
     const place=()=>{const value=Number(state.bonus)||0;cursor.style.setProperty("--valeur",`${Math.min(100,100*value/Number(node.pointsMaximum))}%`);output.textContent=`+${value.toLocaleString("fr-FR")}`;slider.setAttribute("aria-valuetext",output.textContent)};
     slider.addEventListener("input",()=>{state.bonus=Number(slider.value);place();updateFinalScore()});
     gauge.append(slider,cursor,output);place();card.appendChild(gauge);
-    const select=methodEl("select","method-comment-select");select.setAttribute("aria-label",`Commentaire de bonus pour ${node.titre}`);
-    const empty=methodEl("option","","Aucun commentaire");empty.value="";select.appendChild(empty);
-    for(const item of node.commentairesValorisation||[]){const option=methodEl("option","",item.texte);option.value=item.id;select.appendChild(option)}
-    select.value=state.bonusComment||"";select.addEventListener("change",()=>{state.bonusComment=select.value});card.appendChild(methodChamp(select));
+    const options=node.commentairesValorisation||[],chosen=options.find(item=>item.id===state.bonusComment);
+    const field=methodCommentField({options,selectedId:state.bonusComment||"",custom:Object.hasOwn(state,"bonusText"),text:Object.hasOwn(state,"bonusText")?state.bonusText:(chosen?.texte||""),label:`Commentaire de bonus pour ${node.titre}`,
+      onSelect:id=>{state.bonusComment=id;delete state.bonusText;render()},onText:value=>{state.bonusText=value}});
+    field.classList.add("champ--niveau");card.appendChild(field);
     return section;
   }
   /* rangée de boutons : avertissement, niveaux, dépassé */
@@ -881,7 +903,7 @@ function renderMethodCategory(node,categoryOnly=false){
   if(node.depasseAutorise!==false){
     const exceeded=Boolean(categoryEvaluations[node.id]?.exceeded),suggested=node.methode==="compteur"&&(Number(state.count)||0)>=Number(node.seuilsOccurrences.D)&&!exceeded;
     const circle=methodBt(`rond${exceeded?" rond--bleu":""}${suggested?" rond--anneau":""}`,()=>toggleCategoryEvaluation(node.id,"exceeded"),"Dépassé","D");circle.setAttribute("aria-pressed",String(exceeded));row.appendChild(circle);
-  }
+  }else{const slot=methodEl("span","rond rond--vide");slot.setAttribute("aria-hidden","true");row.appendChild(slot)}
   card.appendChild(row);
   /* jauge : segments aux seuils, curseur (calculé, manuel ou fantôme) et curseur natif invisible pour la saisie */
   const stops=methodGaugeStops(node),timerWarning=node.methode==="minuteur"&&categoryEvaluations[node.id]?.warning;
@@ -932,11 +954,11 @@ function renderMethodCategory(node,categoryOnly=false){
     const reset=methodBt("raz",()=>{if(!window.confirm("Réinitialiser la durée enregistrée ?"))return;delete state.startedAt;state.elapsedMs=0;state.recorded=false;delete categoryEvaluations[node.id];render()},"Réinitialiser le minuteur","0");reset.appendChild(methodIcon("restart_alt"));
     back.append(target,reset);card.appendChild(back);
   }
-  /* sous la carte : commentaire de niveau, motif d'avertissement / de dépassement, détail des capacités ou critères */
-  const slot=methodEl("div","method-comment-slot"),comment=methodCommentSelect(node,node,selected);if(comment)slot.appendChild(methodChamp(comment));
-  section.dataset.commentLevel=selected||"";section.appendChild(slot);
-  if(timerWarning){const text=methodEl("p","method-warning-comment",node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.label||"");section.appendChild(text)}
-  else{const extra=renderCategoryEvaluationControls(node);if(extra)section.appendChild(extra)}
+  /* dans la boîte : commentaire de niveau (texte éditable), motif d'avertissement / de dépassement ; sous la boîte : détail rattaché */
+  const comment=methodLevelCommentField(node,node,selected);if(comment){comment.classList.add("champ--niveau");card.appendChild(comment)}
+  section.dataset.commentLevel=selected||"";
+  if(timerWarning){const text=methodEl("p","method-warning-comment",node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.label||"");card.appendChild(text)}
+  else{const extra=renderCategoryEvaluationControls(node);if(extra){const wrap=methodChamp(extra.querySelector("select"));wrap.classList.add("champ--motif");card.appendChild(wrap)}}
   if(details)section.appendChild(details);
   updateMethodGauge(section,node);
   return section;
@@ -947,8 +969,10 @@ function refreshMethodDisplay(node,dragX=null){
     const duration=section.querySelector(".method-duration");if(duration)duration.textContent=formatDuration(timerSeconds(methodState(node)));
     const selected=updateMethodGauge(section,node,dragX);
     if(section.dataset.commentLevel!==(selected||"")){
-      const slot=section.querySelector(".method-comment-slot"),comment=methodCommentSelect(node,node,selected);
-      slot.replaceChildren();if(comment)slot.appendChild(methodChamp(comment));section.dataset.commentLevel=selected||"";
+      const old=section.querySelector(".champ--niveau"),comment=methodLevelCommentField(node,node,selected);
+      if(comment)comment.classList.add("champ--niveau");
+      if(old&&comment)old.replaceWith(comment);else if(old)old.remove();else if(comment)section.querySelector(".carte").appendChild(comment);
+      section.dataset.commentLevel=selected||"";
     }
   }
 }
@@ -1158,6 +1182,7 @@ function renderPrintChildren(node){
 }
 function selectedMethodComment(node,owner,level){
   const options=owner.commentairesNiveaux?.[level]||[],selections=methodState(node).commentSelections||{},key=`${owner.id}:${level}`;
+  if(Object.hasOwn(methodState(node).commentTexts||{},key))return methodState(node).commentTexts[key];
   const selected=Object.hasOwn(selections,key)?selections[key]:options[0]?.id;
   return options.find(item=>item.id===selected)?.texte||"";
 }
@@ -1182,7 +1207,7 @@ function renderPrintMethod(node){
   if(node.methode==="distribution")addLine(node.niveaux.map(id=>`${id} : ${Number(state.counts?.[id])||0}`).join(" · "));
   if(node.methode==="compteur")addLine(`Nombre : ${Number(state.count)||0}`);
   if(node.methode==="minuteur")addLine(`Durée : ${state.recorded||state.startedAt?formatDuration(timerSeconds(state)):"—"} / ${formatDuration(node.dureeCibleSecondes)}`);
-  if(node.methode==="bonus"){const item=(node.commentairesValorisation||[]).find(option=>option.id===state.bonusComment);if(item)addLine(item.texte)}
+  if(node.methode==="bonus"){const item=(node.commentairesValorisation||[]).find(option=>option.id===state.bonusComment);addLine(Object.hasOwn(state,"bonusText")?state.bonusText:item?.texte)}
   return section;
 }
 function renderPrintReport(){
