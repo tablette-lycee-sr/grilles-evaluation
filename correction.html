@@ -815,41 +815,71 @@ function methodGradient(colors,stops){
   });
   return `linear-gradient(90deg,${parts.join(",")})`;
 }
-/* Jauge en U du minuteur : piste haute (trop court → plateau A), piste basse parcourue en sens inverse (plateau A → trop long). */
-function methodTimerPlacement(node,seconds){
-  const limits=node.seuilsSecondes,target=Number(node.dureeCibleSecondes),[first,second]=methodGaugeStops(node);
-  const last=Number(node.courbe?.points?.at(-1)?.secondes)||limits.naTropLong*1.5;
-  let x;
-  if(seconds<limits.naTropCourt)x=methodLerp(seconds,0,limits.naTropCourt,0,first);
-  else if(seconds<limits.entreeA)x=methodLerp(seconds,limits.naTropCourt,limits.entreeA,first,second);
-  else if(seconds<=target)x=methodLerp(seconds,limits.entreeA,target,second,100);
-  else if(seconds<=limits.sortieA)x=methodLerp(seconds,target,limits.sortieA,100,second);
-  else if(seconds<limits.naTropLong)x=methodLerp(seconds,limits.sortieA,limits.naTropLong,second,first);
-  else x=methodLerp(seconds,limits.naTropLong,Math.max(last,limits.naTropLong+1),first,0);
-  return{x,side:seconds>target?"bas":"haut"};
+/* Jauge en U du minuteur : le curseur suit un chemin en fer à cheval (unités --u, repère local de la jauge).
+   Piste haute de gauche à droite (trop court → plateau A), virage vert, piste basse de droite à gauche (plateau A → trop long). */
+function methodTimerGeometry(node){
+  const width=node.niveaux.length===4?157:117,L=width-10,R=7,arc=Math.PI*R,[f1,f2]=methodGaugeStops(node).map(value=>value/100);
+  const limits=node.seuilsSecondes,target=Number(node.dureeCibleSecondes);
+  const last=Math.max(Number(node.courbe?.points?.at(-1)?.secondes)||limits.naTropLong*1.5,limits.naTropLong+1);
+  const anchors=[[0,0],[limits.naTropCourt,f1*L],[limits.entreeA,f2*L],[target,L+arc/2],[limits.sortieA,L+arc+(L-f2*L)],[limits.naTropLong,L+arc+(L-f1*L)],[last,2*L+arc]];
+  return{L,R,arc,total:2*L+arc,anchors};
 }
-function methodGaugeMap(node,seconds){
-  if(node.methode!=="minuteur")return{side:"haut",toX:percent=>percent,toPercent:x=>x};
-  const limits=node.seuilsSecondes,[first,second]=methodGaugeStops(node),side=seconds>Number(node.dureeCibleSecondes)?"bas":"haut";
-  const edge=timerPercentage(node,side==="bas"?limits.naTropLong:limits.naTropCourt)??33;
-  return{side,
-    toX:percent=>percent>=100?100:percent<=edge?methodLerp(percent,0,edge,0,first):methodLerp(percent,edge,100,first,second),
-    toPercent:x=>x>=second?100:x<=first?methodLerp(x,0,first,0,edge):methodLerp(x,first,second,edge,100)};
+function methodTimerToPath(geometry,seconds){
+  const anchors=geometry.anchors;
+  if(seconds<=anchors[0][0])return anchors[0][1];
+  for(let index=1;index<anchors.length;index++)if(seconds<=anchors[index][0])return methodLerp(seconds,anchors[index-1][0],anchors[index][0],anchors[index-1][1],anchors[index][1]);
+  return geometry.total;
 }
-function updateMethodGauge(section,node,dragX=null){
-  const calculation=methodCalculation(node),retained=getCategoryPercentage(node),manual=Object.hasOwn(manualCategoryPercent,node.id);
-  const seconds=node.methode==="minuteur"?timerSeconds(methodState(node)):0,map=methodGaugeMap(node,seconds);
+function methodPathToTimer(geometry,position){
+  const anchors=geometry.anchors;
+  if(position<=anchors[0][1])return anchors[0][0];
+  for(let index=1;index<anchors.length;index++)if(position<=anchors[index][1])return methodLerp(position,anchors[index-1][1],anchors[index][1],anchors[index-1][0],anchors[index][0]);
+  return anchors.at(-1)[0];
+}
+function methodTimerPoint(geometry,position){
+  const s=Math.min(geometry.total,Math.max(0,position));
+  if(s<=geometry.L)return{x:s,y:3};
+  if(s<=geometry.L+geometry.arc){const angle=(s-geometry.L)/geometry.R;return{x:geometry.L+geometry.R*Math.sin(angle),y:10-geometry.R*Math.cos(angle)}}
+  return{x:geometry.L-(s-geometry.L-geometry.arc),y:17};
+}
+/* point du chemin le plus proche d'une position (en unités --u) : piste haute, virage ou piste basse */
+function methodTimerNearest(geometry,x,y){
+  const clampedX=Math.min(geometry.L,Math.max(0,x)),candidates=[];
+  candidates.push({d:(x-clampedX)**2+(y-3)**2,s:clampedX});
+  candidates.push({d:(x-clampedX)**2+(y-17)**2,s:geometry.L+geometry.arc+(geometry.L-clampedX)});
+  const angle=Math.min(Math.PI,Math.max(0,Math.atan2(x-geometry.L,-(y-10))));
+  const arcX=geometry.L+geometry.R*Math.sin(angle),arcY=10-geometry.R*Math.cos(angle);
+  candidates.push({d:(x-arcX)**2+(y-arcY)**2,s:geometry.L+geometry.R*angle});
+  return candidates.reduce((best,item)=>item.d<best.d?item:best).s;
+}
+/* durée correspondant à un pourcentage manuel ancien (sans durée mémorisée) : recherche sur la montée de la courbe */
+function methodSecondsForPercent(node,percent){
+  const limits=node.seuilsSecondes;if(percent>=100)return Number(node.dureeCibleSecondes);
+  let low=0,high=limits.entreeA;
+  for(let step=0;step<30;step++){const middle=(low+high)/2;if((timerPercentage(node,middle)??0)<percent)low=middle;else high=middle}
+  return(low+high)/2;
+}
+function updateMethodGauge(section,node){
+  const calculation=methodCalculation(node),retained=getCategoryPercentage(node),manual=Object.hasOwn(manualCategoryPercent,node.id),timer=node.methode==="minuteur";
+  const state=methodState(node),seconds=timer?timerSeconds(state):0;
   const gauge=section.querySelector(".jauge"),main=gauge.querySelector(".curseur--principal"),ghost=gauge.querySelector(".curseur--fantome"),slider=gauge.querySelector(".method-slider");
-  const place=(element,x,side)=>{element.style.setProperty("--valeur",`${Math.min(100,Math.max(0,x))}%`);element.dataset.side=side};
-  const auto=calculation.percentage===null?null:node.methode==="minuteur"?methodTimerPlacement(node,seconds):{x:calculation.percentage,side:"haut"};
-  if(manual&&retained!==null){place(main,dragX??map.toX(retained),map.side);main.classList.add("curseur--plein");main.classList.remove("curseur--vide")}
-  else{place(main,auto?auto.x:0,auto?auto.side:"haut");main.classList.remove("curseur--plein");main.classList.toggle("curseur--vide",!auto)}
-  ghost.hidden=!(manual&&auto);if(!ghost.hidden)place(ghost,auto.x,auto.side);
+  const geometry=timer?methodTimerGeometry(node):null;
+  const place=(element,value)=>{
+    if(timer){const point=methodTimerPoint(geometry,value);element.style.setProperty("--cx",point.x.toFixed(2));element.style.setProperty("--cy",point.y.toFixed(2))}
+    else element.style.setProperty("--valeur",`${Math.min(100,Math.max(0,value))}%`);
+  };
+  const auto=calculation.percentage===null?null:timer?methodTimerToPath(geometry,seconds):calculation.percentage;
+  let manualPosition=null;
+  if(manual&&retained!==null)manualPosition=timer?methodTimerToPath(geometry,typeof state.manualSeconds==="number"?state.manualSeconds:methodSecondsForPercent(node,retained)):retained;
+  if(manualPosition!==null){place(main,manualPosition);main.classList.add("curseur--plein");main.classList.remove("curseur--vide")}
+  else{place(main,auto??0);main.classList.remove("curseur--plein");main.classList.toggle("curseur--vide",auto===null)}
+  ghost.hidden=!(manualPosition!==null&&auto!==null);if(!ghost.hidden)place(ghost,auto);
   slider.classList.toggle("manual",manual);
-  if(dragX===null&&!(manual&&document.activeElement===slider))slider.value=String(manual&&retained!==null?map.toX(retained):(auto?auto.x:0));
+  const shown=manualPosition??auto??0;
+  if(!(manual&&document.activeElement===slider))slider.value=String(timer?Math.round(1000*shown/geometry.total):Math.round(shown));
   const autoText=calculation.percentage===null?"indisponible":methodPercentText(calculation.percentage);
   const valueText=retained===null?"Aucun résultat":`${methodPercentText(retained)}${manual?`, choix manuel, calcul automatique ${autoText}`:", calcul automatique"}`;
-  slider.setAttribute("aria-valuetext",valueText);gauge.title=retained===null?"Aucun résultat":`${methodPercentText(retained)}${manual&&auto?` (calcul automatique : ${autoText})`:""}`;
+  slider.setAttribute("aria-valuetext",valueText);gauge.title=retained===null?"Aucun résultat":`${methodPercentText(retained)}${manual&&auto!==null?` (calcul automatique : ${autoText})`:""}`;
   const output=section.querySelector(".method-percentage");if(output)output.textContent=retained===null?"—":methodPercentText(retained);
   const selected=Object.hasOwn(manualChoices,node.id)?manualChoices[node.id]:calculation.level;
   for(const button of section.querySelectorAll(".boutons [data-method-level]")){
@@ -909,7 +939,7 @@ function renderMethodCategory(node,categoryOnly=false){
   const stops=methodGaugeStops(node),timerWarning=node.methode==="minuteur"&&categoryEvaluations[node.id]?.warning;
   const gauge=methodEl("div",`jauge${node.methode==="minuteur"?" jauge--u":""}${node.methode==="compteur"||timerWarning?" jauge--lecture":""}`);gauge.style.setProperty("--degrade",methodGradient(methodGaugeColors(node),stops));
   if(node.methode==="minuteur")gauge.append(methodEl("i","piste haut"),methodEl("i","piste bas"),methodEl("i","retour-u"));
-  const slider=methodEl("input","method-slider");slider.type="range";slider.min="0";slider.max="100";slider.step="1";slider.setAttribute("aria-label",`Pourcentage retenu pour ${node.titre}`);
+  const slider=methodEl("input","method-slider");slider.type="range";slider.min="0";slider.max=node.methode==="minuteur"?"1000":"100";slider.step="1";slider.setAttribute("aria-label",node.methode==="minuteur"?`Position de la durée pour ${node.titre}`:`Pourcentage retenu pour ${node.titre}`);
   slider.title="Déplacer pour ajuster ; cliquer sur le curseur déplacé ou appuyer sur Échap pour revenir au calcul";
   const ghost=methodEl("i","curseur curseur--fantome");ghost.hidden=true;ghost.setAttribute("aria-hidden","true");
   const main=methodEl("i","curseur curseur--principal");main.setAttribute("aria-hidden","true");
@@ -921,9 +951,27 @@ function renderMethodCategory(node,categoryOnly=false){
   }
   if(node.methode==="compteur"){slider.disabled=true;slider.title="Pourcentage calculé à partir du nombre d’occurrences"}
   else if(timerWarning){slider.disabled=true;slider.title="L’absence de prise de parole est retenue à 0 %."}
+  else if(node.methode==="minuteur"){
+    /* glisser le long du fer à cheval : la position sur le chemin donne une durée, puis un pourcentage par la courbe */
+    const geometry=methodTimerGeometry(node);
+    const apply=position=>{const seconds=methodPathToTimer(geometry,position);methodState(node).manualSeconds=seconds;manualCategoryPercent[node.id]=timerPercentage(node,seconds)??0;refreshMethodDisplay(node);updateFinalScore()};
+    const fromPointer=event=>{const bounds=gauge.getBoundingClientRect(),unit=bounds.height/20;apply(methodTimerNearest(geometry,(event.clientX-bounds.left)/unit,(event.clientY-bounds.top)/unit))};
+    const resetManual=()=>{delete manualCategoryPercent[node.id];delete methodState(node).manualSeconds;render()};
+    let drag=null;
+    gauge.addEventListener("pointerdown",event=>{
+      if(event.button>0)return;
+      const bounds=main.getBoundingClientRect(),near=Math.hypot(event.clientX-(bounds.left+bounds.width/2),event.clientY-(bounds.top+bounds.height/2))<bounds.width/2+4;
+      drag={x:event.clientX,y:event.clientY,moved:false,reset:near&&Object.hasOwn(manualCategoryPercent,node.id)};
+      gauge.setPointerCapture(event.pointerId);if(!drag.reset)fromPointer(event);
+    });
+    gauge.addEventListener("pointermove",event=>{if(!drag)return;if(Math.hypot(event.clientX-drag.x,event.clientY-drag.y)>3)drag.moved=true;if(drag.moved||!drag.reset)fromPointer(event)});
+    gauge.addEventListener("pointerup",()=>{const wasReset=drag?.reset&&!drag.moved;drag=null;if(wasReset)resetManual()});
+    gauge.addEventListener("pointercancel",()=>{drag=null});
+    slider.addEventListener("input",()=>apply(Number(slider.value)/1000*geometry.total));
+    slider.addEventListener("keydown",event=>{if(event.key==="Escape"&&Object.hasOwn(manualCategoryPercent,node.id))resetManual()});
+  }
   else{
-    const map=()=>methodGaugeMap(node,node.methode==="minuteur"?timerSeconds(methodState(node)):0);
-    slider.addEventListener("input",()=>{const x=Number(slider.value);manualCategoryPercent[node.id]=map().toPercent(x);refreshMethodDisplay(node,x);updateFinalScore()});
+    slider.addEventListener("input",()=>{manualCategoryPercent[node.id]=Number(slider.value);refreshMethodDisplay(node);updateFinalScore()});
     let start=null;
     slider.addEventListener("pointerdown",event=>{const bounds=main.getBoundingClientRect();start={x:event.clientX,onThumb:Math.abs(event.clientX-(bounds.left+bounds.width/2))<bounds.width/2+4,manual:Object.hasOwn(manualCategoryPercent,node.id)}});
     slider.addEventListener("pointerup",event=>{if(start?.manual&&start.onThumb&&Math.abs(event.clientX-start.x)<4){delete manualCategoryPercent[node.id];render()}start=null});
@@ -963,11 +1011,11 @@ function renderMethodCategory(node,categoryOnly=false){
   updateMethodGauge(section,node);
   return section;
 }
-function refreshMethodDisplay(node,dragX=null){
+function refreshMethodDisplay(node){
   if(node.methode==="bonus")return;
   for(const section of document.querySelectorAll("[data-method-node]"))if(section.dataset.methodNode===node.id){
     const duration=section.querySelector(".method-duration");if(duration)duration.textContent=formatDuration(timerSeconds(methodState(node)));
-    const selected=updateMethodGauge(section,node,dragX);
+    const selected=updateMethodGauge(section,node);
     if(section.dataset.commentLevel!==(selected||"")){
       const old=section.querySelector(".champ--niveau"),comment=methodLevelCommentField(node,node,selected);
       if(comment)comment.classList.add("champ--niveau");
