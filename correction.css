@@ -327,7 +327,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 }
 .method-category .carte--m{grid-template-rows:var(--titre-h) calc(29 * var(--u)) calc(29 * var(--u)) auto auto;grid-template-areas:"titre titre titre" "gauche boutons droite" "gauche jauge retour" "champ champ champ" "motif motif motif"}
 .method-category .carte--b{grid-template-rows:var(--titre-h) calc(28 * var(--u)) calc(15 * var(--u)) auto auto;grid-template-areas:"titre titre titre" "gauche jauge ." "gauche . ." "champ champ champ" "motif motif motif"}
-.method-category.method-hors-note .carte{border-color:var(--gris);border-style:dashed}
+.method-category.method-hors-note{opacity:.5}
 
 /* ---- Remise à plat des boutons (la classe .bt précède toutes les variantes) ---- */
 .method-category .bt{appearance:none;-webkit-appearance:none;margin:0;padding:0;border:0;border-radius:0;background:none;color:inherit;font:inherit;line-height:1.2;text-align:center;cursor:pointer;touch-action:manipulation}
@@ -342,7 +342,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .method-category .note{height:calc(17 * var(--u));display:grid;place-items:center;border:calc(1 * var(--u)) solid var(--gris);border-radius:calc(9 * var(--u));font-size:var(--t-note);font-variant-numeric:tabular-nums}
 .method-category .note--pointille{border-style:dashed}
 .method-category .note--plus{font-size:calc(13 * var(--u))}
-.method-category .note--exclue{color:var(--gris);text-decoration:line-through}
+.method-category .note--exclue{font-size:calc(9.5 * var(--u));font-weight:700;letter-spacing:.05em}
 .method-category .aide{flex:1;display:grid;place-items:center;border-radius:var(--rayon);background:var(--gris);color:var(--fond)}
 .method-category .aide .menu-icon{width:calc(20 * var(--u));height:calc(20 * var(--u))}
 
@@ -353,9 +353,9 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .method-category .alerte--erreur::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--blanc);clip-path:polygon(50% 30%,77% 85%,23% 85%)}
 .method-category .alerte:focus-visible{outline:0;background:var(--blanc);color:var(--noir)}
 .method-category .bouton{position:relative;width:var(--col);height:var(--bouton-h);display:grid;place-items:center;border-radius:var(--rayon);background:var(--bouton);font-size:var(--t-bouton);color:var(--blanc)}
-.method-category .bouton--actif{background:var(--jaune);color:var(--noir);font-weight:700}
+.method-category .bouton--actif{background:var(--couleur-niveau,var(--jaune));color:var(--noir);font-weight:700}
 .method-category .bouton--violet{background:var(--violet)}
-.method-category .bouton--anneau{height:var(--anneau-h);border:var(--anneau) solid var(--couleur-anneau,var(--vert))}
+.method-category .bouton--anneau{height:var(--anneau-h);border:var(--anneau) solid var(--couleur-niveau,var(--vert))}
 .method-category .bouton--plus::before{content:"+";position:absolute;left:calc(4 * var(--u));top:calc(-3 * var(--u));font-size:calc(16 * var(--u));line-height:1}
 .method-category .bouton--moins::before{content:"−"}
 .method-category .bouton--anneau.bouton--plus::before{left:calc(2 * var(--u));top:calc(-5 * var(--u))}
@@ -434,7 +434,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 
 /* ---- Bonus : jauge bleue, valeur, commentaire ---- */
 .method-category .carte--b .jauge{align-self:center;margin:0}
-.method-category .valeur-texte{position:absolute;left:calc(100% + 7 * var(--u));top:50%;transform:translateY(-50%);color:var(--bleu);font-size:var(--t-valeur);font-weight:700;line-height:1;white-space:nowrap}
+.method-category .valeur-texte{position:absolute;left:calc(100% + 13 * var(--u));top:50%;transform:translateY(-50%);color:var(--bleu);font-size:var(--t-valeur);font-weight:700;line-height:1;white-space:nowrap}
 
 /* ---- Champ de commentaire dans la boîte : texte éditable + liste de commentaires prédéfinis ---- */
 .method-category .champ{position:relative;display:flex;align-items:stretch;min-width:0;min-height:calc(24 * var(--u));margin-top:calc(5 * var(--u));border:var(--liseré) solid var(--noir);border-radius:var(--rayon);background:var(--bouton);font-size:calc(10 * var(--u))}
@@ -461,7 +461,7 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 .method-category .method-levels{grid-column:2;grid-row:1;display:flex;gap:calc(3 * var(--u))}
 .method-category .method-capacity .champ{grid-column:1 / -1;grid-row:2;margin-top:0;background:#2d3034}
 .method-category .method-level{flex:none;width:calc(37 * var(--u));min-width:0;min-height:0;height:calc(20 * var(--u));padding:0;border-radius:calc(8 * var(--u));border:calc(2 * var(--u)) solid transparent;background:var(--bouton);color:var(--blanc);font-size:calc(8 * var(--u))}
-.method-category .method-level.manual{background:var(--jaune);border-color:var(--jaune);color:var(--noir);font-weight:700}
+.method-category .method-level.manual{background:var(--couleur-niveau,var(--jaune));border-color:var(--couleur-niveau,var(--jaune));color:var(--noir);font-weight:700}
 .method-category .method-subcategory{margin-top:calc(6 * var(--u))}
 .method-category .method-subcategory>strong{display:block;padding-top:calc(4 * var(--u));color:#c9cdd2;font-size:calc(9 * var(--u));letter-spacing:.03em;text-transform:uppercase}
 .method-category .method-criterion{grid-template-columns:minmax(0,1fr) calc(70 * var(--u)) auto;margin:0;padding:calc(6 * var(--u)) 0;border-top:1px solid rgba(255,255,255,.1);font-size:calc(10 * var(--u))}
@@ -495,3 +495,41 @@ body .app{padding-top:calc(var(--header-height) + var(--navigation-height) + 20p
 	.correction-popup-categories{margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
 }
 .method-category .method-details:not([open]){display:none}
+
+/* ---- Bonus : saisie au pointeur sur la jauge (le curseur natif ne sert qu'au clavier) ---- */
+.method-category .jauge--bleu{touch-action:none;cursor:pointer}
+.method-category .jauge--bleu::after{content:"";position:absolute;inset:calc(-9 * var(--u)) 0}
+.method-category .jauge--bleu .method-slider{pointer-events:none}
+.method-category .valeur-texte--zero{color:var(--gris)}
+
+/* =====================================================================
+   Fenêtre d'information d'une méthode
+   ===================================================================== */
+.method-info-dialog{--rouge:#ff3131;--orange:#ffbd59;--jaune:#ffd737;--vert:#17a13f;--gris:#858585;--violet:#a44cbd;--bleu:#4ba0d6;
+  width:min(640px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100vh - 32px);padding:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);box-shadow:0 12px 32px rgba(0,0,0,.5);overflow:hidden}
+.method-info-dialog[open]{display:flex;flex-direction:column}
+.method-info-dialog::backdrop{background:rgba(0,0,0,.65)}
+.method-info-dialog .mi-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:#34373b}
+.method-info-dialog .mi-icon{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:var(--violet);color:#1f1f1f}
+.method-info-dialog .mi-icon .menu-icon{width:26px;height:26px}
+.method-info-dialog .mi-titles{flex:1;min-width:0}
+.method-info-dialog .mi-title{margin:0;font-size:1.2rem;line-height:1.2;overflow-wrap:anywhere}
+.method-info-dialog .mi-sub{margin:2px 0 0;color:var(--sub);font-size:.82rem}
+.method-info-dialog .mi-close{flex:none;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--line);border-radius:10px;background:#3e4247;cursor:pointer}
+.method-info-dialog .mi-close:hover{background:#4a4e54}
+.method-info-dialog .mi-close .menu-icon{width:26px;height:26px}
+.method-info-dialog .mi-body{overflow-y:auto;padding:6px 18px 20px;overscroll-behavior:contain}
+.method-info-dialog .mi-section{margin-top:16px}
+.method-info-dialog .mi-section h3{margin:0 0 8px;color:var(--sub);font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.method-info-dialog .mi-section p{margin:0 0 8px;font-size:.9rem;line-height:1.45}
+.method-info-dialog .mi-lead{padding:10px 12px;border-left:3px solid var(--violet);border-radius:0 8px 8px 0;background:#383c41;font-size:.95rem!important}
+.method-info-dialog .mi-facts{margin:0;padding-left:18px;font-size:.88rem;line-height:1.5}
+.method-info-dialog .mi-levels{display:grid}
+.method-info-dialog .mi-level{display:grid;grid-template-columns:58px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.method-info-dialog .mi-level:first-child{border-top:0}
+.method-info-dialog .mi-badge{display:grid;place-items:center;height:28px;border-radius:10px;background:var(--couleur-niveau,var(--gris));color:#000;font-size:.78rem;font-weight:700}
+.method-info-dialog .mi-badge--alerte{background:var(--rouge)}
+.method-info-dialog .mi-badge--depasse{background:var(--bleu)}
+.method-info-dialog .mi-level-text{min-width:0;font-size:.9rem}
+.method-info-dialog .mi-range{margin-top:2px;color:var(--sub);font-size:.82rem}
+.method-info-dialog .mi-comments{margin:6px 0 0;padding-left:18px;font-size:.84rem;line-height:1.4}

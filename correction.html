@@ -723,7 +723,7 @@ function renderMethodCapacity(node,capacity){
   const buttons=document.createElement("div");buttons.className="method-levels";
   for(const id of node.niveaux){
     const button=methodButton(id,()=>{if(leafChoices[capacity.id]===id)delete leafChoices[capacity.id];else leafChoices[capacity.id]=id;render()},`${capacity.titre} : ${id}`);
-    button.classList.add("method-level");button.style.setProperty("--level-color",levels[id]?.couleur||"#aaa");button.classList.toggle("manual",leafChoices[capacity.id]===id);button.setAttribute("aria-pressed",String(leafChoices[capacity.id]===id));buttons.appendChild(button);
+    button.classList.add("method-level");button.style.setProperty("--level-color",levels[id]?.couleur||"#aaa");button.style.setProperty("--couleur-niveau",METHOD_LEVEL_COLOR[id]||"var(--gris)");button.classList.toggle("manual",leafChoices[capacity.id]===id);button.setAttribute("aria-pressed",String(leafChoices[capacity.id]===id));buttons.appendChild(button);
   }
   controls.appendChild(buttons);const comment=methodLevelCommentField(node,capacity,leafChoices[capacity.id]);if(comment)controls.appendChild(comment);row.appendChild(controls);return row;
 }
@@ -750,9 +750,9 @@ function formatDuration(seconds){const minutes=Math.floor(seconds/60),remaining=
 /* ---- Rendu des catégories par méthode (mise en page des schémas d'évaluation) ---- */
 const METHOD_CARD={capacites:"a",bareme:"a",distribution:"d",compteur:"c",minuteur:"m",bonus:"b"};
 const METHOD_ICONS={capacites:"target",bareme:"rule",distribution:"leaderboard",compteur:"add_circle",minuteur:"hourglass_empty",bonus:"star"};
-const METHOD_RING={NA:"var(--rouge)","ECA-":"var(--orange)",ECA:"var(--orange)","ECA+":"var(--orange)",A:"var(--vert)"};
+const METHOD_LEVEL_COLOR={NA:"var(--rouge)","ECA-":"var(--orange)",ECA:"var(--jaune)","ECA+":"var(--jaune)",A:"var(--vert)"};
 const METHOD_SEGMENT={NA:"var(--jauge-rouge)","ECA-":"var(--jauge-orange)",ECA:"var(--jauge-jaune)","ECA+":"var(--jauge-jaune)",A:"var(--jauge-vert)"};
-const METHOD_COUNT_COLOR={NA:"rouge","ECA-":"orange",ECA:"orange","ECA+":"jaune",A:"vert"};
+const METHOD_COUNT_COLOR={NA:"rouge","ECA-":"orange",ECA:"jaune","ECA+":"jaune",A:"vert"};
 function methodEl(tag,className,text){const element=document.createElement(tag);if(className)element.className=className;if(text!==undefined)element.textContent=text;return element}
 function methodBt(className,action,title,text){const button=methodEl("button",`bt ${className}`,text);button.type="button";button.title=title;button.setAttribute("aria-label",title);button.addEventListener("click",action);return button}
 function methodIcon(name,className=""){const symbol=methodEl("span",`menu-icon ${className}`.trim());symbol.style.setProperty("--icon",`url('icones/${name}.svg')`);symbol.setAttribute("aria-hidden","true");return symbol}
@@ -890,6 +890,92 @@ function updateMethodGauge(section,node){
   }
   return selected;
 }
+/* ---- Fenêtre d'information d'une méthode (remplace l'alerte du navigateur) ---- */
+const METHOD_NAMES={capacites:"Capacités",bareme:"Barème",distribution:"Distribution",compteur:"Compteur",minuteur:"Minuteur",bonus:"Bonus"};
+const METHOD_EXPLANATIONS={
+  capacites:["Chaque capacité reçoit un niveau. Le niveau de la catégorie est calculé à partir de la valeur de chaque niveau choisi, en tenant compte du poids des capacités.","Le pourcentage obtenu est comparé aux seuils pour déterminer le niveau de la catégorie. Vous pouvez imposer un niveau ou déplacer le curseur : le calcul automatique reste affiché (curseur fantôme, anneau coloré)."],
+  bareme:["Attribuez des points à chaque critère. Le pourcentage est le total des points obtenus rapporté au total des points possibles, sur les critères renseignés.","Ce pourcentage est comparé aux seuils pour déterminer le niveau de la catégorie. Vous pouvez imposer un niveau ou déplacer le curseur."],
+  distribution:["Comptez les observations (par exemple les arguments) pour chaque niveau avec les boutons +. Le bouton + / − bascule entre ajout et retrait.","Le pourcentage est la moyenne des valeurs des niveaux, pondérée par le nombre d’observations ; il détermine le niveau de la catégorie."],
+  compteur:["Comptez les occurrences observées (prises de parole, par exemple) avec le bouton +, et retirez-en une avec −1.","Le niveau dépend du nombre d’occurrences atteint ; le pourcentage est calculé par rapport au seuil du niveau le plus haut. Le « D » (Dépassé) se propose à partir de son seuil."],
+  minuteur:["Chronométrez l’intervention avec le bouton de démarrage ou de pause. La durée est rapprochée de la durée cible.","Le pourcentage vient de la courbe de la grille, et le niveau des seuils de durée. Sur la jauge en U, la poignée va de « trop court » à « trop long » en passant par la durée cible (virage vert) : vous pouvez la déplacer pour imposer une valeur."],
+  bonus:["Attribuez des points supplémentaires pour une qualité particulière.","Tant que la poignée reste dans la partie grise, le bonus vaut 0 ; les points commencent à partir du trait entre le gris et le bleu foncé."]
+};
+function methodInfoNumber(value){return Number(value).toLocaleString("fr-FR",{maximumFractionDigits:2})}
+function methodLevelRange(node,id,index){
+  const ids=node.niveaux,next=ids[index+1],last=index===ids.length-1;
+  if(node.methode==="compteur"){
+    const occurrences=node.seuilsOccurrences||{};
+    if(index===0)return `moins de ${occurrences[next]} occurrence${occurrences[next]>1?"s":""}`;
+    return last?`${occurrences[id]} occurrence${occurrences[id]>1?"s":""} et plus`:`de ${occurrences[id]} à ${Number(occurrences[next])-1} occurrences`;
+  }
+  if(node.methode==="minuteur"){
+    const limits=node.seuilsSecondes,separations=node.separationsECASecondes||{},f=formatTarget,fourLevels=ids.includes("ECA-");
+    if(id==="NA")return `moins de ${f(limits.naTropCourt)} ou ${f(limits.naTropLong)} et plus`;
+    if(id==="A")return `de ${f(limits.entreeA)} à ${f(limits.sortieA)}`;
+    if(id==="ECA-")return `de ${f(limits.naTropCourt)} à ${f(separations.tropCourt)}, ou de ${f(separations.tropLong)} à ${f(limits.naTropLong)}`;
+    if(id==="ECA+")return `de ${f(separations.tropCourt)} à ${f(limits.entreeA)}, ou de ${f(limits.sortieA)} à ${f(separations.tropLong)}`;
+    return fourLevels?"":`de ${f(limits.naTropCourt)} à ${f(limits.entreeA)}, ou de ${f(limits.sortieA)} à ${f(limits.naTropLong)}`;
+  }
+  const thresholds=node.seuilsPourcentage||{};
+  if(index===0)return `moins de ${methodInfoNumber(thresholds[next])} %`;
+  return last?`${methodInfoNumber(thresholds[id])} % et plus`:`de ${methodInfoNumber(thresholds[id])} % à moins de ${methodInfoNumber(thresholds[next])} %`;
+}
+function methodInfoDialog(){
+  let dialog=document.getElementById("methodInfoDialog");if(dialog)return dialog;
+  dialog=methodEl("dialog","method-info-dialog");dialog.id="methodInfoDialog";dialog.setAttribute("aria-labelledby","methodInfoTitle");
+  dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close()});
+  /* la fenêtre de correction se ferme sur un clic ou Échap en dehors d'elle : on les garde ici */
+  dialog.addEventListener("pointerdown",event=>event.stopPropagation());
+  dialog.addEventListener("keydown",event=>{if(event.key==="Escape")event.stopPropagation()});
+  document.body.appendChild(dialog);return dialog;
+}
+function openMethodInfo(node){
+  const dialog=methodInfoDialog();dialog.replaceChildren();
+  const head=methodEl("div","mi-head"),titles=methodEl("div","mi-titles"),title=methodEl("h2","mi-title",node.titre);title.id="methodInfoTitle";
+  titles.append(title,methodEl("p","mi-sub",`Méthode ${METHOD_NAMES[node.methode]||node.methode}`));
+  const icon=methodEl("span","mi-icon");icon.appendChild(methodIcon(METHOD_ICONS[node.methode]));
+  const close=methodEl("button","mi-close");close.type="button";close.setAttribute("aria-label","Fermer");close.title="Fermer";close.appendChild(methodIcon("close"));close.addEventListener("click",()=>dialog.close());
+  head.append(icon,titles,close);
+  const body=methodEl("div","mi-body");
+  const section=(label,...content)=>{const block=methodEl("section","mi-section");block.appendChild(methodEl("h3","",label));block.append(...content);body.appendChild(block);return block};
+  if(node.informationsFonctionnement)section("Consigne de la grille",methodEl("p","mi-lead",node.informationsFonctionnement));
+  const facts=[node.methode==="bonus"?`Jusqu’à ${methodInfoNumber(node.pointsMaximum)} point${Number(node.pointsMaximum)>1?"s":""} de bonus, par pas de ${methodInfoNumber(node.pas||.25)}`:`Coefficient ${getCategoryCoefficient(node)} · ${node.priseEnCompte==="facultative"?"prise en compte facultative":"prise en compte obligatoire"}`];
+  if(node.methode==="minuteur")facts.push(`Durée cible : ${formatDuration(node.dureeCibleSecondes)}`);
+  const explanation=(METHOD_EXPLANATIONS[node.methode]||[]).map(text=>methodEl("p","",text));
+  const list=methodEl("ul","mi-facts");for(const fact of facts)list.appendChild(methodEl("li","",fact));
+  section("Fonctionnement",...explanation,list);
+  if(node.methode!=="bonus"){
+    const levelsBlock=methodEl("div","mi-levels");
+    node.niveaux.forEach((id,index)=>{
+      const row=methodEl("div","mi-level"),badge=methodEl("span","mi-badge",id);badge.style.setProperty("--couleur-niveau",METHOD_LEVEL_COLOR[id]||"var(--gris)");
+      const text=methodEl("div","mi-level-text"),name=methodEl("strong","",levels[id]?.libelle||id);text.appendChild(name);
+      const range=methodLevelRange(node,id,index);if(range)text.appendChild(methodEl("div","mi-range",range));
+      if((node.methode==="capacites"||node.methode==="distribution")&&node.valeursNiveaux?.[id]!==undefined)text.appendChild(methodEl("div","mi-range",`Valeur retenue dans le calcul : ${methodInfoNumber(node.valeursNiveaux[id])} %`));
+      const comments=node.commentairesNiveaux?.[id]||[];
+      if(comments.length){const items=methodEl("ul","mi-comments");for(const item of comments)items.appendChild(methodEl("li","",item.texte));text.appendChild(items)}
+      row.append(badge,text);levelsBlock.appendChild(row);
+    });
+    section("Niveaux et commentaires associés",levelsBlock);
+  }
+  const motifs=[["PROBLEME","Attention","!"],["VALORISATION","Dépassé","D"]];
+  const motifBlocks=motifs.map(([kind,label])=>[label,(node.commentMotifs||[]).filter(item=>item.kind===kind)]).filter(([,items])=>items.length);
+  if(motifBlocks.length){
+    const wrap=methodEl("div","mi-levels");
+    for(const [label,items] of motifBlocks){const row=methodEl("div","mi-level"),badge=methodEl("span",`mi-badge mi-badge--${label==="Attention"?"alerte":"depasse"}`,label==="Attention"?"!":"D");const text=methodEl("div","mi-level-text");text.appendChild(methodEl("strong","",label));const ul=methodEl("ul","mi-comments");for(const item of items)ul.appendChild(methodEl("li","",item.label));text.appendChild(ul);row.append(badge,text);wrap.appendChild(row)}
+    section("Avertissement et dépassement",wrap);
+  }
+  if(node.methode==="capacites"){
+    const items=methodEl("ul","mi-facts");
+    for(const capacity of descendantsLeaves(node)){const li=methodEl("li","");li.append(methodEl("strong","",capacity.titre),document.createTextNode(` — poids ${getWeight(capacity)}${capacity.aideNotation?` · ${capacity.aideNotation}`:""}`));items.appendChild(li)}
+    if(items.children.length)section("Capacités évaluées",items);
+  }
+  if(node.methode==="bareme"){
+    const items=methodEl("ul","mi-facts");
+    for(const criterion of node.criteres||[]){const li=methodEl("li","");li.append(methodEl("strong","",criterion.titre),document.createTextNode(` — ${methodInfoNumber(criterion.pointsMaximum)} point${Number(criterion.pointsMaximum)>1?"s":""}${criterion.aideNotation?` · ${criterion.aideNotation}`:""}`));items.appendChild(li)}
+    if(items.children.length)section("Critères évalués",items);
+  }
+  dialog.append(head,body);dialog.showModal();body.scrollTop=0;
+}
 function renderMethodCategory(node,categoryOnly=false){
   const state=methodStates[node.id]||(methodStates[node.id]={}),isBonus=node.methode==="bonus",calculation=isBonus?null:methodCalculation(node);
   const evaluated=(state.evaluee??node.evaluee)!==false,levelCount=isBonus?0:node.niveaux.length;
@@ -898,18 +984,33 @@ function renderMethodCategory(node,categoryOnly=false){
   const title=methodEl("h2","titre"),titleText=methodEl("span","titre-texte",node.titre);titleText.title=node.titre;title.append(methodIcon(METHOD_ICONS[node.methode]),titleText);card.appendChild(title);
   /* colonne de gauche : coefficient (bouton évaluée / non évaluée) et aide */
   const optional=node.priseEnCompte==="facultative",kind=isBonus?"Bonus":optional?"Catégorie facultative":"Coefficient de catégorie";
-  const noteTitle=`${kind} : ${evaluated?"évaluée":"non évaluée"} (cliquer pour ${evaluated?"l’exclure de":"l’inclure dans"} la note)`;
-  const note=methodBt(`note${isBonus?" note--plus":""}${optional&&!isBonus?" note--pointille":""}${evaluated?"":" note--exclue"}`,()=>{state.evaluee=!evaluated;render()},noteTitle,isBonus?"+":optional?`(${getCategoryCoefficient(node)})`:String(getCategoryCoefficient(node)));
+  const noteTitle=`${kind} : ${evaluated?"évaluée":"non notée (NN)"} — cliquer pour ${evaluated?"ne plus la noter":"la noter de nouveau"}`;
+  const noteValue=isBonus?"+":optional?`(${getCategoryCoefficient(node)})`:String(getCategoryCoefficient(node));
+  const note=methodBt(`note${isBonus&&evaluated?" note--plus":""}${(optional&&!isBonus)||!evaluated?" note--pointille":""}${evaluated?"":" note--exclue"}`,()=>{state.evaluee=!evaluated;render()},noteTitle,evaluated?noteValue:"NN");
   note.setAttribute("aria-pressed",String(evaluated));
-  const help=methodBt("aide",()=>window.alert(node.informationsFonctionnement||"Aucune information disponible."),`Informations sur ${node.titre}`);help.appendChild(methodIcon("info"));
+  const help=methodBt("aide",()=>openMethodInfo(node),`Informations sur ${node.titre}`);help.appendChild(methodIcon("info"));
   const left=methodEl("div","gauche");left.append(note,help);card.appendChild(left);
   const afterCard=[];
   if(isBonus){
-    const stops=methodGaugeStops(node),gauge=methodEl("div","jauge jauge--bleu");gauge.style.setProperty("--degrade",methodGradient(methodGaugeColors(node),stops));
-    const slider=methodEl("input","method-slider");slider.type="range";slider.min="0";slider.max=String(node.pointsMaximum);slider.step=String(node.pas||.25);slider.value=String(state.bonus||0);slider.setAttribute("aria-label",`Points bonus pour ${node.titre}`);
-    const cursor=methodEl("i","curseur curseur--plein"),output=methodEl("output","valeur-texte");
-    const place=()=>{const value=Number(state.bonus)||0;cursor.style.setProperty("--valeur",`${Math.min(100,100*value/Number(node.pointsMaximum))}%`);output.textContent=`+${value.toLocaleString("fr-FR")}`;slider.setAttribute("aria-valuetext",output.textContent)};
-    slider.addEventListener("input",()=>{state.bonus=Number(slider.value);place();updateFinalScore()});
+    /* Gris = 0 (une seule position, au centre) ; les points se répartissent ensuite du trait gris/bleu foncé jusqu'au bout de la jauge. */
+    const stops=methodGaugeStops(node),zero=stops[0],maximum=Number(node.pointsMaximum),step=Number(node.pas)||.25,count=Math.max(1,Math.round(maximum/step));
+    const gauge=methodEl("div","jauge jauge--bleu");gauge.style.setProperty("--degrade",methodGradient(methodGaugeColors(node),stops));
+    const slider=methodEl("input","method-slider");slider.type="range";slider.min="0";slider.max=String(count);slider.step="1";slider.setAttribute("aria-label",`Points bonus pour ${node.titre}`);
+    const cursor=methodEl("i","curseur"),output=methodEl("output","valeur-texte");
+    const positionOf=index=>index<=0?zero/2:zero+(100-zero)*index/count;
+    const place=()=>{
+      const value=Number(state.bonus)||0,index=Math.min(count,Math.max(0,Math.round(value/step)));
+      cursor.style.setProperty("--valeur",`${positionOf(index)}%`);cursor.classList.toggle("curseur--plein",index>0);
+      output.textContent=`+${value.toLocaleString("fr-FR")}`;output.classList.toggle("valeur-texte--zero",index===0);
+      slider.value=String(index);slider.setAttribute("aria-valuetext",`${value.toLocaleString("fr-FR")} point${value>1?"s":""} de bonus`);
+    };
+    const setIndex=index=>{const clamped=Math.min(count,Math.max(0,index));state.bonus=Number((clamped*step).toFixed(4));place();updateFinalScore()};
+    const fromPointer=event=>{const bounds=gauge.getBoundingClientRect(),position=100*(event.clientX-bounds.left)/bounds.width;setIndex(position<zero?0:Math.round((position-zero)/(100-zero)*count))};
+    let dragging=false;
+    gauge.addEventListener("pointerdown",event=>{if(event.button>0)return;dragging=true;gauge.setPointerCapture(event.pointerId);fromPointer(event)});
+    gauge.addEventListener("pointermove",event=>{if(dragging)fromPointer(event)});
+    gauge.addEventListener("pointerup",()=>{dragging=false});gauge.addEventListener("pointercancel",()=>{dragging=false});
+    slider.addEventListener("input",()=>setIndex(Number(slider.value)));
     gauge.append(slider,cursor,output);place();card.appendChild(gauge);
     const options=node.commentairesValorisation||[],chosen=options.find(item=>item.id===state.bonusComment);
     const field=methodCommentField({options,selectedId:state.bonusComment||"",custom:Object.hasOwn(state,"bonusText"),text:Object.hasOwn(state,"bonusText")?state.bonusText:(chosen?.texte||""),label:`Commentaire de bonus pour ${node.titre}`,
@@ -928,7 +1029,7 @@ function renderMethodCategory(node,categoryOnly=false){
       render();
     };
     const button=methodBt(`bouton${distribution?` bouton--violet bouton--plus${state.decrement?" bouton--moins":""}`:""}`,action,`${node.titre} : ${id}`,id);
-    button.dataset.methodLevel=id;button.style.setProperty("--couleur-anneau",METHOD_RING[id]||"var(--gris)");button.setAttribute("aria-pressed",String(selected===id));row.appendChild(button);
+    button.dataset.methodLevel=id;button.style.setProperty("--couleur-niveau",METHOD_LEVEL_COLOR[id]||"var(--gris)");button.setAttribute("aria-pressed",String(selected===id));row.appendChild(button);
   }
   if(node.depasseAutorise!==false){
     const exceeded=Boolean(categoryEvaluations[node.id]?.exceeded),suggested=node.methode==="compteur"&&(Number(state.count)||0)>=Number(node.seuilsOccurrences.D)&&!exceeded;
