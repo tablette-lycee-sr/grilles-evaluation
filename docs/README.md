@@ -1,7 +1,7 @@
 # Documentation du projet
 
 | Document | Pour quoi faire |
-|---|---|
+|---|--- |
 | [`PROJECT.md`](PROJECT.md) | Comprendre le projet : objectifs, utilisateur, contraintes, vocabulaire. |
 | [`spec/methodes-correction.md`](spec/methodes-correction.md) | **Référence** des six méthodes de correction (calculs, curseurs, Attention/Dépassé). |
 | [`spec/format-grille.md`](spec/format-grille.md) | Format du fichier de grille JSON. |
