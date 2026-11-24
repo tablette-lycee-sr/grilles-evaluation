@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+      - name: Tests unitaires
+        run: npm test
+      - name: Installer le navigateur de test
+        run: npx playwright install --with-deps chromium
+      - name: Tests de bout en bout
+        run: npm run test:e2e
+      - name: Captures d'écran
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures-e2e
+          path: test-results/screens
+          if-no-files-found: ignore
