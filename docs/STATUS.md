@@ -4,8 +4,9 @@
 Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les issues GitHub ; ce fichier donne la vue d'ensemble.
 
 ## Fonctionnalités
+
 | Fonctionnalité | État | Spec | Tests | Notes |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Grille JSON (chargement, validation) | ✅ | `spec/format-grille.md` | unitaires (21) | Anciennes grilles CSV encore lues, sans conversion automatique. |
 | Éditeur de grilles | ✅ | README (section Éditeur) | unitaires | Éditeur de courbe du Minuteur inclus. |
 | Six méthodes : calculs | ✅ | `spec/methodes-correction.md` | unitaires | Zone sensible. |
@@ -23,11 +24,13 @@ Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les
 | Découpage de `correction.html` en fichiers | ⬜ | — | — | T-01. |
 
 ## Points encore ouverts (repris de la spec des méthodes)
+
 Schéma JSON versionné et reprise éventuelle des corrections locales · contraintes de validation des seuils du Minuteur et comportement de l'éditeur de courbe · seuils exacts restants et précision d'affichage · contenu de la fiche PDF, confidentialité, corrections incomplètes · plafonds et origine des anciens bonus lors d'une migration.
 
 ## Tâches prêtes à créer comme issues
+
 | ID | Titre | Niveau | Critères d'acceptation (résumé) |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | T-01 | Extraire le JavaScript de `correction.html` en fichiers (`src/js/…`), un module par PR | agent:ok, prudent | Comportement identique ; tests unitaires adaptés (marqueurs `section()`), e2e verts ; pas de build, scripts classiques. |
 | T-02 | Fiche imprimable : détail par méthode, vérifier NN / commentaires libres / Minuteur manuel | **sensible** | Fiche cohérente avec l'écran ; test sur une grille d'exemple ; contenu validé par l'utilisateur. |
 | T-03 | Sauvegarde et restauration du devoir sur fichier (spec puis code) | **sensible** | Spec rédigée et validée d'abord ; aller-retour sans perte ; données personnelles documentées. |
@@ -36,6 +39,7 @@ Schéma JSON versionné et reprise éventuelle des corrections locales · contra
 | T-06 | Valider l'échelle du Bonus et les critères du Barème (couleur ? niveau ?) | humain | Décision notée dans `DECISIONS.md`. |
 
 ## Bugs et risques connus
+
 - Un ancien choix manuel du Minuteur (avant `manualSeconds`) est replacé sur la piste haute par recherche sur la courbe : approximation acceptable, à surveiller.
 - Les tests unitaires dépendent des marqueurs de fonctions dans `correction.html` (voir `AGENTS.md`, « Pièges »).
 - Les icônes de `icones/` sont indispensables à l'affichage (masques CSS) ; une icône manquante rend le bouton vide sans erreur.
