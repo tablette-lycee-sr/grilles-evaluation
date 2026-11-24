@@ -2,17 +2,5 @@
 {
     "inputs": [],
     "servers": {
-        "playwright": {
-            "type": "stdio",
-            "command": "C:\\Windows\\System32\\cmd.exe",
-            "args": [
-                "/d",
-                "/s",
-                "/c",
-                "npx.cmd",
-                "-y",
-                "@playwright/mcp@latest"
-            ]
-        }
     }
 }
