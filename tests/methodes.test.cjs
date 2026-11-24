@@ -49,7 +49,8 @@ function makeEngine() {
       calculate(id) { return methodCalculation(grid.elements.find(node => node.id === id)); },
       curve(id, seconds) { return timerPercentage(grid.elements.find(node => node.id === id), seconds); },
       snapshot() { return snapshotMethodStates(); },
-      score() { return calculateFinalScore(); }
+      score() { return calculateFinalScore(); },
+      statut(id) { return categoryStatut(grid.elements.find(node => node.id === id)); }
     };
   `;
   vm.runInContext(source, context);
@@ -153,6 +154,36 @@ test("une catégorie facultative ne diminue pas la moyenne", () => {
   engine.state("qualite-arguments", {evaluee: false});
   engine.state("participation-echanges", {count: 0});
   assert.ok(Math.abs(engine.score() - 20 / 3) < 1e-10);
+});
+
+test("le statut par défaut suit la grille : nn si « evaluee » est false, plus si facultative", () => {
+  const engine = makeEngine();
+  assert.equal(engine.statut("expression-orale"), "note");
+  assert.equal(engine.statut("participation-echanges"), "plus");
+  engine.state("expression-orale", {evaluee: false});
+  assert.equal(engine.statut("expression-orale"), "nn");
+  engine.state("expression-orale", {evaluee: false, statut: "plus"});
+  assert.equal(engine.statut("expression-orale"), "plus");
+});
+
+test("les statuts nn et ne excluent la catégorie, 2(+) ne compte que si elle est favorable", () => {
+  const engine = makeEngine();
+  engine.state("expression-orale", {evaluee: false});
+  engine.state("contenu-expose", {scores: {"precision-informations": 2}});
+  engine.state("gestion-temps", {evaluee: false});
+  engine.state("qualite-arguments", {evaluee: false});
+  const reference = engine.score();
+  engine.state("qualite-arguments", {counts: {NA: 1}, statut: "plus"});
+  assert.equal(engine.score(), reference);
+  engine.state("qualite-arguments", {counts: {NA: 1}, statut: "nn"});
+  assert.equal(engine.score(), reference);
+  engine.state("qualite-arguments", {counts: {NA: 1}, statut: "ne"});
+  assert.equal(engine.score(), reference);
+  engine.state("qualite-arguments", {counts: {NA: 1}, statut: "note"});
+  assert.ok(engine.score() < reference);
+  engine.choices({"voix-audible": "ECA-", "structurer-propos": "A"});
+  engine.state("expression-orale", {statut: "plus"});
+  assert.ok(engine.score() > reference);
 });
 
 test("la somme des bonus est plafonnée sans modifier les points attribués", () => {

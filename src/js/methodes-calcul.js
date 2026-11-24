@@ -1,3 +1,11 @@
+const CATEGORY_STATUTS=["note","nn","plus","ne"],CATEGORY_STATUT_SUIVANT={note:"nn",nn:"plus",plus:"ne",ne:"note"};
+function categoryStatut(node,states=methodStates){
+  const state=methodState(node,states);
+  if(node.methode==="bonus")return (state.evaluee??node.evaluee)===false?"nn":"note";
+  if(state.statut)return state.statut;
+  if((state.evaluee??node.evaluee)===false)return "nn";
+  return node.priseEnCompte==="facultative"?"plus":"note";
+}
 function methodState(node,states=methodStates){return states[node.id]||{}}
 function timerSeconds(state){return Math.max(0,Number(state.elapsedMs||0)+(state.startedAt?Date.now()-state.startedAt:0))/1000}
 function timerPercentage(node,seconds){

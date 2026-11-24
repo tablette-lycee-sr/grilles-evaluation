@@ -1,15 +1,20 @@
 function renderMethodCategory(node,categoryOnly=false){
   const state=methodStates[node.id]||(methodStates[node.id]={}),isBonus=node.methode==="bonus",calculation=isBonus?null:methodCalculation(node);
-  const evaluated=(state.evaluee??node.evaluee)!==false,levelCount=isBonus?0:node.niveaux.length;
-  const section=methodEl("section",`method-category method-${node.methode}${levelCount===4?" method-n4":""}${evaluated?"":" method-hors-note"}`);section.dataset.methodNode=node.id;
+  const statut=categoryStatut(node),horsNote=statut==="nn"||statut==="ne",levelCount=isBonus?0:node.niveaux.length;
+  const section=methodEl("section",`method-category method-${node.methode}${levelCount===4?" method-n4":""}${horsNote?" method-hors-note":""}${statut==="ne"?" method-ne":""}`);section.dataset.methodNode=node.id;
   const card=methodEl("div",`carte carte--${METHOD_CARD[node.methode]}`);section.appendChild(card);
   const title=methodEl("h2","titre"),titleText=methodEl("span","titre-texte",node.titre);titleText.title=node.titre;title.append(methodIcon(METHOD_ICONS[node.methode]),titleText);card.appendChild(title);
-  /* colonne de gauche : coefficient (bouton évaluée / non évaluée) et aide */
+  /* colonne de gauche : coefficient (bouton du cycle de statuts Noté / NN / 2(+) / NE) et aide */
   const optional=node.priseEnCompte==="facultative",kind=isBonus?"Bonus":optional?"Catégorie facultative":"Coefficient de catégorie";
-  const noteTitle=`${kind} : ${evaluated?"évaluée":"non notée (NN)"} — cliquer pour ${evaluated?"ne plus la noter":"la noter de nouveau"}`;
-  const noteValue=isBonus?"+":optional?`(${getCategoryCoefficient(node)})`:String(getCategoryCoefficient(node));
-  const note=methodBt(`note${isBonus&&evaluated?" note--plus":""}${(optional&&!isBonus)||!evaluated?" note--pointille":""}${evaluated?"":" note--exclue"}`,()=>{state.evaluee=!evaluated;render()},noteTitle,evaluated?noteValue:"NN");
-  note.setAttribute("aria-pressed",String(evaluated));
+  const coefficient=getCategoryCoefficient(node);
+  const statutLabels={note:isBonus?"+":optional?`(${coefficient})`:`${coefficient}`,nn:"NN",plus:optional?`(${coefficient}+)`:`${coefficient}(+)`,ne:"NE"};
+  const statutTitres={note:"notée",nn:"évaluée, non notée (NN)",plus:"notée seulement si elle augmente la note finale",ne:"non évaluée (NE), évaluation désactivée"};
+  const noteTitle=`${kind} : ${statutTitres[statut]} — cliquer pour passer à « ${statutLabels[CATEGORY_STATUT_SUIVANT[statut]]} »`;
+  const note=methodBt(`note${isBonus&&!horsNote?" note--plus":""}${(optional&&!isBonus)||horsNote?" note--pointille":""}${horsNote?" note--exclue":""}`,()=>{
+    if(isBonus)state.evaluee=statut==="nn";
+    else{state.statut=CATEGORY_STATUT_SUIVANT[statut];delete state.evaluee}
+    render()
+  },noteTitle,statutLabels[statut]);
   const help=methodBt("aide",()=>openMethodInfo(node),`Informations sur ${node.titre}`);help.appendChild(methodIcon("info"));
   const left=methodEl("div","gauche");left.append(note,help);card.appendChild(left);
   const afterCard=[];
@@ -131,6 +136,7 @@ function renderMethodCategory(node,categoryOnly=false){
   if(timerWarning){const text=methodEl("p","method-warning-comment",node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.label||"");card.appendChild(text)}
   else{const extra=renderCategoryEvaluationControls(node);if(extra){const wrap=methodChamp(extra.querySelector("select"));wrap.classList.add("champ--motif");card.appendChild(wrap)}}
   if(details)section.appendChild(details);
+  if(statut==="ne")section.querySelectorAll("button,input,select,textarea").forEach(control=>{if(!control.closest(".note")&&!control.closest(".aide"))control.disabled=true});
   updateMethodGauge(section,node);
   return section;
 }

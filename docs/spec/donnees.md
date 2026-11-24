@@ -31,6 +31,7 @@ Une **correction** (`studentCorrections[idÉlève]` et `currentCorrection`) cont
 | `commentSelections` | toutes | `"<idPropriétaire>:<niveau>"` → id du commentaire prédéfini (`""` = aucun) |
 | `commentTexts` | toutes | `"<idPropriétaire>:<niveau>"` → **texte libre** (prioritaire sur le prédéfini, même vide) ; effacé quand on choisit dans la liste |
 | `evaluee` | toutes | `false` = non noté (NN) ; absent = valeur de la grille |
+| `statut` | toutes (hors Bonus) | `note` / `nn` / `plus` / `ne` (cycle D-014) ; absent = déduit de `evaluee` (false → `nn`), puis de `priseEnCompte` (facultative → `plus`), sinon `note` |
 | `detailsOpen`, `popupDetailsOpen` | Capacités, Barème | tiroir ouvert (écran principal / fenêtre de correction) |
 
 `<idPropriétaire>` = id de la catégorie, ou de la capacité pour un commentaire de capacité.

@@ -32,7 +32,7 @@ Code : `renderMethodCategory` / `updateMethodGauge` (JS), blocs `.method-categor
 - **Jauge** : segments aux teintes **désaturées** (`--jauge-*`), à ne pas remplacer par le nuancier vif.
 - **Curseurs** : calculé = rond creux ; **manuel** = rond blanc plein ; **fantôme** = rond translucide à la valeur calculée quand un curseur manuel existe. Un clic sur le curseur manuel (sans le déplacer) ou la touche Échap revient au calcul.
 - **Attention** actif : triangle rouge avec intérieur blanc ; **D** actif : rond bleu ; D **suggéré** (Compteur au seuil D) : anneau bleu.
-- **Non noté** : le bouton coefficient affiche **NN** (bordure en pointillés, comme les coefficients entre parenthèses des catégories facultatives) et **toute la carte, tiroir compris, passe à 50 % d'opacité**. Un second clic restaure la valeur précédente. La pastille « + » du Bonus devient aussi NN.
+- **Cycle de notation du bouton coefficient** (D-014) : chaque clic applique le statut suivant, le dernier ramène au premier. **Noté** (le coefficient s'affiche, carte normale) → **NN** — évalué mais non noté (`NN`, carte aux **contours en tirets**, opacité normale ; la catégorie reste évaluable mais est exclue du calcul) → **2(+)** — notée seulement si cette note augmente la note finale (carte normale) → **NE** — non évaluée, non notée (`NE`, **opacité à 25 %**, contours en tirets, **contrôles désactivés** — seul le bouton coefficient et l'aide restent actifs) → retour à Noté. La pastille « + » du Bonus reste sur deux états (+ / NN, bordure en pointillés).
 
 ## 4. Colonne droite par méthode
 | Méthode | Contenu |

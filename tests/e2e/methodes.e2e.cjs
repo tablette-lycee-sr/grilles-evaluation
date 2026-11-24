@@ -65,16 +65,42 @@ test("minuteur : la poignée suit le fer à cheval (piste haute, virage, piste b
   await shot(page, "minuteur-fer-a-cheval");
 }));
 
-test("bouton coefficient : NN, pointillés, bloc à 50 %, puis retour à la valeur précédente", () => avec(async page => {
-  const note = `${section("participation-echanges")} .note`;
-  assert.equal(await page.locator(note).innerText(), "(2)");
+test("bouton coefficient : cycle Noté, NN, 2(+), NE puis retour à Noté", () => avec(async page => {
+  const id = "expression-orale", note = `${section(id)} .note`, carte = `${section(id)} .carte`;
+  const style = (selecteur, propriete) => page.evaluate(([s, p]) => getComputedStyle(document.querySelector(s))[p], [selecteur, propriete]);
+  assert.equal(await page.locator(note).innerText(), "3");
   await page.click(note);
   assert.equal(await page.locator(note).innerText(), "NN");
-  assert.equal(await page.evaluate(s => getComputedStyle(document.querySelector(s)).opacity, section("participation-echanges")), "0.5");
-  assert.equal(await page.evaluate(s => getComputedStyle(document.querySelector(s)).borderTopStyle, note), "dashed");
+  assert.equal(await style(section(id), "opacity"), "1");
+  assert.equal(await style(carte, "borderTopStyle"), "dashed");
+  await page.click(`${section(id)} .boutons [data-method-level="ECA-"]`);
+  assert.equal(await page.locator(`${section(id)} .boutons [data-method-level="ECA-"]`).getAttribute("aria-pressed"), "true");
   await page.click(note);
-  assert.equal(await page.locator(note).innerText(), "(2)");
-  assert.equal(await page.evaluate(s => getComputedStyle(document.querySelector(s)).opacity, section("participation-echanges")), "1");
+  assert.equal(await page.locator(note).innerText(), "3(+)");
+  assert.equal(await style(carte, "borderTopStyle"), "solid");
+  await page.click(note);
+  assert.equal(await page.locator(note).innerText(), "NE");
+  assert.equal(await style(section(id), "opacity"), "0.25");
+  assert.equal(await style(carte, "borderTopStyle"), "dashed");
+  assert.ok(await page.locator(`${section(id)} .boutons [data-method-level="ECA-"]`).isDisabled());
+  assert.ok(await page.locator(`${section(id)} .rond`).isDisabled());
+  assert.ok(!(await page.locator(`${section(id)} .note`).isDisabled()));
+  await page.click(note);
+  assert.equal(await page.locator(note).innerText(), "3");
+  assert.equal(await style(section(id), "opacity"), "1");
+  assert.equal(await page.locator(`${section(id)} .boutons [data-method-level="ECA-"]`).isDisabled(), false);
+}));
+
+test("catégorie facultative : le bouton démarre à (2+) et suit le même cycle", () => avec(async page => {
+  const note = `${section("participation-echanges")} .note`;
+  assert.equal(await page.locator(note).innerText(), "(2+)");
+  await page.click(note);
+  assert.equal(await page.locator(note).innerText(), "NE");
+  assert.equal(await page.evaluate(s => getComputedStyle(document.querySelector(s)).opacity, section("participation-echanges")), "0.25");
+  await page.click(note);
+  await page.click(note);
+  assert.equal(await page.locator(note).innerText(), "NN");
+  assert.equal((await etat(page, "participation-echanges")).statut, "nn");
 }));
 
 test("commentaire de niveau : texte éditable, liste prédéfinie, texte libre conservé", () => avec(async page => {

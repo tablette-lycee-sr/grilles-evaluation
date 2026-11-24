@@ -701,9 +701,11 @@ function renderMethodDetails(node,calculation,categoryOnly){
 }
 function calculateFinalScore(){
   const categories=(grid.elements||[]).map(category=>{
-    if(category.methode==="bonus"||(methodState(category).evaluee??category.evaluee)===false)return null;
+    if(category.methode==="bonus")return null;
+    const statut=categoryStatut(category);
+    if(statut==="nn"||statut==="ne")return null;
     const percentage=getCategoryPercentage(category);
-    return percentage===null?null:{percentage,coefficient:getCategoryCoefficient(category),optional:category.priseEnCompte==="facultative"};
+    return percentage===null?null:{percentage,coefficient:getCategoryCoefficient(category),optional:category.priseEnCompte==="facultative"||statut==="plus"};
   }).filter(Boolean);
   const required=categories.filter(category=>!category.optional),optional=categories.filter(category=>category.optional).sort((first,second)=>second.percentage-first.percentage);
   if(!required.length)return null;
@@ -713,7 +715,7 @@ function calculateFinalScore(){
 }
 function updateFinalScore(){
   const score=calculateFinalScore(),formatted=score===null?"—/20":`${score.toFixed(2).replace(".",",")}/20`;
-  const partial=(grid.elements||[]).some(node=>node.methode&&node.methode!=="bonus"&&node.priseEnCompte!=="facultative"&&(methodState(node).evaluee??node.evaluee)!==false&&(()=>{const result=methodCalculation(node);return result.percentage===null||result.partial})());
+  const partial=(grid.elements||[]).some(node=>node.methode&&node.methode!=="bonus"&&node.priseEnCompte!=="facultative"&&categoryStatut(node)==="note"&&(()=>{const result=methodCalculation(node);return result.percentage===null||result.partial})());
   const output=document.getElementById("finalScore");output.textContent=formatted+(score!==null&&partial?" *":"");output.title=partial?"Note provisoire : des catégories obligatoires sont incomplètes.":"Note calculée";
   output.setAttribute("aria-label",partial?`Note provisoire : ${formatted}`:`Note calculée : ${formatted}`);
 }
