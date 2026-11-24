@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schémas d'évaluation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Open Sans (texte) + Material Symbols (icônes) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap">
+<style>
+  /* =====================================================================
+     1. VARIABLES UNIQUES — elles commandent tous les schémas
+     --u = unité de base : calc(1 * var(--u)) donne la taille d'origine (cartes de 278 px).
+     Changer sa valeur (calc(1.5 * var(--u)), calc(2 * var(--u))…) agrandit ou réduit tout proportionnellement.
+     ===================================================================== */
+  :root {
+    --u: 1px;
+
+    /* couleurs */
+    --fond: #2d3034;
+    --bouton: #44474c;
+    --gris: #858585;
+    --noir: #000;
+    --blanc: #fff;
+    --violet: #a44cbd;
+    --bleu: #4ba0d6;
+    --vert: #17a13f;
+    --rouge: #ff3131;
+    --orange: #ffbd59;
+    --jaune: #ffd737;               /* bouton « sélectionné » */
+    --fleche: #1f1f1f;              /* flèches ▼ et icônes sombres */
+
+    /* jauges (une seule teinte par segment, identique partout) */
+    --jauge-rouge: #a14732;
+    --jauge-jaune: #c3a91e;
+    --jauge-vert: #099332;
+    --jauge-neutre: #464647;        /* jauge bleue (Bonus) */
+    --jauge-bleu-fonce: #095994;
+
+    /* dimensions communes */
+    --carte-l: calc(278 * var(--u));
+    --marge: calc(3 * var(--u));                   /* + liseré = 4 px de marge intérieure */
+    --liseré: calc(1 * var(--u));
+    --rayon: calc(10 * var(--u));
+    --ecart: calc(3 * var(--u));
+    --col: calc(37 * var(--u));                    /* colonnes latérales et boutons */
+    --bouton-h: calc(22 * var(--u));
+    --anneau-h: calc(24 * var(--u));
+    --anneau: calc(3 * var(--u));
+    --jauge-l: calc(117 * var(--u));               /* = NA + ECA + A + 2 écarts */
+    --jauge-h: calc(7 * var(--u));
+    --curseur: calc(13 * var(--u));
+    --titre-h: calc(24 * var(--u));
+
+    /* typographie */
+    --police: "Open Sans", sans-serif;
+    --t-titre: calc(15 * var(--u));
+    --t-bouton: calc(8 * var(--u));
+    --t-note: calc(10.5 * var(--u));
+    --t-valeur: calc(12 * var(--u));
+    --t-grand: calc(14.5 * var(--u));
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* =====================================================================
+     2. PAGE
+     ===================================================================== */
+  body {
+    margin: 0; padding: calc(24 * var(--u));
+    background: #fff;
+    font-family: var(--police);
+    color: var(--fond);
+  }
+  .page-titre { margin: 0 0 calc(24 * var(--u)); text-align: center; font-size: calc(18 * var(--u)); font-weight: 700; }
+  .galerie {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, var(--carte-l));
+    gap: calc(32 * var(--u)) calc(40 * var(--u));
+    justify-content: center; align-items: start;
+  }
+  .schema { margin: 0; }
+  .schema figcaption { margin-bottom: calc(8 * var(--u)); font-size: calc(13 * var(--u)); font-weight: 700; color: var(--gris); }
+
+  /* =====================================================================
+     3. CARTE (coque commune) + une variante de grille par schéma
+     ===================================================================== */
+  .carte {
+    width: var(--carte-l);
+    padding: var(--marge);
+    display: grid;
+    column-gap: var(--ecart);
+    border: var(--liseré) solid var(--noir);
+    border-radius: var(--rayon);
+    background: var(--fond);
+    color: var(--blanc);
+    font-family: var(--police);
+  }
+  /* Capacités et Barème */
+  .carte--a {
+    height: calc(78 * var(--u));
+    grid-template-columns: var(--col) 1fr var(--col);
+    grid-template-rows: calc(28 * var(--u)) calc(22 * var(--u)) calc(20 * var(--u));
+    grid-template-areas: "titre titre droite" "gauche boutons droite" "gauche jauge droite";
+  }
+  /* Distribution */
+  .carte--d {
+    height: calc(94 * var(--u));
+    grid-template-columns: var(--col) 1fr var(--col);
+    grid-template-rows: var(--titre-h) calc(36 * var(--u)) calc(26 * var(--u));
+    grid-template-areas: "titre titre titre" "gauche boutons droite" "gauche jauge droite";
+  }
+  /* Compteur */
+  .carte--c {
+    height: calc(84 * var(--u));
+    grid-template-columns: var(--col) 1fr var(--col);
+    grid-template-rows: calc(28 * var(--u)) calc(22 * var(--u)) calc(20 * var(--u)) calc(6 * var(--u));
+    grid-template-areas: "titre titre droite" "gauche boutons droite" "gauche jauge droite" "gauche . droite";
+  }
+  /* Minuteur */
+  .carte--m {
+    height: calc(90 * var(--u));
+    grid-template-columns: var(--col) 1fr calc(65.5 * var(--u));
+    grid-template-rows: var(--titre-h) calc(29 * var(--u)) calc(29 * var(--u));
+    grid-template-areas: "titre titre titre" "gauche boutons droite" "gauche jauge droite-bas";
+    --marge-jauge: calc(0 * var(--u));
+  }
+  /* Bonus */
+  .carte--b {
+    height: calc(75 * var(--u));
+    grid-template-columns: var(--col) 1fr;
+    grid-template-rows: var(--titre-h) calc(19 * var(--u)) calc(24 * var(--u));
+    grid-template-areas: "titre titre" "gauche jauge" "gauche champ";
+    column-gap: calc(7 * var(--u));
+  }
+
+  /* =====================================================================
+     4. BLOCS COMMUNS
+     ===================================================================== */
+
+  /* ---- Titre + icône ---- */
+  .titre {
+    grid-area: titre;
+    display: flex; align-items: center; gap: calc(6 * var(--u));
+    margin: 0; font-size: var(--t-titre); font-weight: 400;
+  }
+  .titre .material-symbols-outlined { font-size: calc(24 * var(--u)); color: var(--gris); }
+
+  /* ---- Colonne de gauche : note + aide ---- */
+  .gauche {
+    grid-area: gauche; align-self: end;
+    height: calc(43 * var(--u));
+    display: flex; flex-direction: column; gap: calc(2 * var(--u));
+  }
+  .note {
+    height: calc(17 * var(--u));
+    display: grid; place-items: center;
+    border: calc(1 * var(--u)) solid var(--gris); border-radius: calc(9 * var(--u));
+    font-size: var(--t-note);
+  }
+  .note--pointille { border-style: dashed; }
+  .note--plus { font-size: calc(13 * var(--u)); }
+  .aide {
+    flex: 1;
+    display: grid; place-items: center;
+    border-radius: var(--rayon);
+    background: var(--gris); color: var(--fond);
+  }
+  .aide .material-symbols-outlined { font-size: calc(20 * var(--u)); }
+
+  /* ---- Rangée de boutons ---- */
+  .boutons {
+    grid-area: boutons; justify-self: end; align-self: center;
+    display: flex; align-items: center; gap: var(--ecart);
+  }
+  .alerte {
+    position: relative;
+    width: calc(23 * var(--u)); height: calc(20 * var(--u)); padding-bottom: calc(3 * var(--u));
+    display: flex; align-items: flex-end; justify-content: center;
+    background: var(--bouton);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    font-size: calc(9 * var(--u)); font-weight: 700; line-height: 1;
+  }
+  .alerte--erreur { background: var(--rouge); color: var(--noir); }
+  .alerte--erreur::before {                       /* intérieur blanc du triangle */
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: var(--blanc);
+    clip-path: polygon(50% 30%, 77% 85%, 23% 85%);
+  }
+  .bouton {
+    position: relative;
+    width: var(--col); height: var(--bouton-h);
+    display: grid; place-items: center;
+    border-radius: var(--rayon);
+    background: var(--bouton);
+    font-size: var(--t-bouton);
+  }
+  .bouton--actif   { background: var(--jaune); color: var(--noir); font-weight: 700; }  /* sélectionné */
+  .bouton--violet  { background: var(--violet); }
+  .bouton--anneau  { height: var(--anneau-h); border: var(--anneau) solid var(--couleur-anneau, var(--vert)); }
+  .bouton--rouge   { --couleur-anneau: var(--rouge); }
+  .bouton--vert    { --couleur-anneau: var(--vert); }
+  .bouton--plus::before {                         /* petit « + » en haut à gauche */
+    content: "+"; position: absolute; left: calc(4 * var(--u)); top: calc(-3 * var(--u));
+    font-size: calc(16 * var(--u)); line-height: 1;
+  }
+  .bouton--anneau.bouton--plus::before { left: calc(2 * var(--u)); top: calc(-5 * var(--u)); }
+
+  .rond {                                         /* « D » */
+    width: calc(24 * var(--u)); height: var(--bouton-h);
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--bouton);
+    font-size: var(--t-bouton);
+  }
+  .rond--bleu   { background: var(--bleu); }
+  .rond--anneau { width: calc(25 * var(--u)); height: calc(23 * var(--u)); border: var(--anneau) solid var(--bleu); }
+
+  /* ---- Jauge simple (un seul dégradé de segments, séparateurs noirs de 1 px) ---- */
+  .jauge {
+    --demi: calc(.5 * var(--u));
+    --sep1: 30%; --sep2: 66%;
+    --j1: var(--jauge-rouge); --j2: var(--jauge-jaune); --j3: var(--jauge-vert);
+    --degrade: linear-gradient(90deg,
+      var(--j1) 0 calc(var(--sep1) - var(--demi)),
+      #000 0 calc(var(--sep1) + var(--demi)),
+      var(--j2) 0 calc(var(--sep2) - var(--demi)),
+      #000 0 calc(var(--sep2) + var(--demi)),
+      var(--j3) 0);
+    grid-area: jauge; justify-self: end; align-self: center;
+    margin-right: var(--marge-jauge, calc(27 * var(--u)));        /* 27 px = rond D (24) + écart (3) */
+    position: relative;
+    width: var(--jauge-l); height: var(--jauge-h);
+    border-radius: calc(4 * var(--u));
+    background: var(--degrade);
+  }
+  .jauge--bleu { --j1: var(--jauge-neutre); --j2: var(--jauge-bleu-fonce); --j3: var(--bleu); }
+
+  .curseur {
+    position: absolute; top: 50%; left: var(--valeur, 50%);
+    width: var(--curseur); height: var(--curseur);
+    transform: translate(-50%, -50%);
+    border: calc(2 * var(--u)) solid var(--blanc); border-radius: 50%;
+    background: var(--bouton);
+  }
+  .curseur--plein   { background: var(--blanc); }
+  .curseur--fantome { border-color: rgba(255,255,255,.45); background: rgba(68,71,76,.55); }
+
+  /* chiffres sous les trois segments (Distribution) */
+  .repartition {
+    position: absolute; top: calc(100% + calc(3 * var(--u))); left: 0; right: 0;
+    display: grid; grid-template-columns: 30fr 36fr 34fr;
+    text-align: center; line-height: 1;
+    font-size: var(--t-valeur); font-weight: 700;
+  }
+  .repartition .rouge  { color: var(--rouge); }
+  .repartition .orange { color: var(--orange); }
+  .repartition .vert   { color: var(--vert); }
+
+  /* ---- Carte violette « 2/3 critères » ---- */
+  .capacite {
+    grid-area: droite; align-self: end;
+    height: calc(52 * var(--u)); padding: calc(4 * var(--u)) 0 calc(3 * var(--u));
+    display: flex; flex-direction: column; align-items: center;
+    border: var(--liseré) solid var(--noir); border-radius: var(--rayon);
+    background: var(--violet); color: var(--noir);
+  }
+  .capacite .ratio   { font-size: var(--t-grand); line-height: 1.1; }
+  .capacite .libelle { margin-top: calc(1 * var(--u)); font-size: calc(7 * var(--u)); line-height: 1.2; }
+  .fleche-bas {                                    /* triangle ▼ */
+    width: calc(17 * var(--u)); height: calc(8 * var(--u));
+    background: var(--fleche);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+  }
+  .capacite .fleche-bas { margin-top: auto; }
+
+  /* =====================================================================
+     5. BLOCS PROPRES À UN SCHÉMA
+     ===================================================================== */
+
+  /* ---- Distribution : bouton + / − (segmenté vertical) ----
+     Cliquer alterne entre incrément (+) et décrément (−).
+     Pour forcer le mode − au chargement : ajouter la classe « moins ». */
+  .bascule {
+    --m: 0;                                        /* 0 = +  ·  1 = − */
+    grid-area: droite; align-self: end;
+    position: relative; overflow: hidden;
+    width: var(--col); height: calc(36 * var(--u));
+    border: var(--liseré) solid var(--noir); border-radius: var(--rayon);
+    background: var(--gris);
+    font-weight: 700; line-height: 1; user-select: none;
+  }
+  .bascule:is(.moins, :has(input:checked)) { --m: 1; }
+  .bascule input { position: absolute; inset: 0; z-index: 2; margin: 0; opacity: 0; cursor: pointer; }
+  .bascule .pastille {                             /* moitié active, grise foncée */
+    position: absolute; left: calc(3 * var(--u)); right: calc(3 * var(--u)); top: calc(3 * var(--u)); height: calc(50% - calc(3 * var(--u)));
+    border-radius: calc(7 * var(--u)); background: var(--bouton);
+    transform: translateY(calc(var(--m) * 100%));
+    transition: transform .18s;
+  }
+  .bascule .moitie {
+    position: absolute; left: calc(3 * var(--u)); right: calc(3 * var(--u)); height: calc(50% - calc(3 * var(--u)));
+    display: grid; place-items: center; font-size: calc(16 * var(--u));
+    transition: color .18s;
+  }
+  .bascule .plus  { top: calc(3 * var(--u));    color: var(--blanc); }
+  .bascule .tiret { bottom: calc(3 * var(--u)); color: var(--noir); }
+  .bascule:is(.moins, :has(input:checked)) .plus  { color: var(--noir); }
+  .bascule:is(.moins, :has(input:checked)) .tiret { color: var(--blanc); }
+
+  .carte--d .jauge { align-self: start; }          /* les chiffres 4 / 2 / 0 passent dessous */
+
+  /* ---- Compteur : carré « + 12 » et pastille « -1 » ---- */
+  .droite { grid-area: droite; align-self: end; display: flex; flex-direction: column; gap: calc(2 * var(--u)); }
+  .compteur {
+    position: relative;
+    width: var(--col); height: calc(36 * var(--u));
+    display: grid; place-items: center;
+    border: var(--liseré) solid var(--noir); border-radius: var(--rayon);
+    background: var(--violet); color: var(--noir);
+    font-size: calc(15 * var(--u));
+  }
+  .compteur::before { content: "+"; position: absolute; left: calc(3 * var(--u)); top: calc(-3 * var(--u)); font-size: calc(15 * var(--u)); line-height: 1; }
+  .delta {
+    height: calc(18 * var(--u));
+    display: grid; place-items: center;
+    border: var(--liseré) solid var(--noir); border-radius: calc(9 * var(--u));
+    background: var(--gris); color: var(--noir);
+    font-size: var(--t-grand);
+  }
+
+  /* ---- Minuteur : pastille, jauge en U, durée, remise à zéro ---- */
+  .pilule {
+    grid-area: droite; align-self: center;
+    height: calc(28 * var(--u)); padding: 0 calc(4 * var(--u));
+    display: flex; align-items: center; justify-content: space-between;
+    border: var(--liseré) solid var(--noir); border-radius: calc(14 * var(--u));
+    background: var(--violet); color: var(--noir);
+    font-size: var(--t-valeur);
+  }
+  .pilule .material-symbols-outlined { font-size: calc(24 * var(--u)); color: var(--fleche); }
+
+  .jauge--u {
+    --sep1: 33.5%; --sep2: 72.5%;
+    height: calc(20 * var(--u)); border-radius: 0; background: none;
+  }
+  .jauge--u .piste {
+    position: absolute; left: 0; width: calc(100% - calc(9 * var(--u))); height: calc(6 * var(--u));
+    border-radius: calc(3 * var(--u)) 0 0 calc(3 * var(--u));
+    background: var(--degrade);
+  }
+  .jauge--u .haut { top: 0; }
+  .jauge--u .bas  { bottom: 0; }
+  .jauge--u .retour-u {                            /* demi-cercle qui relie les deux pistes */
+    position: absolute; top: 0; right: 0; bottom: 0; width: calc(10 * var(--u));
+    border: calc(6 * var(--u)) solid var(--jauge-vert); border-left: 0;
+    border-radius: 0 calc(10 * var(--u)) calc(10 * var(--u)) 0;
+  }
+  .jauge--u .curseur { top: calc(3 * var(--u)); }
+
+  .retour { grid-area: droite-bas; padding-left: calc(6 * var(--u)); display: flex; justify-content: space-between; }
+  .duree  { align-self: center; color: var(--vert); font-size: var(--t-valeur); font-weight: 700; }
+  .raz {
+    align-self: end;
+    width: var(--col); height: calc(18.5 * var(--u));
+    display: flex; align-items: center; justify-content: center; gap: calc(1 * var(--u));
+    border: var(--liseré) solid var(--noir); border-radius: var(--rayon);
+    background: var(--gris); color: var(--noir);
+    font-size: var(--t-note);
+  }
+  .raz .material-symbols-outlined { font-size: calc(16 * var(--u)); }
+
+  /* ---- Bonus : jauge bleue, valeur et liste déroulante ---- */
+  .carte--b .jauge { justify-self: start; align-self: start; margin: calc(2 * var(--u)) 0 0 calc(44 * var(--u)); }
+  .valeur-texte {
+    position: absolute; left: calc(100% + calc(7 * var(--u))); top: 50%; transform: translateY(-50%);
+    color: var(--bleu); font-size: var(--t-valeur); font-weight: 700; line-height: 1;
+  }
+  .champ {
+    grid-area: champ;
+    display: flex; align-items: center;
+    padding-left: calc(13 * var(--u));
+    border: var(--liseré) solid var(--noir); border-radius: var(--rayon);
+    background: var(--bouton);
+    font-size: var(--t-valeur);
+  }
+  .champ .deroulant {
+    width: calc(26 * var(--u)); height: calc(100% + calc(2 * var(--u))); margin: calc(-1 * var(--u)) calc(-1 * var(--u)) calc(-1 * var(--u)) auto;
+    display: grid; place-items: center;
+    border: var(--liseré) solid var(--noir); border-radius: var(--rayon);
+    background: var(--violet);
+  }
+</style>
+</head>
+<body>
+
+<h1 class="page-titre">Schémas d'évaluation</h1>
+
+<main class="galerie">
+
+  <!-- 1. Capacités -->
+  <figure class="schema">
+    <figcaption>Capacités</figcaption>
+    <div class="carte carte--a">
+      <h2 class="titre"><span class="material-symbols-outlined" aria-hidden="true">target</span>Exploitation des documents</h2>
+      <div class="gauche">
+        <div class="note">10</div>
+        <div class="aide"><span class="material-symbols-outlined" aria-label="Aide">info</span></div>
+      </div>
+      <div class="boutons">
+        <div class="alerte">!</div>
+        <div class="bouton">NA</div>
+        <div class="bouton">ECA</div>
+        <div class="bouton bouton--anneau bouton--vert">A</div>
+        <div class="rond rond--bleu">D</div>
+      </div>
+      <div class="jauge" style="--valeur: 94.5%"><i class="curseur"></i></div>
+      <div class="capacite">
+        <div class="ratio">2/3</div><div class="libelle">capacités</div><div class="fleche-bas"></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 2. Barème -->
+  <figure class="schema">
+    <figcaption>Barème</figcaption>
+    <div class="carte carte--a">
+      <h2 class="titre"><span class="material-symbols-outlined" aria-hidden="true">rule</span>Activité 2</h2>
+      <div class="gauche">
+        <div class="note note--pointille">(5)</div>
+        <div class="aide"><span class="material-symbols-outlined" aria-label="Aide">info</span></div>
+      </div>
+      <div class="boutons">
+        <div class="alerte alerte--erreur">!</div>
+        <div class="bouton bouton--anneau bouton--rouge">NA</div>
+        <div class="bouton">ECA</div>
+        <div class="bouton">A</div>
+        <div class="rond">D</div>
+      </div>
+      <div class="jauge" style="--valeur: 8.4%"><i class="curseur"></i></div>
+      <div class="capacite">
+        <div class="ratio">5/5</div><div class="libelle">critères</div><div class="fleche-bas"></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 3. Distribution -->
+  <figure class="schema">
+    <figcaption>Distribution</figcaption>
+    <div class="carte carte--d">
+      <h2 class="titre"><span class="material-symbols-outlined" aria-hidden="true">leaderboard</span>Qualité des arguments</h2>
+      <div class="gauche">
+        <div class="note">20</div>
+        <div class="aide"><span class="material-symbols-outlined" aria-label="Aide">info</span></div>
+      </div>
+      <div class="boutons">
+        <div class="alerte">!</div>
+        <div class="bouton bouton--violet bouton--plus bouton--anneau bouton--rouge">NA</div>
+        <div class="bouton bouton--violet bouton--plus">ECA</div>
+        <div class="bouton bouton--violet bouton--plus">A</div>
+        <div class="rond">D</div>
+      </div>
+      <div class="jauge">
+        <i class="curseur curseur--fantome" style="--valeur: 19%"></i>
+        <i class="curseur curseur--plein" style="--valeur: 35.6%"></i>
+        <div class="repartition"><span class="rouge">4</span><span class="orange">2</span><span class="vert">0</span></div>
+      </div>
+      <label class="bascule" title="Alterner incrément (+) / décrément (−)">
+        <input type="checkbox" aria-label="Mode décrément">
+        <i class="pastille"></i><b class="moitie plus">+</b><b class="moitie tiret">−</b>
+      </label>
+    </div>
+  </figure>
+
+  <!-- 4. Compteur -->
+  <figure class="schema">
+    <figcaption>Compteur</figcaption>
+    <div class="carte carte--c">
+      <h2 class="titre"><span class="material-symbols-outlined" aria-hidden="true">add_circle</span>Participation aux échanges</h2>
+      <div class="gauche">
+        <div class="note">25</div>
+        <div class="aide"><span class="material-symbols-outlined" aria-label="Aide">info</span></div>
+      </div>
+      <div class="boutons">
+        <div class="alerte">!</div>
+        <div class="bouton">NA</div>
+        <div class="bouton">ECA</div>
+        <div class="bouton bouton--anneau bouton--vert">A</div>
+        <div class="rond rond--anneau">D</div>
+      </div>
+      <div class="jauge" style="--valeur: 95.6%"><i class="curseur"></i></div>
+      <div class="droite">
+        <div class="compteur">12</div>
+        <div class="delta">-1</div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 5. Minuteur -->
+  <figure class="schema">
+    <figcaption>Minuteur</figcaption>
+    <div class="carte carte--m">
+      <h2 class="titre"><span class="material-symbols-outlined" aria-hidden="true">hourglass_empty</span>Gestion du temps</h2>
+      <div class="gauche">
+        <div class="note">10</div>
+        <div class="aide"><span class="material-symbols-outlined" aria-label="Aide">info</span></div>
+      </div>
+      <div class="boutons">
+        <div class="alerte">!</div>
+        <div class="bouton">NA</div>
+        <div class="bouton bouton--actif">ECA</div>
+        <div class="bouton">A</div>
+      </div>
+      <div class="pilule">
+        <span class="material-symbols-outlined" aria-hidden="true">timer_play</span>3'25"
+      </div>
+      <div class="jauge jauge--u" style="--valeur: 56%">
+        <i class="piste haut"></i><i class="piste bas"></i><i class="retour-u"></i><i class="curseur"></i>
+      </div>
+      <div class="retour">
+        <div class="duree">5'</div>
+        <div class="raz">0<span class="material-symbols-outlined" aria-label="Remettre à zéro">undo</span></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 6. Bonus -->
+  <figure class="schema">
+    <figcaption>Bonus</figcaption>
+    <div class="carte carte--b">
+      <h2 class="titre"><span class="material-symbols-outlined" aria-hidden="true">star</span>Rôle dans le débat</h2>
+      <div class="gauche">
+        <div class="note note--plus">+</div>
+        <div class="aide"><span class="material-symbols-outlined" aria-label="Aide">info</span></div>
+      </div>
+      <div class="jauge jauge--bleu" style="--valeur: 83.7%">
+        <i class="curseur curseur--plein"></i>
+        <span class="valeur-texte">+2</span>
+      </div>
+      <div class="champ">
+        Arbitre et rôle moteur
+        <span class="deroulant"><i class="fleche-bas"></i></span>
+      </div>
+    </div>
+  </figure>
+
+</main>
+</body>
+</html>
