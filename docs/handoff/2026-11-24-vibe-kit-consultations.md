@@ -10,9 +10,10 @@ Rendre traçables les contributions des IA extérieures (ChatGPT, Perplexity, Mi
 - `docs/consultations/_TEMPLATE.md` : gabarit de note de consultation (contexte envoyé, recommandation reçue, verdict de l'humain, actions, renvoi vers la session de reprise).
 - `docs/README.md` : ligne d'index pour `docs/consultations/`.
 
-## Pas fait / blocages
-- Aucun changement du code de l'application ni de `AGENTS.md` (intentionnel : le protocole de consultation doit être évalué par l'utilisateur avant d'être normalisé plus haut).
-- Les modèles d'issue et de PR annoncés dans la passation du 2026-11-23 sont toujours absents du dépôt : à créer dans une session suivante.
+## Fait (complément)
+- Modèles d'issue et de PR manquants créés : `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/tache.yml` (niveau de risque), `.github/ISSUE_TEMPLATE/bug.yml`. À valider visuellement à la prochaine issue.
+- Tests rejoués en local sur la branche : `npm test` ✅ 21 verts, `npm run test:e2e` : (résultat plus bas).
+- Diagnostic CI sur cette PR : workflow actif et vert sur `main`, mais aucun run déclenché sur l'événement `pull_request` après création et synchronisation de la PR. À investiguer côté réglages GitHub (Settings > Actions) si le nouveau push ne déclenche rien.
 
 ## Questions pour l'utilisateur
 - Fallait-il aussi citer `docs/consultations/` dans `AGENTS.md` (étapes de démarrage) ? Option retenue : non, pour un premier essai ; option alternative : l'ajouter après la première vraie consultation.

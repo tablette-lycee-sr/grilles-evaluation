@@ -1,0 +1,37 @@
+name: Bug
+description: Comportement constaté qui ne correspond pas à la spec ou aux tests
+labels: ["bug"]
+body:
+  - type: textarea
+    id: constat
+    attributes:
+      label: Constat
+      description: Ce qui se passe (écran, clic, message), sur grille réelle ou `grille-exemple-oral.json`.
+    validations:
+      required: true
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Comportement attendu
+      description: Ce que dit la spec (`docs/spec/*.md`) avec un lien vers la section.
+    validations:
+      required: true
+  - type: dropdown
+    id: contexte
+    attributes:
+      label: Contexte d'usage
+      options:
+        - Tablette (portrait)
+        - Tablette (paysage)
+        - Ordinateur
+        - Impression / PDF
+        - Tests automatiques
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Étapes minimales ; noms d'élèves fictifs uniquement (règle `AGENTS.md`).
+    validations:
+      required: true
