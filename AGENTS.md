@@ -72,3 +72,12 @@ Calculs de notes (`methodCalculation`, `calculateFinalScore`, `timerPercentage`)
 ## Si tu es bloqué ou si la spec est muette
 
 N'invente pas. Écris la question dans le handoff avec **deux options** et leurs conséquences, puis arrête-toi sur ce point.
+
+## Si les outils GitHub sont indisponibles (mode dégradé)
+
+`gh` absent, réseau fermé, `.git` en lecture seule : ne contourne pas et ne devine pas.
+
+- **Ne déduis jamais le contenu d'une issue de son numéro.** Le numéro GitHub `#4` n'est pas l'ID interne (`T-04`) : vérifie titre et label de l'issue, ou reçois son texte de l'utilisateur.
+- Demande le **texte complet de l'issue** dans le prompt et continue avec lui, ou arrête-toi en expliquant ce qui manque.
+- Sans droit d'écriture sur le dépôt (pas de branche possible), ne modifie pas les fichiers « en attendant » : signale le blocage et arrête-toi. Un travail non versionnable devient une source d'erreur au prochain agent.
+- Les issues vivent dans GitHub (`gh issue view N`) ; la table de correspondance `T-0N ⇢ #N` est dans `docs/STATUS.md`.
