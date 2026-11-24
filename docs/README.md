@@ -11,5 +11,6 @@
 | [`DECISIONS.md`](DECISIONS.md) | Pourquoi les choses sont comme elles sont. |
 | [`TESTING.md`](TESTING.md) | Lancer les tests, ce qu'ils couvrent, vérifications manuelles. |
 | [`handoff/`](handoff/) | Une note par session d'agent, pour passer le relais. |
+| [`consultations/`](consultations/) | Une note par session d'**IA extérieure** (ChatGPT, Perplexity, Mistral…) : contexte envoyé, recommandation reçue, verdict, actions. |
 
 Instructions pour les agents : voir `../AGENTS.md`.
