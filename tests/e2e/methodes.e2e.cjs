@@ -68,7 +68,7 @@ test("minuteur : la poignée suit le fer à cheval (piste haute, virage, piste b
 test("bouton coefficient : cycle Noté, NN, 2(+), NE puis retour à Noté", () => avec(async page => {
   const id = "expression-orale", note = `${section(id)} .note`, carte = `${section(id)} .carte`;
   const style = (selecteur, propriete) => page.evaluate(([s, p]) => getComputedStyle(document.querySelector(s))[p], [selecteur, propriete]);
-  assert.equal(await page.locator(note).innerText(), "1");
+  assert.equal(await page.locator(note).innerText(), "3");
   await page.click(note);
   assert.equal(await page.locator(note).innerText(), "NN");
   assert.equal(await style(section(id), "opacity"), "1");
@@ -76,7 +76,7 @@ test("bouton coefficient : cycle Noté, NN, 2(+), NE puis retour à Noté", () =
   await page.click(`${section(id)} .boutons [data-method-level="ECA-"]`);
   assert.equal(await page.locator(`${section(id)} .boutons [data-method-level="ECA-"]`).getAttribute("aria-pressed"), "true");
   await page.click(note);
-  assert.equal(await page.locator(note).innerText(), "1(+)");
+  assert.equal(await page.locator(note).innerText(), "3(+)");
   assert.equal(await style(carte, "borderTopStyle"), "solid");
   await page.click(note);
   assert.equal(await page.locator(note).innerText(), "NE");
@@ -86,7 +86,7 @@ test("bouton coefficient : cycle Noté, NN, 2(+), NE puis retour à Noté", () =
   assert.ok(await page.locator(`${section(id)} .rond`).isDisabled());
   assert.ok(!(await page.locator(`${section(id)} .note`).isDisabled()));
   await page.click(note);
-  assert.equal(await page.locator(note).innerText(), "1");
+  assert.equal(await page.locator(note).innerText(), "3");
   assert.equal(await style(section(id), "opacity"), "1");
   assert.equal(await page.locator(`${section(id)} .boutons [data-method-level="ECA-"]`).isDisabled(), false);
 }));
