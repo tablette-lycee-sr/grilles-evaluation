@@ -21,7 +21,7 @@ Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les
 | Sauvegarde / restauration du devoir sur fichier | ⬜ | à rédiger | — | Prévue après les méthodes. |
 | Migration des anciennes corrections locales | ⬜ | spec méthodes | — | Questions suspendues par le concepteur. |
 | Tests automatiques (GitHub Actions) | 🟡 | `TESTING.md` | unitaires + e2e | Fournis avec le kit ; à vérifier à la première PR. |
-| Découpage de `correction.html` en fichiers | 🟡 | — | unitaires (21) | T-01 · #4 : calculs des méthodes extraits ; e2e à exécuter avec Playwright installé. |
+| Découpage de `correction.html` en fichiers | 🟡 | — | unitaires (21) | T-01 · #4 : modules 1 (calculs), 2 (rendu des cartes) et 3 (assemblage des cartes) extraits et fusionnés ; restent impression, fenêtre de correction, éditeur, stockage. |
 
 ## Points encore ouverts (repris de la spec des méthodes)
 
