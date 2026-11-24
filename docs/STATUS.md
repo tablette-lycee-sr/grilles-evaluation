@@ -1,6 +1,6 @@
 # État d'avancement
 
-*Dernière mise à jour : 2026-11-23 (Claude, mise en place du kit agents). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
+*Dernière mise à jour : 2026-11-24 (Vibe, T-07 cycle de notation par catégorie). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
 Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les issues GitHub ; ce fichier donne la vue d'ensemble.
 
 ## Fonctionnalités
@@ -15,7 +15,8 @@ Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les
 | Bonus : échelle à partir du bleu foncé | 🟡 | `spec/ui-correction.md` §5 | e2e | Hypothèse « tout le bleu » à valider par l'utilisateur (T-06 · #9). |
 | Fenêtre de correction individuelle (90 %, bandeau portrait) | ✅ | `spec/ui-correction.md` §7 | e2e | |
 | Trombinoscope, groupes d'élèves (CSV) | ✅ | README | — | Pas de test automatique. |
-| Sauvegarde locale (IndexedDB) | ✅ | `spec/donnees.md` | — | Zone sensible. Nouveaux champs : `manualSeconds`, `commentTexts`, `bonusText`, `evaluee`, `popupDetailsOpen`. |
+| Sauvegarde locale (IndexedDB) | ✅ | `spec/donnees.md` | — | Zone sensible. Nouveaux champs : `manualSeconds`, `commentTexts`, `bonusText`, `evaluee`, `statut (D-014)`, `popupDetailsOpen`. |
+| Cycle de notation par catégorie (Noté / NN / 2(+) / NE) | ✅ | `spec/ui-correction.md` §3 | unitaires + e2e | T-07 · #16 (D-014) : à éprouver sur tablette, PDF à imprimer par l'utilisateur. |
 | Fiche imprimable / PDF | 🟡 | spec méthodes (« Sauvegarde, compatibilité et fiche ») | — | Existe (`makePrint*`). À vérifier avec : commentaires libres, NN, Minuteur manuel. Contenu visible par l'élève à préciser. |
 | Onglets Résultats et Export | 🟡 | — | — | État réel à qualifier (relever ce qui est implémenté). |
 | Sauvegarde / restauration du devoir sur fichier | ⬜ | à rédiger | — | Prévue après les méthodes. |
@@ -37,6 +38,7 @@ Schéma JSON versionné et reprise éventuelle des corrections locales · contra
 | T-04 | Qualifier les onglets Résultats et Export | agent:ok | #7 | Liste de l'existant dans ce fichier ; issues de suite. |
 | T-05 | Tests e2e supplémentaires : import CSV d'élèves, éditeur de grille, impression | agent:ok | #8 | Chaque scénario nommé dans `TESTING.md`. |
 | T-06 | Valider l'échelle du Bonus et les critères du Barème (couleur ? niveau ?) | humain | #9 | Décision notée dans `DECISIONS.md`. |
+| T-07 | Cycle de notation par catégorie : Noté / NN / 2(+) / NE | **sensible** | #16 | Cycle respecté ; 2(+) dynamique ; NE = contrôles désactivés et PDF réduit au titre ; unitaires + e2e adaptés ; D-014 remplace D-009. |
 
 ## Bugs et risques connus
 

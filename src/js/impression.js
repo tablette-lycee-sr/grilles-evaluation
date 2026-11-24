@@ -82,11 +82,12 @@ function selectedMethodComment(node,owner,level){
 function renderPrintMethod(node){
   const section=document.createElement("section");section.className="print-category print-method";
   const state=methodState(node),evaluation=categoryEvaluations[node.id]||{},heading=document.createElement("h3");heading.className="print-category-heading";
-  const selected=node.methode==="bonus"?null:effectiveLevel(node),percentage=node.methode==="bonus"?null:getCategoryPercentage(node);
-  const summary=document.createElement("span");summary.textContent=node.methode==="bonus"?`+${Number(state.bonus||0).toLocaleString("fr-FR")} pt`:`${selected||"Non évaluée"} · ${percentage===null?"—":`${percentage.toFixed(2).replace(".",",")} %`}`;
+  const selected=node.methode==="bonus"?null:effectiveLevel(node),percentage=node.methode==="bonus"?null:getCategoryPercentage(node),statut=categoryStatut(node);
+  const summary=document.createElement("span");summary.textContent=statut==="ne"?"NE":node.methode==="bonus"?`+${Number(state.bonus||0).toLocaleString("fr-FR")} pt`:`${selected||"Non évaluée"} · ${percentage===null?"—":`${percentage.toFixed(2).replace(".",",")} %`}`;
   const title=document.createElement("span");title.textContent=node.titre;heading.append(title,summary);section.appendChild(heading);
+  if(statut==="ne")return section;
   const addLine=text=>{if(!text)return;const line=document.createElement("div");line.className="print-method-line";line.textContent=text;section.appendChild(line)};
-  if((state.evaluee??node.evaluee)===false)addLine("Catégorie non évaluée");
+  if(statut==="nn")addLine("Évaluée mais non notée (NN)");
   const comment=selected&&selectedMethodComment(node,node,selected);if(comment)addLine(comment);
   for(const [key,kind] of [["warning","PROBLEME"],["exceeded","VALORISATION"]])if(evaluation[key]){
     const motif=(node.commentMotifs||[]).find(item=>item.kind===kind&&item.id===(evaluation.motifIds?.[key]||evaluation.motifId));
