@@ -1,6 +1,6 @@
 # État d'avancement
 
-*Dernière mise à jour : 2026-11-25 (Vibe, T-01 module 7 : stockage). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
+*Dernière mise à jour : 2026-11-25 (Vibe, T-01 module 8 : corrections en cours). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
 Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les issues GitHub ; ce fichier donne la vue d'ensemble.
 
 ## Fonctionnalités
@@ -22,7 +22,7 @@ Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les
 | Sauvegarde / restauration du devoir sur fichier | ⬜ | à rédiger | — | Prévue après les méthodes. |
 | Migration des anciennes corrections locales | ⬜ | spec méthodes | — | Questions suspendues par le concepteur. |
 | Tests automatiques (GitHub Actions) | 🟡 | `TESTING.md` | unitaires + e2e | Fournis avec le kit ; à vérifier à la première PR. |
-| Découpage de `correction.html` en fichiers | 🟡 | — | unitaires (23) | T-01 · #4 : modules 1-7 extraits et fusionnés (calculs, rendu des cartes, assemblage, impression, fenêtre de correction et trombinoscope, import de grilles, stockage) ; reste élèves et corrections en cours. |
+| Découpage de `correction.html` en fichiers | 🟡 | — | unitaires (23) | T-01 · #4 : modules 1-8 extraits et fusionnés (calculs, rendu des cartes, assemblage, impression, fenêtre de correction et trombinoscope, import de grilles, stockage, corrections en cours) ; restent élèves, chargement des grilles et dialogues/trombinoscope. |
 
 ## Points encore ouverts (repris de la spec des méthodes)
 

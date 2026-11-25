@@ -385,6 +385,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <script src="src/js/fenetre-correction.js"></script>
 <script src="src/js/import-grilles.js"></script>
 <script src="src/js/stockage.js"></script>
+<script src="src/js/corrections-en-cours.js"></script>
 <script>
 const DEFAULT_GRID = {"version": 1, "id": "etude-critique-introduction-conclusion-v1", "titre": "Étude critique — Introduction et conclusion", "niveaux": [{"id": "NA", "libelle": "Non acquis", "valeur": 0, "couleur": "#e45b60"}, {"id": "ECA", "libelle": "En cours d'acquisition", "valeur": 1, "couleur": "#e8c64a"}, {"id": "A", "libelle": "Acquis", "valeur": 2, "couleur": "#49bd7b"}], "elements": [{"id": "introduction-conclusion", "titre": "Introduction et conclusion", "evaluable": true, "commentaires": {"NA": "Début et fin du devoir absents, très limités et/ou maladroits.", "ECA": "Commentaire à préciser à partir de la grille définitive.", "A": "Première et dernière impression très positive : le sujet est compris.", "D": "Commentaire à confirmer à partir de la grille source."}, "enfants": [{"id": "introduction", "titre": "Introduction", "evaluable": true, "commentaires": {}, "enfants": [{"id": "accroche", "titre": "Commencer par une accroche", "evaluable": true, "commentaires": {"NA": "Pas d'accroche.", "ECA": "Accroche présente mais imprécise / déconnectée.", "A": "Accroche efficace et intéressante.", "D": "Accroche et contextualisation s'appuyant sur une culture personnelle."}}, {"id": "definition-termes", "titre": "Définir les termes du sujet", "evaluable": true, "commentaires": {"NA": "Pas de contexte / définitions erronées.", "ECA": "Contextualisation donnant globalement le sens du sujet.", "A": "Bonne maîtrise des notions et enjeux disciplinaires.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "problematique", "titre": "Proposer une problématique", "evaluable": true, "commentaires": {"NA": "Problématique absente ou maladroite, restrictive / menant à un hors-sujet.", "ECA": "Simple reprise du sujet, reformulation sans pertinence mais convenable.", "A": "Questionnement montrant que l'intérêt et la portée du sujet sont bien compris.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "annonce-plan", "titre": "Annoncer le plan", "evaluable": true, "commentaires": {"NA": "Pas d'annonce de plan / annonce très confuse.", "ECA": "Annonce sommaire / plutôt approximative du plan.", "A": "Annonce efficace et qui oriente le devoir.", "D": "Commentaire à confirmer à partir de la grille source."}}]}, {"id": "conclusion", "titre": "Conclusion", "evaluable": true, "commentaires": {}, "enfants": [{"id": "synthese", "titre": "Formuler une synthèse", "evaluable": true, "commentaires": {"NA": "Pas de conclusion.", "ECA": "Phrase conclusive simple / anecdotique / confuse.", "A": "Véritable réponse à la problématique.", "D": "Commentaire à confirmer à partir de la grille source."}}, {"id": "ouverture", "titre": "Proposer une ouverture", "evaluable": true, "commentaires": {"NA": "Pas d'ouverture.", "ECA": "Présence d'une ouverture mais plutôt artificielle.", "A": "Réelle mise en perspective du sujet.", "D": "Commentaire à confirmer à partir de la grille source."}}]}]}], "description": "NA, ECA et A sont des niveaux de maîtrise exclusifs. D est une bonification indépendante : le texte D décrit le motif de valorisation."};
 const DEFAULT_CONFIG = {"version": 1, "grille": "etude-critique-introduction-conclusion-v1", "description": "Paramètres de départ à ajuster après essais pédagogiques. D est une bonification indépendante, plafonnée au total indiqué.", "ponderations": {"accroche": 1, "definition-termes": 2, "problematique": 3, "annonce-plan": 2, "synthese": 2, "ouverture": 1}, "seuils": {"NA_max_exclusif": 0.5, "ECA_max_exclusif": 1.5, "A_max_exclusif": 2.5}, "bonus": {"plafond_total": 3, "pas_saisie": 0.25}};
@@ -758,44 +759,6 @@ function captureActiveCorrection(){
   studentCorrections[activeCorrectionStudentId]=structuredClone({manualChoices,manualCategoryPercent,categoryEvaluations,leafChoices,bonusChoices,methodStates:snapshotMethodStates(),note});
   const details=assignmentStudentDetails[activeCorrectionStudentId]||(assignmentStudentDetails[activeCorrectionStudentId]={sousGroupe:"",sujet:"",remarque:""});
   details.note=note;
-}
-function loadStudentCorrection(student){
-  if(activeCorrectionStudentId!==student.id){
-    pauseMethodTimers();captureActiveCorrection();activeCorrectionStudentId=student.id;
-    const correction=structuredClone(studentCorrections[student.id]||{});
-    manualChoices=correction.manualChoices||{};manualCategoryPercent=correction.manualCategoryPercent||{};categoryEvaluations=correction.categoryEvaluations||{};
-    leafChoices=correction.leafChoices||{};bonusChoices=correction.bonusChoices||{};methodStates=correction.methodStates||{};
-    document.getElementById("finalGrade").value=correction.note||"";
-  }
-  document.getElementById("studentName").textContent=[student.nom,student.prenom].filter(Boolean).join(" ");
-  updateCorrectionStudentNavigation();
-}
-function openStudentCorrection(student){
-  if(!document.querySelector(".app").classList.contains("grid-loaded")){
-    setStatus("Créez d'abord un devoir et choisissez une grille de correction.","error");return;
-  }
-  if(!document.getElementById("correctionTrombiView").hidden)correctionStudentOrder=getSortedTrombiStudents(activeStudentGroup?.students||[]).map(item=>item.id);
-  loadStudentCorrection(student);
-  if(correctionInteractionMode==="popup"&&!document.getElementById("correctionTrombiView").hidden){openCorrectionPopup(student);return}
-  document.getElementById("correctionTrombiView").hidden=true;document.querySelector(".app").classList.remove("trombi-view");render();
-}
-function updateCorrectionStudentNavigation(){
-  const students=activeStudentGroup?.students||[],studentIds=new Set(students.map(student=>student.id));
-  correctionStudentOrder=correctionStudentOrder.filter(id=>studentIds.has(id));
-  if(!correctionStudentOrder.includes(activeCorrectionStudentId))correctionStudentOrder=getSortedTrombiStudents(students).map(student=>student.id);
-  const index=correctionStudentOrder.indexOf(activeCorrectionStudentId);
-  document.getElementById("previousCorrectionStudent").disabled=index<=0;
-  document.getElementById("nextCorrectionStudent").disabled=index<0||index>=correctionStudentOrder.length-1;
-  const photoButton=document.getElementById("showCorrectionStudentInfo"),student=students.find(item=>item.id===activeCorrectionStudentId);
-  photoButton.disabled=!student;photoButton.replaceChildren();
-  if(student)photoButton.append(createTrombiPortrait(student,true));
-  else{const icon=document.createElement("span");icon.className="menu-icon";icon.style.setProperty("--icon","url('icones/portrait.svg')");icon.setAttribute("aria-hidden","true");photoButton.append(icon)}
-}
-function navigateCorrectionStudent(direction){
-  updateCorrectionStudentNavigation();
-  const index=correctionStudentOrder.indexOf(activeCorrectionStudentId),id=correctionStudentOrder[index+direction];
-  const student=activeStudentGroup?.students.find(item=>item.id===id);
-  if(student)openStudentCorrection(student);
 }
 function activateLoadedGrid(title){document.getElementById("pageTitle").textContent=title;document.querySelector(".app").classList.add("grid-loaded");initializePartNav()}
 function initializeAssignment(){
