@@ -1,7 +1,7 @@
 # Données sauvegardées et compatibilité
 
 ## Stockage local
-- Base **IndexedDB `grilles-evaluation`, version 1**, magasin **`workspace`** : un seul enregistrement, l'espace de travail actif (un devoir, un groupe). Fonctions : `openWorkspaceDatabase`, `readWorkspace`, `writeWorkspace`, `workspaceSnapshot`, `saveWorkspace`, `restoreWorkspace`.
+- Base **IndexedDB `grilles-evaluation`, version 1**, magasin **`workspace`** : un seul enregistrement, l'espace de travail actif (un devoir, un groupe). Fonctions : `openWorkspaceDatabase`, `readWorkspace`, `writeWorkspace`, `workspaceSnapshot`, `saveWorkspace`, `restoreWorkspace` (module `src/js/stockage.js`) ; les déclencheurs (boucle d'écouteurs d'événements et appel de `initializeWorkspaceStorage`) restent dans `correction.html`.
 - Les **photos** des élèves ne sont pas sauvegardées. Aucune donnée n'est envoyée sur un réseau.
 - Si un autre onglet modifie la sauvegarde, un avertissement signale que l'onglet courant n'enregistre plus.
 
@@ -31,7 +31,7 @@ Une **correction** (`studentCorrections[idÉlève]` et `currentCorrection`) cont
 | `commentSelections` | toutes | `"<idPropriétaire>:<niveau>"` → id du commentaire prédéfini (`""` = aucun) |
 | `commentTexts` | toutes | `"<idPropriétaire>:<niveau>"` → **texte libre** (prioritaire sur le prédéfini, même vide) ; effacé quand on choisit dans la liste |
 | `evaluee` | toutes | `false` = non noté (NN) ; absent = valeur de la grille |
-| `statut` | toutes (hors Bonus) | `note` / `nn` / `plus` / `ne` (cycle D-014) ; absent = déduit de `evaluee` (false → `nn`), puis de `priseEnCompte` (facultative → `plus`), sinon `note` |
+| `statut` | toutes (hors Bonus) | `note` / `nn` / `plus` / `ne` (cycle D-014, voir `docs/DECISIONS.md`) ; absent = déduit de `evaluee` (false → `nn`), puis de `priseEnCompte` (facultative → `plus`), sinon `note` |
 | `detailsOpen`, `popupDetailsOpen` | Capacités, Barème | tiroir ouvert (écran principal / fenêtre de correction) |
 
 `<idPropriétaire>` = id de la catégorie, ou de la capacité pour un commentaire de capacité.
