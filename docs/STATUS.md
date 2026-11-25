@@ -1,6 +1,6 @@
 # État d'avancement
 
-*Dernière mise à jour : 2026-11-25 (Vibe, T-01 module 10 : chargement des grilles). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
+*Dernière mise à jour : 2026-11-25 (Vibe, clôture de T-01). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
 Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les issues GitHub ; ce fichier donne la vue d'ensemble.
 
 ## Fonctionnalités
@@ -22,7 +22,7 @@ Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les
 | Sauvegarde / restauration du devoir sur fichier | ⬜ | à rédiger | — | Prévue après les méthodes. |
 | Migration des anciennes corrections locales | ⬜ | spec méthodes | — | Questions suspendues par le concepteur. |
 | Tests automatiques (GitHub Actions) | 🟡 | `TESTING.md` | unitaires + e2e | Fournis avec le kit ; à vérifier à la première PR. |
-| Découpage de `correction.html` en fichiers | 🟡 | — | unitaires (23) | T-01 · #4 : modules 1-10 extraits et fusionnés (calculs, rendu des cartes, assemblage, impression, fenêtre de correction et trombinoscope, import de grilles, stockage, corrections en cours, devoir & élèves, chargement des grilles) ; restent dialogues/menus/navigation, câblage et zone de marqueurs de tests. |
+| Découpage de `correction.html` en fichiers | ✅ | — | unitaires (23) | T-01 · #4 : **clôturé** — 10 modules extraits et fusionnés : 1 `methodes-calcul.js` (#12), 2 `rendu-cartes.js` (#13), 3 `carte-methodes.js` (#14), 4 `impression.js` (#15), 5 `fenetre-correction.js` (#19), 6 `import-grilles.js` (#20), 7 `stockage.js` (#21), 8 `corrections-en-cours.js` (#22), 9 `devoir-eleves.js` (#23), 10 `chargement-grilles.js` (#24). Reste dans `correction.html` (volontaire) : état initial, fonctions frontières des marqueurs de tests, dialogues/menus/navigation, câblage top-level ; récapitulatif dans `docs/handoff/2026-11-25-vibe-t01-clos.md`. |
 
 ## Points encore ouverts (repris de la spec des méthodes)
 
