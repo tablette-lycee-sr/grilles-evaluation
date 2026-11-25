@@ -1,5 +1,5 @@
 ## Tâche
-Closes #
+Closes # (sinon : « Partie de # » si la PR ne couvre qu'une partie de l'issue)
 
 ## Ce qui change
 (2-3 lignes)
