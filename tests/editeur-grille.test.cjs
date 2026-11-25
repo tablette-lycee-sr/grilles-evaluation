@@ -29,11 +29,9 @@ function treeEngine() {
 
 function parseGrid(grid) {
   const config = html.match(/^const DEFAULT_CONFIG = .*$/m)[0];
-  const first = html.indexOf("function gridFromJson(");
-  const last = html.indexOf("function resetChoices(", first);
-  assert.ok(first >= 0 && last > first);
+  const source = fs.readFileSync(path.join(root, "src/js/import-grilles.js"), "utf8");
   const context = vm.createContext({structuredClone});
-  vm.runInContext(`${config}\n${html.slice(first, last)}\nglobalThis.parseGrid=gridFromJson;`, context);
+  vm.runInContext(`${config}\n${source}\nglobalThis.parseGrid=gridFromJson;`, context);
   return context.parseGrid(JSON.stringify(grid));
 }
 
