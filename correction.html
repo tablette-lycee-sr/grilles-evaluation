@@ -630,7 +630,12 @@ function toggleCategoryEvaluation(nodeId,key){
   const current=categoryEvaluations[nodeId]||{},next={warning:false,exceeded:false,...current,motifIds:{warning:"",exceeded:"",...current.motifIds}};
   const isOpen=current.activeMotifKind===key;
   if(current[key]&&isOpen){next[key]=false;next.activeMotifKind="";next.motifIds[key]=""}
-  else{next[key]=true;next.activeMotifKind=key;if(key==="exceeded"&&!node?.methode)delete manualChoices[nodeId]}
+  else{
+    next[key]=true;next.activeMotifKind=key;
+    const other=key==="warning"?"exceeded":"warning";
+    if(next[other]){next[other]=false;next.motifIds[other]=""}
+    if(key==="exceeded"&&!node?.methode)delete manualChoices[nodeId]
+  }
   if(!next.warning&&!next.exceeded)delete categoryEvaluations[nodeId];
   else categoryEvaluations[nodeId]=next;
   render();

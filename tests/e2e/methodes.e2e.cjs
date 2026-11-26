@@ -124,3 +124,19 @@ test("fenêtre d'information : s'ouvre, liste les niveaux, Échap la ferme sans 
   assert.equal(await page.evaluate(() => document.getElementById("methodInfoDialog").open), false);
   assert.ok(await page.evaluate(() => document.getElementById("correctionPopup").open));
 }));
+
+test("Attention et Dépassé s'excluent : activer l'un désactive l'autre et efface son motif", () => avec(async page => {
+  const alerte = `${section("expression-orale")} .boutons .alerte`, depasse = `${section("expression-orale")} .boutons .rond:not(.rond--vide)`;
+  await page.click(alerte);
+  await page.evaluate(() => { categoryEvaluations["expression-orale"].motifIds = {warning: "expression-attention", exceeded: "expression-depasse"}; });
+  await page.click(depasse);
+  let evaluation = await page.evaluate(() => categoryEvaluations["expression-orale"]);
+  assert.ok(evaluation.exceeded, "Dépassé actif");
+  assert.ok(!evaluation.warning, "Attention désactivé par Dépassé");
+  assert.equal(evaluation.motifIds.warning, "", "le motif Attention choisi est effacé");
+  await page.click(alerte);
+  evaluation = await page.evaluate(() => categoryEvaluations["expression-orale"]);
+  assert.ok(evaluation.warning && !evaluation.exceeded, "activer Attention désactive Dépassé");
+  assert.equal(evaluation.motifIds.exceeded, "", "le motif Dépassé choisi est effacé");
+}));
+
