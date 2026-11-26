@@ -1,6 +1,6 @@
 # État d'avancement
 
-*Dernière mise à jour : 2026-11-24 (Vibe, T-07 cycle de notation par catégorie). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
+*Dernière mise à jour : 2026-11-25 (Vibe, T-04 : onglets Résultats et Export qualifiés). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
 Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les issues GitHub ; ce fichier donne la vue d'ensemble.
 
 ## Fonctionnalités
@@ -18,11 +18,11 @@ Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les
 | Sauvegarde locale (IndexedDB) | ✅ | `spec/donnees.md` | — | Zone sensible. Nouveaux champs : `manualSeconds`, `commentTexts`, `bonusText`, `evaluee`, `statut (D-014)`, `popupDetailsOpen`. |
 | Cycle de notation par catégorie (Noté / NN / 2(+) / NE) | ✅ | `spec/ui-correction.md` §3 | unitaires + e2e | T-07 · #16 (D-014) : à éprouver sur tablette, PDF à imprimer par l'utilisateur. |
 | Fiche imprimable / PDF | 🟡 | spec méthodes (« Sauvegarde, compatibilité et fiche ») | — | Existe (`makePrint*`). À vérifier avec : commentaires libres, NN, Minuteur manuel. Contenu visible par l'élève à préciser. |
-| Onglets Résultats et Export | 🟡 | — | — | État réel à qualifier (relever ce qui est implémenté). |
+| Onglets Résultats et Export | 🟡 | — | — | T-04 · #7 : **qualifié**. **Résultats** : non implémenté (placeholder « disponible prochainement », aucun sous-menu, aucune fonction) → à concevoir puis bâtir, cf. T-08 · #26 (labels `humain`, `spec-needed`). **Export** : réduit au sous-menu « Imprimer / PDF » (`exportPrintBtn` → fiche imprimable de `src/js/impression.js`) ; l'écran de la vue reste un placeholder ; l'export du devoir sur fichier est le sujet de T-02 / T-03 (#5 / #6). Boutons « Ouvrir un devoir », « Sauvegarder le devoir » et « Télécharger une grille » du sous-menu Devoir : désactivés « (à venir) ». |
 | Sauvegarde / restauration du devoir sur fichier | ⬜ | à rédiger | — | Prévue après les méthodes. |
 | Migration des anciennes corrections locales | ⬜ | spec méthodes | — | Questions suspendues par le concepteur. |
 | Tests automatiques (GitHub Actions) | 🟡 | `TESTING.md` | unitaires + e2e | Fournis avec le kit ; à vérifier à la première PR. |
-| Découpage de `correction.html` en fichiers | 🟡 | — | unitaires (21) | T-01 · #4 : modules 1-4 extraits et fusionnés (calculs, rendu des cartes, assemblage, impression) ; restent fenêtre de correction, éditeur, stockage. |
+| Découpage de `correction.html` en fichiers | ✅ | — | unitaires (23) | T-01 · #4 : **clôturé** — 10 modules extraits et fusionnés : 1 `methodes-calcul.js` (#12), 2 `rendu-cartes.js` (#13), 3 `carte-methodes.js` (#14), 4 `impression.js` (#15), 5 `fenetre-correction.js` (#19), 6 `import-grilles.js` (#20), 7 `stockage.js` (#21), 8 `corrections-en-cours.js` (#22), 9 `devoir-eleves.js` (#23), 10 `chargement-grilles.js` (#24). Reste dans `correction.html` (volontaire) : état initial, fonctions frontières des marqueurs de tests, dialogues/menus/navigation, câblage top-level ; récapitulatif dans `docs/handoff/2026-11-25-vibe-t01-clos.md`. |
 
 ## Points encore ouverts (repris de la spec des méthodes)
 
@@ -39,6 +39,7 @@ Schéma JSON versionné et reprise éventuelle des corrections locales · contra
 | T-05 | Tests e2e supplémentaires : import CSV d'élèves, éditeur de grille, impression | agent:ok | #8 | Chaque scénario nommé dans `TESTING.md`. |
 | T-06 | Valider l'échelle du Bonus et les critères du Barème (couleur ? niveau ?) | humain | #9 | Décision notée dans `DECISIONS.md`. |
 | T-07 | Cycle de notation par catégorie : Noté / NN / 2(+) / NE | **sensible** | #16 | Cycle respecté ; 2(+) dynamique ; NE = contrôles désactivés et PDF réduit au titre ; unitaires + e2e adaptés ; D-014 remplace D-009. |
+| T-08 | Onglet Résultats : concevoir puis implémenter la vue | humain, spec-needed | #26 | Conception validée par l'utilisateur ; spec rédigée et validée ; implémentation et tests ensuite. |
 
 ## Bugs et risques connus
 

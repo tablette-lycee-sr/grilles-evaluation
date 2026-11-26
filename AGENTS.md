@@ -68,6 +68,27 @@ Calculs de notes (`methodCalculation`, `calculateFinalScore`, `timerPercentage`)
 4. Décision de conception ⇒ ligne dans `docs/DECISIONS.md` ; changement de comportement ⇒ spec mise à jour.
 5. Fichier `docs/handoff/AAAA-MM-JJ-<agent>-<sujet>.md` créé d'après `_TEMPLATE.md`.
 6. PR remplie avec le modèle ; l'intégration continue joint des captures d'écran quand l'interface change.
+7. La PR se termine par **« Closes #N »** si elle couvre toute l'issue (GitHub fermera l'issue à la fusion) ; dans le cas contraire **« Partie de #N »**, et l'issue reste ouverte pour la suite.
+
+## Fusion d'une PR — vérifications avant de cliquer
+
+La ruleset de `main` exige une **pull request** et le check **tests** vert avant fusion : rien ne se pousse en direct, y compris pour l'utilisateur.
+
+- Avant de fusionner : ouvrir l'onglet **Checks** de la PR. Si un bouton **« Approve and run workflows »** est proposé (notamment pour les PR ouvertes par Copilot), cliquer. Ne jamais fusionner avec une CI en attente ou rouge.
+- PR partielle : `Closes #N` est interdit si l'issue reste à compléter ; écrire « Partie de #N » et laisser l'issue ouverte.
+
+## Consultations IA extérieures (ChatGPT, Perplexity, Mistral, Claude…)
+
+Un avis de consultation n'est pas un livrable tant qu'il ne repose pas dans le dépôt :
+
+- Note de consultation créée d'après `docs/consultations/_TEMPLATE.md` (une note datée par consultation).
+- **Décision** qui en découle ⇒ une ligne dans `docs/DECISIONS.md` ; **comportement** modifié ⇒ `docs/spec/` mis à jour, dans la même PR que le code le cas échéant.
+- Le dernier handoff cite la consultation applicable.
+
+## Vérifiabilité des affirmations
+
+- Toute affirmation d'un agent doit être appuyée par une **preuve du dépôt** (fichier, diff, numéro de run CI) ; un constat invérifiable est signalé comme hypothèse, pas présenté comme un fait.
+- L'utilisateur vérifie le fait avant d'agir (exemples : un fichier annoncé manquant, une décision attribuée à une IA).
 
 ## Si tu es bloqué ou si la spec est muette
 

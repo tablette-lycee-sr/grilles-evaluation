@@ -7,6 +7,7 @@ const vm = require("node:vm");
 const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "correction.html"), "utf8");
 const methodCalculationSource = fs.readFileSync(path.join(root, "src/js/methodes-calcul.js"), "utf8");
+const importGrillesSource = fs.readFileSync(path.join(root, "src/js/import-grilles.js"), "utf8");
 const gridText = fs.readFileSync(path.join(root, "grille-exemple-oral.json"), "utf8");
 const defaultConfig = html.match(/^const DEFAULT_CONFIG = .*$/m)[0];
 
@@ -32,7 +33,7 @@ function makeEngine() {
     let methodStates = {};
     ${section("function allNodes(", "function makeChoiceButton(")}
     ${methodCalculationSource}
-    ${section("function gridFromJson(", "function resetChoices(")}
+    ${importGrillesSource}
     ${section("function resetChoices(", "function captureActiveCorrection(")}
     ${section("function calculateFinalScore(", "function updateFinalScore(")}
     globalThis.engine = {
