@@ -158,7 +158,11 @@ Si les anciennes corrections sont reprises, leurs anciens points D des capacité
 - Si les corrections locales sont migrées, conserver une copie de l'ancien état et vérifier la migration avant activation. En cas d'échec, ne pas écraser la copie. Cette copie locale ne remplace pas une sauvegarde sur fichier et peut disparaître avec les données du navigateur.
 - Les questions sur le traitement des imports et des fichiers partiellement invalides sont suspendues à la demande du concepteur ; leur portée reste à préciser avant mise en œuvre.
 - La sauvegarde et la restauration du devoir sur fichier sont prévues après les nouvelles méthodes. La sauvegarde locale actuelle ne synchronise pas les appareils et n'est pas un export de devoir.
-- La fiche PDF ou imprimable doit comporter un détail adapté à chaque méthode, avec les résultats et commentaires pertinents. Le contenu exact visible par l'élève reste à préciser.
+- La fiche PDF ou imprimable comporte un détail adapté à chaque méthode, avec les résultats et commentaires pertinents (T-02 · #5, inventaire validé par l'utilisateur) :
+  - l'en-tête de catégorie porte le statut de l'élève : « NN » (évaluée mais non notée : aucune valeur de note imprimée, détail conservé à titre indicatif), « NE » (réduite à son titre) ; pour 2(+), « (+) » après le niveau et le pourcentage, avec la ligne « Notée seulement si elle augmente la note finale » ; le Bonus en NN affiche « NN » et « Bonus non pris en compte », sans « +X pt » ;
+  - le texte libre édité prime sur le commentaire prédéfini (D-007) ;
+  - Minuteur : la durée retenue est imprimée (`manualSeconds` quand une position manuelle est définie, sinon la mesure), la mesure est rappelée entre parenthèses quand elle existe et diffère de plus d'une demi-seconde de la retenue (D-011) ; « — » si jamais démarré et sans position manuelle ;
+  - les motifs Attention et Dépassé sont imprimés pour toutes les catégories, avec méthode ou non : motif précis du type (`motifIds`), repli sur le motif générique (`motifId`) ; le coefficient n'est pas imprimé sur la fiche.
 - Les deux vues de correction doivent partager les mêmes données et calculs. Le passage rapide entre élèves et les corrections en cours doivent être vérifiés dans les deux vues.
 
 ## Points encore ouverts
