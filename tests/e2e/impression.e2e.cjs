@@ -8,15 +8,15 @@ async function avec(corps) {
   try { await openCorrection(app.page); await corps(app.page); assert.deepEqual(app.page.errors, []); } finally { await app.close(); }
 }
 
-// Rend la fiche visible hors impression (pour les captures) et régénère son contenu.
-function afficherFiche(page) {
-  return page.evaluate(() => {
+// Rend la fiche visible dans les conditions réelles du papier : émule le média d'impression
+// (les règles @media print de l'application masquent tout sauf #printReport) et régénère son contenu.
+async function afficherFiche(page) {
+  await page.evaluate(() => {
     document.getElementById("correctionPopup")?.close();
-    const report = document.getElementById("printReport");
-    report.style.cssText = "display:block!important;position:static;transform:none;background:#fff;color:#111;padding:16px";
-    report.hidden = false;report.setAttribute("aria-hidden", "false");
-    renderPrintReport();report.scrollIntoView();
+    renderPrintReport();
   });
+  await page.emulateMedia({media: "print"});
+  await page.evaluate(() => window.scrollTo(0, 0));
 }
 
 // Texte de la section fiche d'une catégorie, retrouvée par son titre.
@@ -35,7 +35,7 @@ test("fiche : NN sans valeur de note, 2(+) signalé, NE réduit, Bonus NN non pr
     methodStates["role-debat"] = {evaluee: false, bonus: 0};
   });
   await afficherFiche(page);
-  await shot(page, "fiche-statuts-t02");
+  await shot(page, "fiche-statuts-t02", {fullPage: true});
   const expression = await texteSection(page, "Expression orale");
   assert.ok(expression.includes("NN"), "l'en-tête affiche NN");
   assert.ok(expression.includes("Évaluée mais non notée (NN)"));
@@ -88,7 +88,8 @@ test("fiche : les motifs Attention et Dépassé s'impriment aussi sur les catég
     categoryEvaluations[node.id] = {warning: true, exceeded: true, motifIds: {warning: "m1", exceeded: "m2"}};
     renderPrintReport();
   });
-  await shot(page, "fiche-motifs-t02");
+  await afficherFiche(page);
+  await shot(page, "fiche-motifs-t02", {fullPage: true});
   const texte = await page.evaluate(() => document.getElementById("printReport").textContent);
   assert.ok(texte.includes("Motif attention"), "le motif Attention précis est imprimé");
   assert.ok(texte.includes("Dépassé : Motif dépassé"), "le motif Dépassé est imprimé");
