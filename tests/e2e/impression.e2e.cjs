@@ -80,7 +80,9 @@ test("fiche : la durée retenue du Minuteur est imprimée, la mesure rappelée s
 
 test("fiche : les motifs Attention et Dépassé s'impriment aussi sur les catégories sans méthode", () => avec(async page => {
   await page.evaluate(() => {
-    applyLoadedGrid({grid: structuredClone(DEFAULT_GRID), config: structuredClone(DEFAULT_CONFIG), partLayout: structuredClone(PART_LAYOUT)}, "defaut.csv");
+    const config=structuredClone(DEFAULT_CONFIG);
+    config.ponderations={};config.coefficientsCategories={};
+    applyLoadedGrid({grid: structuredClone(DEFAULT_GRID), config, partLayout: structuredClone(PART_LAYOUT)}, "defaut.csv");
     const node = grid.elements.find(item => !item.methode);
     node.commentMotifs = [{id: "m1", label: "Motif attention", kind: "PROBLEME"}, {id: "m2", label: "Motif dépassé", kind: "VALORISATION"}];
     categoryEvaluations[node.id] = {warning: true, exceeded: true, motifIds: {warning: "m1", exceeded: "m2"}};
