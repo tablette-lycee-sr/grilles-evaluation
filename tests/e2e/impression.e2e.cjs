@@ -54,16 +54,26 @@ test("fiche : NN sans valeur de note, 2(+) signalé, NE réduit, Bonus NN non pr
 }));
 
 test("fiche : la durée retenue du Minuteur est imprimée, la mesure rappelée si elle diffère", () => avec(async page => {
-  await page.evaluate(() => { methodStates["gestion-temps"] = {manualSeconds: 90}; });
+  await page.evaluate(() => {
+    methodStates["gestion-temps"] = {manualSeconds: 90};
+    manualCategoryPercent["gestion-temps"] = 30;
+  });
   await afficherFiche(page);
   let gestion = await texteSection(page, "Gestion du temps");
-  assert.ok(gestion.includes("Durée : 1′30″ / 5′00″"), `durée manuelle imprimée (reçu : ${gestion})`);
+  assert.ok(gestion.includes("Durée : 1′30″ / 5′00″"), `durée manuelle imprimée quand la position manuelle existe (reçu : ${gestion})`);
   await page.evaluate(() => {
     methodStates["gestion-temps"] = {recorded: true, elapsedMs: 125000, manualSeconds: 90};
+    manualCategoryPercent["gestion-temps"] = 30;
     renderPrintReport();
   });
   gestion = await texteSection(page, "Gestion du temps");
   assert.ok(gestion.includes("Durée : 1′30″ (mesurée 2′05″) / 5′00″"), `mesure rappelée entre parenthèses (reçu : ${gestion})`);
+  await page.evaluate(() => {
+    delete manualCategoryPercent["gestion-temps"];
+    renderPrintReport();
+  });
+  gestion = await texteSection(page, "Gestion du temps");
+  assert.ok(gestion.includes("Durée : 2′05″ / 5′00″"), `manualSeconds sans position manuelle est ignoré (reçu : ${gestion})`);
   await page.evaluate(() => {
     methodStates["gestion-temps"] = {recorded: true, elapsedMs: 125000};
     renderPrintReport();
@@ -148,7 +158,7 @@ test("fiche : les motifs des catégories sans méthode respectent leur type (Att
     renderPrintReport();
   });
   const texte2 = await page.evaluate(() => document.getElementById("printReport").textContent);
-  assert.ok(texte2.includes("Attention : Motif attention"), "le motif Attention du bon type est imprimé");
+  assert.ok(texte2.includes("Motif attention"), "le motif Attention du bon type est imprimé dans le commentaire d'en-tête");
   assert.ok(texte2.includes("Dépassé"), "la mention Dépassé s'imprime");
   assert.ok(!texte2.includes("Dépassé : "), "Dépassé sans motif de type VALORISATION : mention sans libellé");
 }));
