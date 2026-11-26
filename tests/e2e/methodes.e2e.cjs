@@ -140,3 +140,12 @@ test("Attention et Dépassé s'excluent : activer l'un désactive l'autre et eff
   assert.equal(evaluation.motifIds.exceeded, "", "le motif Dépassé choisi est effacé");
 }));
 
+test("compteur : le Dépassé suggéré (anneau) n'empêche pas d'activer Attention", () => avec(async page => {
+  for (let i = 0; i < 6; i++) await page.click(`${section("participation-echanges")} .compteur`);
+  assert.ok(await page.locator(`${section("participation-echanges")} .boutons .rond--anneau`).count(), "l'anneau de suggestion est visible au seuil D");
+  await page.click(`${section("participation-echanges")} .boutons .alerte`);
+  const evaluation = await page.evaluate(() => categoryEvaluations["participation-echanges"]);
+  assert.ok(evaluation.warning, "Attention s'active normalement malgré la suggestion");
+  assert.ok(!evaluation.exceeded, "la suggestion de Dépassé n'active rien");
+  assert.ok(await page.locator(`${section("participation-echanges")} .boutons .rond--anneau`).count(), "l'anneau de suggestion reste affiché, Dépassé reste disponible");
+}));

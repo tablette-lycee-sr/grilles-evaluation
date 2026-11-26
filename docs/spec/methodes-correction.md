@@ -55,7 +55,7 @@ Pour le Compteur, le pourcentage est calculé sans déplacement manuel du curseu
 
 ## Attention et Dépassé
 
-Attention et Dépassé signalent des états hors norme, distincts du calcul de la note. Leur sélection est manuelle, sauf règles de suggestion et de désactivation du Compteur précisées ci-dessous. Pour chaque état, le correcteur peut choisir au maximum un commentaire proposé dans la grille ; un commentaire justificatif n'est pas obligatoire en règle générale.
+Attention et Dépassé signalent des états hors norme, distincts du calcul de la note. Leur sélection est manuelle, sauf règles de suggestion et de désactivation du Compteur précisées ci-dessous. Les deux signalements **s'excluent** (D-015) : activer l'un décoche l'autre et efface le motif qui y était choisi ; la suggestion de Dépassé du Compteur n'active rien et n'empêche pas d'activer Attention. Pour chaque état, le correcteur peut choisir au maximum un commentaire proposé dans la grille ; un commentaire justificatif n'est pas obligatoire en règle générale.
 
 Pour le Minuteur, Attention est activé manuellement pour constater que l'élève n'a pas parlé. Son activation affiche automatiquement le commentaire pré-saisi dans la grille, notamment dans les vues de correction et sur la fiche. Dans ce cas, un minuteur jamais démarré passe de non renseigné à une absence de prise de parole constatée, à 0 %. Si un pourcentage manuel existait, cette activation le désactive et rétablit le calcul automatique à 0 %. Démarrer le minuteur désactive automatiquement Attention et son commentaire d'absence ; la durée devient la donnée de calcul. Le Minuteur n'a pas d'état Dépassé.
 
