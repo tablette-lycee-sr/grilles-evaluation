@@ -101,3 +101,54 @@ test("fiche : les motifs Attention et Dépassé s'impriment aussi sur les catég
   const texte2 = await page.evaluate(() => document.getElementById("printReport").textContent);
   assert.ok(texte2.includes("Motif attention"), "repli sur le motif générique quand motifIds est absent");
 }));
+
+test("fiche : la durée manuelle du Minuteur n'est plus retenue après « n'a pas pris la parole »", () => avec(async page => {
+  await page.evaluate(() => {
+    methodStates["gestion-temps"] = {manualSeconds: 90};
+    manualCategoryPercent["gestion-temps"] = 30;
+    renderPrintReport();
+  });
+  await afficherFiche(page);
+  let gestion = await texteSection(page, "Gestion du temps");
+  assert.ok(gestion.includes("Durée : 1′30″ / 5′00″"), `position manuelle encore définie : durée manuelle retenue (reçu : ${gestion})`);
+  await page.evaluate(() => toggleCategoryEvaluation("gestion-temps", "warning"));
+  await afficherFiche(page);
+  gestion = await texteSection(page, "Gestion du temps");
+  assert.ok(gestion.includes("Attention"), "le signalement est imprimé");
+  assert.ok(gestion.includes("Durée : 0′00″ / 5′00″"), `durée manuelle oubliée après le signalement (reçu : ${gestion})`);
+  assert.ok(!gestion.includes("1′30″"), "aucune trace de l'ancienne durée manuelle");
+  assert.ok(!gestion.includes("(mesurée"), "pas de rappel de mesure : la mesure vaut zéro");
+  await page.evaluate(() => {
+    methodStates["gestion-temps"].elapsedMs = 125000;
+    renderPrintReport();
+  });
+  gestion = await texteSection(page, "Gestion du temps");
+  assert.ok(gestion.includes("Durée : 2′05″ / 5′00″"), "sans position manuelle, la durée mesurée reprend la main");
+}));
+
+test("fiche : les motifs des catégories sans méthode respectent leur type (Attention = PROBLÈME, Dépassé = VALORISATION)", () => avec(async page => {
+  await page.evaluate(() => {
+    const config = structuredClone(DEFAULT_CONFIG);
+    config.ponderations = {};config.coefficientsCategories = {};
+    applyLoadedGrid({grid: structuredClone(DEFAULT_GRID), config, partLayout: structuredClone(PART_LAYOUT)}, "defaut.csv");
+    const node = grid.elements.find(item => !item.methode);
+    node.commentMotifs = [{id: "m1", label: "Motif attention", kind: "PROBLEME"}, {id: "m2", label: "Motif dépassé", kind: "VALORISATION"}];
+    categoryEvaluations[node.id] = {warning: true, exceeded: true, motifIds: {warning: "m2", exceeded: "m1"}};
+    renderPrintReport();
+  });
+  await afficherFiche(page);
+  await shot(page, "fiche-motifs-t02b", {fullPage: true});
+  const texte = await page.evaluate(() => document.getElementById("printReport").textContent);
+  assert.ok(!texte.includes("Motif attention"), "un identifiant de VALORISATION choisi en Attention n'imprime rien");
+  assert.ok(!texte.includes("Motif dépassé"), "un identifiant de PROBLÈME choisi en Dépassé n'imprime rien");
+  assert.ok(texte.includes("Dépassé"), "la mention Dépassé s'imprime sans libellé hors type");
+  await page.evaluate(() => {
+    const node = grid.elements.find(item => !item.methode);
+    categoryEvaluations[node.id] = {warning: true, exceeded: true, motifIds: {warning: "m1"}};
+    renderPrintReport();
+  });
+  const texte2 = await page.evaluate(() => document.getElementById("printReport").textContent);
+  assert.ok(texte2.includes("Attention : Motif attention"), "le motif Attention du bon type est imprimé");
+  assert.ok(texte2.includes("Dépassé"), "la mention Dépassé s'imprime");
+  assert.ok(!texte2.includes("Dépassé : "), "Dépassé sans motif de type VALORISATION : mention sans libellé");
+}));

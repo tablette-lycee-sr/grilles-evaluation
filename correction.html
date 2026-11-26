@@ -622,7 +622,7 @@ function toggleCategoryEvaluation(nodeId,key){
     if(current.warning){delete categoryEvaluations[nodeId];state.recorded=false}
     else{
       if(timerSeconds(state)>0&&!window.confirm("Remettre la durée à zéro et signaler que l’élève n’a pas pris la parole ?"))return;
-      delete state.startedAt;state.elapsedMs=0;state.recorded=true;delete manualCategoryPercent[nodeId];
+      delete state.startedAt;state.elapsedMs=0;state.recorded=true;delete manualCategoryPercent[nodeId];delete state.manualSeconds;
       categoryEvaluations[nodeId]={warning:true,motifIds:{warning:node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.id||""}};
     }
     render();return;

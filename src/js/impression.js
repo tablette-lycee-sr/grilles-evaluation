@@ -104,7 +104,7 @@ function renderPrintMethod(node){
   if(node.methode==="distribution")addLine(node.niveaux.map(id=>`${id} : ${Number(state.counts?.[id])||0}`).join(" · "));
   if(node.methode==="compteur")addLine(`Nombre : ${Number(state.count)||0}`);
   if(node.methode==="minuteur"){
-    const measured=state.recorded||state.startedAt?timerSeconds(state):null,retained=Number.isFinite(Number(state.manualSeconds))?Number(state.manualSeconds):measured;
+    const measured=state.recorded||state.startedAt?timerSeconds(state):null,retained=Object.hasOwn(manualCategoryPercent,node.id)&&typeof state.manualSeconds==="number"?state.manualSeconds:measured;
     addLine(retained===null?`Durée : — / ${formatDuration(node.dureeCibleSecondes)}`:`Durée : ${formatDuration(retained)}${measured!==null&&Math.abs(measured-retained)>0.5?` (mesurée ${formatDuration(measured)})`:""} / ${formatDuration(node.dureeCibleSecondes)}`);
   }
   if(node.methode==="bonus"&&statut!=="nn"){const item=(node.commentairesValorisation||[]).find(option=>option.id===state.bonusComment);addLine(Object.hasOwn(state,"bonusText")?state.bonusText:item?.texte)}
@@ -137,14 +137,14 @@ function renderPrintReport(){
       const label=document.createElement("span");label.className="print-category-label";
       const name=document.createElement("span");name.textContent=node.titre;
       const comment=document.createElement("span");comment.className="print-category-comment";comment.setAttribute("aria-label","Emplacement du commentaire de catégorie");
-      const evaluation=categoryEvaluations[node.id]||{},selectedMotif=evaluation.warning?(node.commentMotifs||[]).find(motif=>motif.id===(evaluation.motifIds?.warning||evaluation.motifId)):null;
+      const evaluation=categoryEvaluations[node.id]||{},selectedMotif=evaluation.warning?(node.commentMotifs||[]).find(motif=>motif.kind==="PROBLEME"&&motif.id===(evaluation.motifIds?.warning||evaluation.motifId)):null;
       if(selectedMotif)comment.textContent=selectedMotif.label;
       label.append(name);
       if(evaluation.warning)label.appendChild(makePrintWarning());
       label.appendChild(comment);
       heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),Boolean(evaluation.exceeded)));category.appendChild(heading);
       if(evaluation.exceeded){
-        const exceededMotif=(node.commentMotifs||[]).find(motif=>motif.id===(evaluation.motifIds?.exceeded||evaluation.motifId));
+        const exceededMotif=(node.commentMotifs||[]).find(motif=>motif.kind==="VALORISATION"&&motif.id===(evaluation.motifIds?.exceeded||evaluation.motifId));
         const line=document.createElement("div");line.className="print-method-line";line.textContent=`Dépassé${exceededMotif?` : ${exceededMotif.label}`:""}`;category.appendChild(line);
       }
       category.appendChild(renderPrintChildren(node));section.appendChild(category);
