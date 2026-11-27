@@ -622,7 +622,7 @@ function toggleCategoryEvaluation(nodeId,key){
     if(current.warning){delete categoryEvaluations[nodeId];state.recorded=false}
     else{
       if(timerSeconds(state)>0&&!window.confirm("Remettre la durée à zéro et signaler que l’élève n’a pas pris la parole ?"))return;
-      delete state.startedAt;state.elapsedMs=0;state.recorded=true;delete manualCategoryPercent[nodeId];
+      delete state.startedAt;state.elapsedMs=0;state.recorded=true;delete manualCategoryPercent[nodeId];delete state.manualSeconds;
       categoryEvaluations[nodeId]={warning:true,motifIds:{warning:node.commentMotifs?.find(item=>item.kind==="PROBLEME")?.id||""}};
     }
     render();return;
@@ -630,7 +630,12 @@ function toggleCategoryEvaluation(nodeId,key){
   const current=categoryEvaluations[nodeId]||{},next={warning:false,exceeded:false,...current,motifIds:{warning:"",exceeded:"",...current.motifIds}};
   const isOpen=current.activeMotifKind===key;
   if(current[key]&&isOpen){next[key]=false;next.activeMotifKind="";next.motifIds[key]=""}
-  else{next[key]=true;next.activeMotifKind=key;if(key==="exceeded"&&!node?.methode)delete manualChoices[nodeId]}
+  else{
+    next[key]=true;next.activeMotifKind=key;
+    const other=key==="warning"?"exceeded":"warning";
+    if(next[other]){next[other]=false;next.motifIds[other]=""}
+    if(key==="exceeded"&&!node?.methode)delete manualChoices[nodeId]
+  }
   if(!next.warning&&!next.exceeded)delete categoryEvaluations[nodeId];
   else categoryEvaluations[nodeId]=next;
   render();

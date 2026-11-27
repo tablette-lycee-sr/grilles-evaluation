@@ -54,9 +54,9 @@ async function openCorrection(page) {
 
 const section = id => `#correctionPopup [data-method-node="${id}"]`;
 
-async function shot(page, name) {
+async function shot(page, name, options = {}) {
   fs.mkdirSync(SCREENS, {recursive: true});
-  await page.screenshot({path: path.join(SCREENS, `${name}.png`)});
+  await page.screenshot({path: path.join(SCREENS, `${name}.png`), ...options});
 }
 
 module.exports = {openApp, openCorrection, section, shot};

@@ -55,7 +55,7 @@ Pour le Compteur, le pourcentage est calculé sans déplacement manuel du curseu
 
 ## Attention et Dépassé
 
-Attention et Dépassé signalent des états hors norme, distincts du calcul de la note. Leur sélection est manuelle, sauf règles de suggestion et de désactivation du Compteur précisées ci-dessous. Pour chaque état, le correcteur peut choisir au maximum un commentaire proposé dans la grille ; un commentaire justificatif n'est pas obligatoire en règle générale.
+Attention et Dépassé signalent des états hors norme, distincts du calcul de la note. Leur sélection est manuelle, sauf règles de suggestion et de désactivation du Compteur précisées ci-dessous. Les deux signalements **s'excluent** (D-015) : activer l'un décoche l'autre et efface le motif qui y était choisi ; la suggestion de Dépassé du Compteur n'active rien et n'empêche pas d'activer Attention. Pour chaque état, le correcteur peut choisir au maximum un commentaire proposé dans la grille ; un commentaire justificatif n'est pas obligatoire en règle générale.
 
 Pour le Minuteur, Attention est activé manuellement pour constater que l'élève n'a pas parlé. Son activation affiche automatiquement le commentaire pré-saisi dans la grille, notamment dans les vues de correction et sur la fiche. Dans ce cas, un minuteur jamais démarré passe de non renseigné à une absence de prise de parole constatée, à 0 %. Si un pourcentage manuel existait, cette activation le désactive et rétablit le calcul automatique à 0 %. Démarrer le minuteur désactive automatiquement Attention et son commentaire d'absence ; la durée devient la donnée de calcul. Le Minuteur n'a pas d'état Dépassé.
 
@@ -158,7 +158,11 @@ Si les anciennes corrections sont reprises, leurs anciens points D des capacité
 - Si les corrections locales sont migrées, conserver une copie de l'ancien état et vérifier la migration avant activation. En cas d'échec, ne pas écraser la copie. Cette copie locale ne remplace pas une sauvegarde sur fichier et peut disparaître avec les données du navigateur.
 - Les questions sur le traitement des imports et des fichiers partiellement invalides sont suspendues à la demande du concepteur ; leur portée reste à préciser avant mise en œuvre.
 - La sauvegarde et la restauration du devoir sur fichier sont prévues après les nouvelles méthodes. La sauvegarde locale actuelle ne synchronise pas les appareils et n'est pas un export de devoir.
-- La fiche PDF ou imprimable doit comporter un détail adapté à chaque méthode, avec les résultats et commentaires pertinents. Le contenu exact visible par l'élève reste à préciser.
+- La fiche PDF ou imprimable comporte un détail adapté à chaque méthode, avec les résultats et commentaires pertinents (T-02 · #5, inventaire validé par l'utilisateur) :
+  - l'en-tête de catégorie porte le statut de l'élève : « NN » (évaluée mais non notée : aucune valeur de note imprimée, détail conservé à titre indicatif), « NE » (réduite à son titre) ; pour 2(+), « (+) » après le niveau et le pourcentage, avec la ligne « Notée seulement si elle augmente la note finale » ; le Bonus en NN affiche « NN » et « Bonus non pris en compte », sans « +X pt » ;
+  - le texte libre édité prime sur le commentaire prédéfini (D-007) ;
+  - Minuteur : la durée retenue est imprimée (`manualSeconds` seulement si la position manuelle existe toujours (`manualCategoryPercent`) et que `manualSeconds` est un nombre, sinon la mesure) ; un signalement « n'a pas pris la parole » efface la position manuelle et `manualSeconds`, la fiche imprime donc la durée mesurée ; la mesure est rappelée entre parenthèses quand elle existe et diffère de plus d'une demi-seconde de la retenue (D-011) ; « — » si jamais démarré et sans position manuelle ;
+  - les motifs Attention et Dépassé sont imprimés pour toutes les catégories, avec méthode ou non : motif du type correspondant (`kind` PROBLEME pour Attention, VALORISATION pour Dépassé) identifié par `motifIds`, repli sur le motif générique (`motifId`) ; un signalement sans motif du bon type imprime la mention seule (« Dépassé » sans libellé) ; le coefficient n'est pas imprimé sur la fiche.
 - Les deux vues de correction doivent partager les mêmes données et calculs. Le passage rapide entre élèves et les corrections en cours doivent être vérifiés dans les deux vues.
 
 ## Points encore ouverts

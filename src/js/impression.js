@@ -83,11 +83,14 @@ function renderPrintMethod(node){
   const section=document.createElement("section");section.className="print-category print-method";
   const state=methodState(node),evaluation=categoryEvaluations[node.id]||{},heading=document.createElement("h3");heading.className="print-category-heading";
   const selected=node.methode==="bonus"?null:effectiveLevel(node),percentage=node.methode==="bonus"?null:getCategoryPercentage(node),statut=categoryStatut(node);
-  const summary=document.createElement("span");summary.textContent=statut==="ne"?"NE":node.methode==="bonus"?`+${Number(state.bonus||0).toLocaleString("fr-FR")} pt`:`${selected||"Non évaluée"} · ${percentage===null?"—":`${percentage.toFixed(2).replace(".",",")} %`}`;
+  const summary=document.createElement("span");
+  summary.textContent=statut==="ne"?"NE":statut==="nn"?"NN":node.methode==="bonus"?`+${Number(state.bonus||0).toLocaleString("fr-FR")} pt`:`${selected||"Non évaluée"} · ${percentage===null?"—":`${percentage.toFixed(2).replace(".",",")} %`}${statut==="plus"?" (+)":""}`;
   const title=document.createElement("span");title.textContent=node.titre;heading.append(title,summary);section.appendChild(heading);
   if(statut==="ne")return section;
   const addLine=text=>{if(!text)return;const line=document.createElement("div");line.className="print-method-line";line.textContent=text;section.appendChild(line)};
-  if(statut==="nn")addLine("Évaluée mais non notée (NN)");
+  if(statut==="nn"&&node.methode!=="bonus")addLine("Évaluée mais non notée (NN)");
+  if(statut==="plus")addLine("Notée seulement si elle augmente la note finale");
+  if(statut==="nn"&&node.methode==="bonus")addLine("Bonus non pris en compte");
   const comment=selected&&selectedMethodComment(node,node,selected);if(comment)addLine(comment);
   for(const [key,kind] of [["warning","PROBLEME"],["exceeded","VALORISATION"]])if(evaluation[key]){
     const motif=(node.commentMotifs||[]).find(item=>item.kind===kind&&item.id===(evaluation.motifIds?.[key]||evaluation.motifId));
@@ -100,8 +103,11 @@ function renderPrintMethod(node){
   if(node.methode==="bareme")for(const criterion of node.criteres||[]){const value=Object.hasOwn(state.scores||{},criterion.id)?String(state.scores[criterion.id]).replace(".",","):"—";addLine(`${criterion.titre} : ${value} / ${criterion.pointsMaximum}`)}
   if(node.methode==="distribution")addLine(node.niveaux.map(id=>`${id} : ${Number(state.counts?.[id])||0}`).join(" · "));
   if(node.methode==="compteur")addLine(`Nombre : ${Number(state.count)||0}`);
-  if(node.methode==="minuteur")addLine(`Durée : ${state.recorded||state.startedAt?formatDuration(timerSeconds(state)):"—"} / ${formatDuration(node.dureeCibleSecondes)}`);
-  if(node.methode==="bonus"){const item=(node.commentairesValorisation||[]).find(option=>option.id===state.bonusComment);addLine(Object.hasOwn(state,"bonusText")?state.bonusText:item?.texte)}
+  if(node.methode==="minuteur"){
+    const measured=state.recorded||state.startedAt?timerSeconds(state):null,retained=Object.hasOwn(manualCategoryPercent,node.id)&&typeof state.manualSeconds==="number"?state.manualSeconds:measured;
+    addLine(retained===null?`Durée : — / ${formatDuration(node.dureeCibleSecondes)}`:`Durée : ${formatDuration(retained)}${measured!==null&&Math.abs(measured-retained)>0.5?` (mesurée ${formatDuration(measured)})`:""} / ${formatDuration(node.dureeCibleSecondes)}`);
+  }
+  if(node.methode==="bonus"&&statut!=="nn"){const item=(node.commentairesValorisation||[]).find(option=>option.id===state.bonusComment);addLine(Object.hasOwn(state,"bonusText")?state.bonusText:item?.texte)}
   return section;
 }
 function renderPrintReport(){
@@ -131,12 +137,16 @@ function renderPrintReport(){
       const label=document.createElement("span");label.className="print-category-label";
       const name=document.createElement("span");name.textContent=node.titre;
       const comment=document.createElement("span");comment.className="print-category-comment";comment.setAttribute("aria-label","Emplacement du commentaire de catégorie");
-      const evaluation=categoryEvaluations[node.id]||{},selectedMotif=(node.commentMotifs||[]).find(motif=>motif.id===evaluation.motifId);
+      const evaluation=categoryEvaluations[node.id]||{},selectedMotif=evaluation.warning?(node.commentMotifs||[]).find(motif=>motif.kind==="PROBLEME"&&motif.id===(evaluation.motifIds?.warning||evaluation.motifId)):null;
       if(selectedMotif)comment.textContent=selectedMotif.label;
       label.append(name);
       if(evaluation.warning)label.appendChild(makePrintWarning());
       label.appendChild(comment);
       heading.append(label,makePrintCategoryLevels(printCategoryLevel(node),Boolean(evaluation.exceeded)));category.appendChild(heading);
+      if(evaluation.exceeded){
+        const exceededMotif=(node.commentMotifs||[]).find(motif=>motif.kind==="VALORISATION"&&motif.id===(evaluation.motifIds?.exceeded||evaluation.motifId));
+        const line=document.createElement("div");line.className="print-method-line";line.textContent=`Dépassé${exceededMotif?` : ${exceededMotif.label}`:""}`;category.appendChild(line);
+      }
       category.appendChild(renderPrintChildren(node));section.appendChild(category);
     }
     report.appendChild(section);
