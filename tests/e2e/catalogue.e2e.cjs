@@ -33,6 +33,7 @@ test("devoir : cr\u00e9er un devoir depuis le catalogue charge la grille choisie
 }));
 
 test("devoir : une grille JSON locale choisie dans le catalogue initialise aussi le devoir", () => avec(async page => {
+  page.on("dialog", dialogue => dialogue.accept()); // window.confirm du remplacement (grille d’exemple déjà chargée par openApp)
   await page.click("#createAssignmentBtn");
   await page.waitForSelector("#gridCatalogDialog[open]");
   await page.waitForFunction(() => document.querySelectorAll("#gridModalCatalog .grid-modal-choice").length > 0, null, {timeout: 5000});

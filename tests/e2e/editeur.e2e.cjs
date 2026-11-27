@@ -17,15 +17,17 @@ test("\u00e9diteur : importer une grille, la d\u00e9placer au clavier, l'exporte
   page.on("dialog", dialogue => dialogue.accept());
   await page.click("#createGridEditorBtn");
   await page.waitForSelector("#gridEditorDialog[open]");
-  // Import de la grille d'exemple dans le brouillon de l'\u00e9diteur.
+  // Import de la grille d'exemple dans le brouillon de l'\u00e9diteur (l'ordre des parties se lit dans l'arbre du DOM :
+  // `draft` vit dans l'IIFE de editeur-grille.js, il n'est pas expos\u00e9 globalement).
+  const titresParties = () => page.evaluate(() => [...document.querySelectorAll("#gridEditorTree .grid-editor-partie .grid-editor-node-title")].map(el => el.textContent));
   await page.setInputFiles("#gridEditorImportInput", GRILLE_EXEMPLE);
   await page.waitForFunction(() => document.querySelectorAll("#gridEditorTree .grid-editor-row").length > 0, null, {timeout: 5000});
-  assert.deepEqual(await page.evaluate(() => draft.parties.map(partie => partie.titre)), ["Pr\u00e9sentation orale", "Participation au d\u00e9bat"], "grille import\u00e9e dans le brouillon");
+  assert.deepEqual(await titresParties(), ["Pr\u00e9sentation orale", "Participation au d\u00e9bat"], "grille import\u00e9e dans le brouillon");
   // D\u00e9placement au clavier : la premi\u00e8re partie passe apr\u00e8s la seconde (Alt+Fl\u00e8che bas).
   await page.focus("#gridEditorTree .grid-editor-row .grid-editor-handle");
   await page.keyboard.press("Alt+ArrowDown");
   await page.waitForFunction(() => document.getElementById("gridEditorStatus").textContent === "\u00c9l\u00e9ment d\u00e9plac\u00e9.", null, {timeout: 5000});
-  assert.deepEqual(await page.evaluate(() => draft.parties.map(partie => partie.titre)), ["Participation au d\u00e9bat", "Pr\u00e9sentation orale"], "la partie a \u00e9t\u00e9 d\u00e9plac\u00e9e dans le brouillon");
+  assert.deepEqual(await titresParties(), ["Participation au d\u00e9bat", "Pr\u00e9sentation orale"], "la partie a \u00e9t\u00e9 d\u00e9plac\u00e9e dans le brouillon");
   // Export : fichier JSON valide, au nom de la grille, qui conserve l'ordre d\u00e9plac\u00e9.
   const [telechargement] = await Promise.all([page.waitForEvent("download"), page.click("#gridEditorExport")]);
   const nomExport = telechargement.suggestedFilename();
