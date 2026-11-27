@@ -1,3 +1,6 @@
+/* D-016 : mini-bonus fixe accordé par toute la zone bleu foncé de la jauge, avant l'échelle linéaire du bleu clair. */
+const BONUS_PALIER=0.5;
+
 function renderMethodCategory(node,categoryOnly=false){
   const state=methodStates[node.id]||(methodStates[node.id]={}),isBonus=node.methode==="bonus",calculation=isBonus?null:methodCalculation(node);
   const statut=categoryStatut(node),horsNote=statut==="nn"||statut==="ne",levelCount=isBonus?0:node.niveaux.length;
@@ -19,20 +22,24 @@ function renderMethodCategory(node,categoryOnly=false){
   const left=methodEl("div","gauche");left.append(note,help);card.appendChild(left);
   const afterCard=[];
   if(isBonus){
-    /* Gris = 0 (une seule position, au centre) ; les points se répartissent ensuite du trait gris/bleu foncé jusqu'au bout de la jauge. */
-    const stops=methodGaugeStops(node),zero=stops[0],maximum=Number(node.pointsMaximum),step=Number(node.pas)||.25,count=Math.max(1,Math.round(maximum/step));
+    /* Gris = 0 (une seule position, au centre) ; la zone bleu foncé accorde un mini-bonus fixe (D-016) ;
+       l'échelle reprend ensuite linéairement du trait bleu foncé/bleu clair jusqu'au plafond. */
+    const stops=methodGaugeStops(node),zero=stops[0],bleuFonce=stops.length>1?stops[1]:(zero+100)/2,maximum=Number(node.pointsMaximum),step=Number(node.pas)||.25;
+    const palier=Math.min(BONUS_PALIER,maximum),linearSteps=Math.max(0,Math.round((maximum-palier)/step)),count=linearSteps+1;
     const gauge=methodEl("div","jauge jauge--bleu");gauge.style.setProperty("--degrade",methodGradient(methodGaugeColors(node),stops));
     const slider=methodEl("input","method-slider");slider.type="range";slider.min="0";slider.max=String(count);slider.step="1";slider.setAttribute("aria-label",`Points bonus pour ${node.titre}`);
     const cursor=methodEl("i","curseur"),output=methodEl("output","valeur-texte");
-    const positionOf=index=>index<=0?zero/2:zero+(100-zero)*index/count;
+    const positionOf=index=>index<=0?zero/2:index===1?(zero+bleuFonce)/2:bleuFonce+(100-bleuFonce)*(index-1)/Math.max(1,linearSteps);
+    const valeurDe=index=>index<=0?0:index===1?palier:Math.min(maximum,Number((palier+(index-1)*step).toFixed(4)));
+    const indexDe=value=>value<=0?0:value<=palier?1:Math.min(count,1+Math.round((value-palier)/step));
     const place=()=>{
-      const value=Number(state.bonus)||0,index=Math.min(count,Math.max(0,Math.round(value/step)));
+      const value=Number(state.bonus)||0,index=indexDe(value);
       cursor.style.setProperty("--valeur",`${positionOf(index)}%`);cursor.classList.toggle("curseur--plein",index>0);
       output.textContent=`+${value.toLocaleString("fr-FR")}`;output.classList.toggle("valeur-texte--zero",index===0);
       slider.value=String(index);slider.setAttribute("aria-valuetext",`${value.toLocaleString("fr-FR")} point${value>1?"s":""} de bonus`);
     };
-    const setIndex=index=>{const clamped=Math.min(count,Math.max(0,index));state.bonus=Number((clamped*step).toFixed(4));place();updateFinalScore()};
-    const fromPointer=event=>{const bounds=gauge.getBoundingClientRect(),position=100*(event.clientX-bounds.left)/bounds.width;setIndex(position<zero?0:Math.round((position-zero)/(100-zero)*count))};
+    const setIndex=index=>{const clamped=Math.min(count,Math.max(0,index));state.bonus=valeurDe(clamped);place();updateFinalScore()};
+    const fromPointer=event=>{const bounds=gauge.getBoundingClientRect(),position=100*(event.clientX-bounds.left)/bounds.width;setIndex(position<zero?0:position<bleuFonce?1:1+Math.round((position-bleuFonce)/(100-bleuFonce)*linearSteps))};
     let dragging=false;
     gauge.addEventListener("pointerdown",event=>{if(event.button>0)return;dragging=true;gauge.setPointerCapture(event.pointerId);fromPointer(event)});
     gauge.addEventListener("pointermove",event=>{if(dragging)fromPointer(event)});

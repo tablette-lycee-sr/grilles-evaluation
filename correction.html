@@ -708,12 +708,18 @@ function renderMethodDetails(node,calculation,categoryOnly){
       if(Array.isArray(child.enfants)){const group=document.createElement("div");group.className="method-subcategory";const heading=document.createElement("strong");heading.textContent=child.titre;group.appendChild(heading);for(const capacity of child.enfants)group.appendChild(renderMethodCapacity(node,capacity));details.appendChild(group)}
       else details.appendChild(renderMethodCapacity(node,child));
     }
-  }else for(const criterion of node.criteres||[]){
-    const row=document.createElement("label");row.className="method-criterion";
-    const name=document.createElement("span");name.textContent=criterion.titre;name.title=criterion.aideNotation||"";row.appendChild(name);
-    const input=document.createElement("input");input.type="number";input.min="0";input.max=String(criterion.pointsMaximum);input.step=String(criterion.pas||1);input.placeholder="—";input.value=Object.hasOwn(state.scores||{},criterion.id)?state.scores[criterion.id]:"";input.setAttribute("aria-label",`${criterion.titre}, sur ${criterion.pointsMaximum}`);
-    input.addEventListener("change",()=>{state.scores=state.scores||{};if(input.value==="")delete state.scores[criterion.id];else state.scores[criterion.id]=Math.max(0,Math.min(Number(criterion.pointsMaximum),Number(input.value)||0));render()});
-    const maximum=document.createElement("span");maximum.textContent=`/ ${criterion.pointsMaximum}`;row.append(input,maximum);details.appendChild(row);
+  }else{
+    /* D-017 : point de couleur non cliquable = niveau courant de la catégorie (nuancier NA/ECA/A), gris tant que rien n'est saisi. */
+    const niveauCourant=Object.hasOwn(manualChoices,node.id)?manualChoices[node.id]:calculation.level;
+    for(const criterion of node.criteres||[]){
+      const row=document.createElement("label");row.className="method-criterion";
+      const name=document.createElement("span");name.textContent=criterion.titre;name.title=criterion.aideNotation||"";row.appendChild(name);
+      const marque=document.createElement("i");marque.className="critere-niveau";marque.style.setProperty("--couleur-niveau",METHOD_LEVEL_COLOR[niveauCourant]||"var(--gris)");
+      const libelleMarque=`Niveau actuel de la catégorie : ${niveauCourant||"—"}`;marque.title=libelleMarque;marque.setAttribute("role","img");marque.setAttribute("aria-label",libelleMarque);row.appendChild(marque);
+      const input=document.createElement("input");input.type="number";input.min="0";input.max=String(criterion.pointsMaximum);input.step=String(criterion.pas||1);input.placeholder="—";input.value=Object.hasOwn(state.scores||{},criterion.id)?state.scores[criterion.id]:"";input.setAttribute("aria-label",`${criterion.titre}, sur ${criterion.pointsMaximum}`);
+      input.addEventListener("change",()=>{state.scores=state.scores||{};if(input.value==="")delete state.scores[criterion.id];else state.scores[criterion.id]=Math.max(0,Math.min(Number(criterion.pointsMaximum),Number(input.value)||0));render()});
+      const maximum=document.createElement("span");maximum.textContent=`/ ${criterion.pointsMaximum}`;row.append(marque,input,maximum);details.appendChild(row);
+    }
   }
   return details;
 }
