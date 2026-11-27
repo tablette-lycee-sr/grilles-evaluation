@@ -36,14 +36,33 @@ test("distribution et compteur enregistrent les occurrences", () => avec(async p
   assert.ok(await page.locator(`${section("participation-echanges")} .rond--anneau`).count(), "l'anneau de Dépassé est suggéré au seuil D");
 }));
 
-test("bonus : 0 jusqu'au trait gris/bleu foncé, puis une échelle linéaire jusqu'au plafond", () => avec(async page => {
+test("bonus : 0 dans le gris, mini-bonus fixe dans le bleu foncé (D-016), puis échelle linéaire jusqu'au plafond", () => avec(async page => {
   const jauge = await jaugeVisible(page, "role-debat");
   const cliquer = async pourcent => page.mouse.click(jauge.x + jauge.width * pourcent / 100, jauge.y + jauge.height / 2);
   const bonus = async () => (await etat(page, "role-debat")).bonus ?? 0;
   await cliquer(10); assert.equal(await bonus(), 0);
   await cliquer(29); assert.equal(await bonus(), 0);
-  await cliquer(38.75); assert.equal(await bonus(), 0.25);
+  await cliquer(38.75); assert.equal(await bonus(), 0.5, "entrée dans le bleu foncé : palier fixe de +0,5");
+  await cliquer(50); assert.equal(await bonus(), 0.5, "tout le bleu foncé vaut le même palier");
+  await cliquer(83); assert.equal(await bonus(), 1.25, "échelle linéaire dans le bleu clair");
   await cliquer(99.5); assert.equal(await bonus(), 2);
+}));
+
+test("barème : un point de couleur à gauche de chaque critère suit le niveau courant de la catégorie (D-017)", () => avec(async page => {
+  const carte = section("contenu-expose");
+  await page.click(`${carte} .capacite`); // ouvre le détail des critères
+  await page.waitForSelector(`${carte} .method-criterion`);
+  const couleur = async () => page.locator(`${carte} .method-criterion .critere-niveau`).first().evaluate(el => getComputedStyle(el).backgroundColor);
+  const points = async () => page.locator(`${carte} .method-criterion .critere-niveau`).count();
+  assert.equal(await points(), 2, "un point par critère");
+  assert.equal(await couleur(), "rgb(133, 133, 133)", "rien n'est saisi : point gris");
+  await page.fill(`${carte} .method-criterion input >> nth=0`, "6");
+  assert.equal(await couleur(), "rgb(23, 161, 63)", "6/6 sur le premier critère = 100 % : niveau A (vert)");
+  await page.fill(`${carte} .method-criterion input >> nth=1`, "0");
+  assert.equal(await couleur(), "rgb(255, 215, 55)", "6+0 sur 10 = 60 % : niveau ECA (jaune)");
+  await page.fill(`${carte} .method-criterion input >> nth=0`, "0");
+  await page.fill(`${carte} .method-criterion input >> nth=1`, "0");
+  assert.equal(await couleur(), "rgb(255, 49, 49)", "0 point : niveau NA (rouge)");
 }));
 
 test("minuteur : la poignée suit le fer à cheval (piste haute, virage, piste basse)", () => avec(async page => {

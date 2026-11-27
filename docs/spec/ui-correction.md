@@ -37,7 +37,7 @@ Code : `renderMethodCategory` / `updateMethodGauge` (JS), blocs `.method-categor
 ## 4. Colonne droite par méthode
 | Méthode | Contenu |
 |---|---|
-| Capacités, Barème | Carte violette « n/m capacités \| critères » qui ouvre le tiroir. |
+| Capacités, Barème | Carte violette « n/m capacités \| critères » qui ouvre le tiroir. Dans le Barème, chaque critère est précédé d'un **point de couleur non cliquable** (nuancier des niveaux) donnant le niveau courant de la catégorie (D-017). |
 | Distribution | Boutons de niveaux **violets** avec « + » (ou « − »), chiffres de comptage colorés **sous** les segments, bascule verticale +/− à droite. |
 | Compteur | Carré violet « + n » (incrémente) et pastille « −1 ». Jauge en lecture seule. |
 | Minuteur | Pastille violette (icône + durée, démarre/pause), durée cible en vert, bouton remise à zéro. |
@@ -46,7 +46,8 @@ Code : `renderMethodCategory` / `updateMethodGauge` (JS), blocs `.method-categor
 ## 5. Jauges particulières
 **Bonus** — `échelle = [gris | bleu foncé | bleu clair]` (séparateurs à 30 % et 66 %).
 - Gris = **0**, une seule position (poignée au **centre du gris**, poignée creuse).
-- Les points se répartissent **linéairement** du trait gris/bleu foncé jusqu'au bout de la jauge : position = `30 + 70 × (points / pointsMaximum)` %. Ex. 2 points, pas 0,25 : 0,25 → 38,75 %. *(Hypothèse à valider : l'échelle couvre le bleu foncé et le bleu clair.)*
+- Toute la zone **bleu foncé** accorde un **mini-bonus fixe de +0,5 pt** (D-016, constante `BONUS_PALIER`), quelle que soit la position exacte (poignée au **centre du bleu foncé**).
+- La zone **bleu clair** reprend ensuite **linéairement** du trait bleu foncé/bleu clair jusqu'au plafond : points = `mini-bonus + (pointsMaximum − mini-bonus) × (position − 66) / 34` (arrondi au `pas`). Ex. 2 points, pas 0,25 : palier 0,5 → 66 % ; 1,25 → 83 % ; 2 → 100 %.
 - Saisie au pointeur sur toute la jauge (zone de toucher élargie) et au clavier (une graduation par flèche).
 
 **Minuteur** — jauge en **fer à cheval** : piste haute (trop court → plateau A, de gauche à droite), **virage vert** (plateau A, milieu = durée cible), piste basse (plateau A → trop long, de droite à gauche). Géométrie dans le repère de la jauge (unités `--u`) : largeur `W` = 117 ou 157, `L = W − 10`, rayon du virage 7, pistes à y = 3 et y = 17.
