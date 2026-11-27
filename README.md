@@ -6,7 +6,7 @@ Grilles d'évaluation en Histoire-géographie
 
 Le devoir actif, sa grille et ses coefficients, le groupe d'élèves et les corrections individuelles sont enregistrés automatiquement dans IndexedDB sur l'appareil et le navigateur utilisés. Les photos ne sont pas enregistrées et doivent être associées à nouveau après fermeture ou rechargement de la page.
 
-Cette sauvegarde ne synchronise pas les appareils et peut disparaître si les données du navigateur sont effacées. Elle contient des données personnelles et ne remplace pas une sauvegarde sur fichier, qui reste à développer. Évitez les appareils partagés et respectez les règles de protection des données de l'établissement.
+Cette sauvegarde ne synchronise pas les appareils et peut disparaître si les données du navigateur sont effacées. Elle contient des données personnelles ; utilisez « Enregistrer le devoir » (fichier `DEVOIR_<Date>_<Groupe>_<Titre>.devoir.json`, cf. `docs/spec/sauvegarde-devoir.md`) pour conserver ou transporter un devoir, et rangez ce fichier dans un emplacement adapté aux données personnelles. Évitez les appareils partagés et respectez les règles de protection des données de l'établissement.
 
 Un seul devoir et un seul groupe sont conservés comme espace de travail actif. Leur remplacement ou la suppression d'élèves efface les corrections concernées après confirmation. Si un autre onglet modifie la sauvegarde, un avertissement signale que les nouvelles modifications de l'onglet courant ne sont plus enregistrées.
 

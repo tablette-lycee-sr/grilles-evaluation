@@ -1,6 +1,6 @@
 # État d'avancement
 
-*Dernière mise à jour : 2026-11-26 (Vibe, T-02 : fiche imprimable cohérente écran/papier). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
+*Dernière mise à jour : 2026-11-27 (Vibe, T-03 : sauvegarde du devoir sur fichier). Légende : ✅ fait · 🟡 partiel / à vérifier · ⬜ à faire · 🐞 bug connu.*
 Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les issues GitHub ; ce fichier donne la vue d'ensemble.
 
 ## Fonctionnalités
@@ -19,7 +19,7 @@ Mettre à jour la ligne concernée à chaque PR. Les **tâches** vivent dans les
 | Cycle de notation par catégorie (Noté / NN / 2(+) / NE) | ✅ | `spec/ui-correction.md` §3 | unitaires + e2e | T-07 · #16 (D-014) : à éprouver sur tablette, PDF à imprimer par l'utilisateur. |
 | Fiche imprimable / PDF | ✅ | spec méthodes (« Sauvegarde, compatibilité et fiche ») | e2e (impression) | T-02 · #5 : NN sans valeur de note, 2(+) signalé, NE réduit, Bonus NN, textes libres (D-007), durée retenue du Minuteur (D-011), motifs Attention/Dépassé toutes catégories ; coefficient non imprimé. Inventaire validé sur #5 ; PDF réel à imprimer par l'utilisateur. |
 | Onglets Résultats et Export | 🟡 | — | — | T-04 · #7 : **qualifié**. **Résultats** : non implémenté (placeholder « disponible prochainement », aucun sous-menu, aucune fonction) → à concevoir puis bâtir, cf. T-08 · #26 (labels `humain`, `spec-needed`). **Export** : réduit au sous-menu « Imprimer / PDF » (`exportPrintBtn` → fiche imprimable de `src/js/impression.js`) ; l'écran de la vue reste un placeholder ; l'export du devoir sur fichier est le sujet de T-02 / T-03 (#5 / #6). Boutons « Ouvrir un devoir », « Sauvegarder le devoir » et « Télécharger une grille » du sous-menu Devoir : désactivés « (à venir) ». |
-| Sauvegarde / restauration du devoir sur fichier | ⬜ | à rédiger | — | Prévue après les méthodes. |
+| Sauvegarde / restauration du devoir sur fichier | ✅ | `spec/sauvegarde-devoir.md` | unitaires (devoir-fichier) + e2e (devoir) | T-03 · #6 : fichier = `workspaceSnapshot` v1 tel quel + enveloppe (`type`, date) ; `.devoir.json` ; nommage `DEVOIR_<Date>_<Groupe>_<Titre>` (validé) ; confirmation avant remplacement ; jamais de photos ; pas de compatibilité ascendante. |
 | Migration des anciennes corrections locales | ⬜ | spec méthodes | — | Questions suspendues par le concepteur. |
 | Icônes de l'interface intégrées (data-URI) | ✅ | — | unitaires (garde) | #30 : plus aucune requête réseau pour dessiner les icônes (un SVG non chargé rendait le bouton invisible tout en le laissant cliquable) ; mêmes fichiers sources dans `icones/` ; captures e2e horodatées. |
 | Tests automatiques (GitHub Actions) | 🟡 | `TESTING.md` | unitaires + e2e | Fournis avec le kit ; à vérifier à la première PR. |
