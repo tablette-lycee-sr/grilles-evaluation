@@ -28,7 +28,7 @@ function updateCorrectionStudentNavigation(){
   const photoButton=document.getElementById("showCorrectionStudentInfo"),student=students.find(item=>item.id===activeCorrectionStudentId);
   photoButton.disabled=!student;photoButton.replaceChildren();
   if(student)photoButton.append(createTrombiPortrait(student,true));
-  else{const icon=document.createElement("span");icon.className="menu-icon";icon.style.setProperty("--icon","url('icones/portrait.svg')");icon.setAttribute("aria-hidden","true");photoButton.append(icon)}
+  else{const icon=document.createElement("span");icon.className="menu-icon icone-portrait";icon.setAttribute("aria-hidden","true");photoButton.append(icon)}
 }
 function navigateCorrectionStudent(direction){
   updateCorrectionStudentNavigation();

@@ -54,9 +54,13 @@ async function openCorrection(page) {
 
 const section = id => `#correctionPopup [data-method-node="${id}"]`;
 
+// Chaque capture est préfixée par un horodatage AAAAMMJJ-HHMMSS : le tri alphabétique des fichiers
+// de l'artefact « captures-e2e » suit alors l'ordre chronologique des exécutions.
 async function shot(page, name, options = {}) {
   fs.mkdirSync(SCREENS, {recursive: true});
-  await page.screenshot({path: path.join(SCREENS, `${name}.png`), ...options});
+  const t = new Date();
+  const horodatage = [t.getFullYear(), String(t.getMonth() + 1).padStart(2, "0"), String(t.getDate()).padStart(2, "0")].join("") + "-" + [t.getHours(), t.getMinutes(), t.getSeconds()].map(n => String(n).padStart(2, "0")).join("");
+  await page.screenshot({path: path.join(SCREENS, `${horodatage}_${name}.png`), ...options});
 }
 
 module.exports = {openApp, openCorrection, section, shot};

@@ -156,22 +156,22 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <symbol id="icon-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
 </svg>
 <nav class="app-navigation no-print" aria-label="Navigation principale">
-  <button type="button" data-view="devoir" aria-current="page"><span class="menu-icon" style="--icon:url('icones/description.svg')" aria-hidden="true"></span>Devoir</button>
-  <button type="button" data-view="eleves"><span class="menu-icon" style="--icon:url('icones/group.svg')" aria-hidden="true"></span>Élèves</button>
-  <button type="button" data-view="correction"><span class="menu-icon" style="--icon:url('icones/check.svg')" aria-hidden="true"></span>Correction</button>
-  <button type="button" data-view="resultats"><span class="menu-icon" style="--icon:url('icones/finance.svg')" aria-hidden="true"></span>Résultats</button>
-  <button type="button" data-view="export"><span class="menu-icon" style="--icon:url('icones/file.svg')" aria-hidden="true"></span>Export</button>
+  <button type="button" data-view="devoir" aria-current="page"><span class="menu-icon icone-description" aria-hidden="true"></span>Devoir</button>
+  <button type="button" data-view="eleves"><span class="menu-icon icone-group" aria-hidden="true"></span>Élèves</button>
+  <button type="button" data-view="correction"><span class="menu-icon icone-check" aria-hidden="true"></span>Correction</button>
+  <button type="button" data-view="resultats"><span class="menu-icon icone-finance" aria-hidden="true"></span>Résultats</button>
+  <button type="button" data-view="export"><span class="menu-icon icone-file" aria-hidden="true"></span>Export</button>
 </nav>
 <nav class="app-subnavigation no-print" aria-label="Actions de la vue">
   <div class="submenu" data-submenu="devoir">
-    <button type="button" id="createAssignmentBtn" title="Créer un nouveau devoir" aria-label="Créer un nouveau devoir"><span class="menu-icon" style="--icon:url('icones/add.svg')" aria-hidden="true"></span></button>
-    <span class="submenu-action" title="Ouvrir un devoir (à venir)"><button type="button" disabled aria-label="Ouvrir un devoir"><span class="menu-icon" style="--icon:url('icones/upload.svg')" aria-hidden="true"></span></button></span>
-    <span class="submenu-action" title="Sauvegarder le devoir (à venir)"><button type="button" disabled aria-label="Sauvegarder le devoir"><span class="menu-icon" style="--icon:url('icones/save.svg')" aria-hidden="true"></span></button></span>
+    <button type="button" id="createAssignmentBtn" title="Créer un nouveau devoir" aria-label="Créer un nouveau devoir"><span class="menu-icon icone-add" aria-hidden="true"></span></button>
+    <span class="submenu-action" title="Ouvrir un devoir (à venir)"><button type="button" disabled aria-label="Ouvrir un devoir"><span class="menu-icon icone-upload" aria-hidden="true"></span></button></span>
+    <span class="submenu-action" title="Sauvegarder le devoir (à venir)"><button type="button" disabled aria-label="Sauvegarder le devoir"><span class="menu-icon icone-save" aria-hidden="true"></span></button></span>
     <span class="submenu-spacer" aria-hidden="true"></span>
-    <button type="button" id="resetAssignmentBtn" title="Effacer le devoir en cours" aria-label="Effacer le devoir en cours"><span class="menu-icon" style="--icon:url('icones/replay.svg')" aria-hidden="true"></span></button>
+    <button type="button" id="resetAssignmentBtn" title="Effacer le devoir en cours" aria-label="Effacer le devoir en cours"><span class="menu-icon icone-replay" aria-hidden="true"></span></button>
     <span class="submenu-spacer" aria-hidden="true"></span>
-    <span class="submenu-action" title="Télécharger une grille de correction (à venir)"><button type="button" disabled aria-label="Télécharger une grille de correction"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button></span>
-    <button type="button" id="createGridEditorBtn" title="Créer une grille de correction" aria-label="Créer une grille de correction"><span class="menu-icon" style="--icon:url('icones/wand_stars.svg')" aria-hidden="true"></span></button>
+    <span class="submenu-action" title="Télécharger une grille de correction (à venir)"><button type="button" disabled aria-label="Télécharger une grille de correction"><span class="menu-icon icone-download" aria-hidden="true"></span></button></span>
+    <button type="button" id="createGridEditorBtn" title="Créer une grille de correction" aria-label="Créer une grille de correction"><span class="menu-icon icone-wand_stars" aria-hidden="true"></span></button>
   </div>
   <div class="submenu" data-submenu="eleves" hidden>
     <button type="button" id="createStudentGroupBtn" title="Créer un nouveau groupe d’élèves" aria-label="Créer un nouveau groupe d’élèves"><svg aria-hidden="true"><use href="#icon-user-plus"/></svg></button>
@@ -184,10 +184,10 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   </div>
   <div class="submenu" data-submenu="correction">
     <button id="correctionModeButton" type="button" title="Choisir le mode de correction" aria-label="Choisir le mode de correction" aria-haspopup="true" aria-expanded="false"><svg aria-hidden="true"><use href="#icon-sliders"/></svg></button>
-    <button type="button" id="submenuSettings" title="Préférences" aria-label="Préférences"><span class="menu-icon" style="--icon:url('icones/settings.svg')" aria-hidden="true"></span></button>
+    <button type="button" id="submenuSettings" title="Préférences" aria-label="Préférences"><span class="menu-icon icone-settings" aria-hidden="true"></span></button>
   </div>
   <div class="submenu" data-submenu="export" hidden>
-    <button type="button" id="exportPrintBtn" title="Imprimer / PDF" aria-label="Imprimer / PDF"><span class="menu-icon" style="--icon:url('icones/print.svg')" aria-hidden="true"></span></button>
+    <button type="button" id="exportPrintBtn" title="Imprimer / PDF" aria-label="Imprimer / PDF"><span class="menu-icon icone-print" aria-hidden="true"></span></button>
   </div>
 </nav>
 <main class="app-view" id="otherView">
@@ -215,7 +215,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
     <section id="studentGroupWorkspace" hidden>
       <div class="student-group-toolbar">
         <div class="student-group-heading"><h1 id="studentGroupTitle"></h1><span id="studentGroupCount" class="student-group-count"></span></div>
-        <button id="deleteSelectedStudents" class="student-selection-action" type="button" title="Supprimer les élèves sélectionnés" aria-label="Supprimer les élèves sélectionnés" disabled><span class="menu-icon" style="--icon:url('icones/delete.svg')" aria-hidden="true"></span></button>
+        <button id="deleteSelectedStudents" class="student-selection-action" type="button" title="Supprimer les élèves sélectionnés" aria-label="Supprimer les élèves sélectionnés" disabled><span class="menu-icon icone-delete" aria-hidden="true"></span></button>
         <label class="student-csv-button" for="studentCsvInput">Importer une liste depuis un export Pronote</label>
         <input id="studentCsvInput" class="sr-only" type="file" accept=".csv,text/csv" aria-label="Importer une liste depuis un export Pronote">
       </div>
@@ -225,13 +225,13 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
         <table class="student-table">
           <thead><tr>
             <th scope="col"><div class="student-header-control student-select-all-control"><input class="student-selection-checkbox" id="selectAllStudents" type="checkbox" aria-label="Sélectionner tous les élèves affichés"></div></th>
-            <th scope="col" data-student-header="nom"><div class="student-header-control"><span class="student-header-label">Nom</span><button class="student-header-menu-button" type="button" data-column-menu="nom" aria-label="Actions pour la colonne Nom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></div></th>
-            <th scope="col" data-student-header="prenom"><div class="student-header-control"><span class="student-header-label">Prénom</span><button class="student-header-menu-button" type="button" data-column-menu="prenom" aria-label="Actions pour la colonne Prénom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></div></th>
-            <th scope="col" data-student-header="classe"><div class="student-header-control"><span class="student-header-label">Classe</span><button class="student-header-menu-button" type="button" data-column-menu="classe" aria-label="Actions pour la colonne Classe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></div></th>
+            <th scope="col" data-student-header="nom"><div class="student-header-control"><span class="student-header-label">Nom</span><button class="student-header-menu-button" type="button" data-column-menu="nom" aria-label="Actions pour la colonne Nom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon icone-expand_circle_down" aria-hidden="true"></span></button></div></th>
+            <th scope="col" data-student-header="prenom"><div class="student-header-control"><span class="student-header-label">Prénom</span><button class="student-header-menu-button" type="button" data-column-menu="prenom" aria-label="Actions pour la colonne Prénom" aria-haspopup="true" aria-expanded="false"><span class="menu-icon icone-expand_circle_down" aria-hidden="true"></span></button></div></th>
+            <th scope="col" data-student-header="classe"><div class="student-header-control"><span class="student-header-label">Classe</span><button class="student-header-menu-button" type="button" data-column-menu="classe" aria-label="Actions pour la colonne Classe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon icone-expand_circle_down" aria-hidden="true"></span></button></div></th>
             <th scope="col" data-student-header="pap"><div class="student-header-control"><span class="student-header-label">PAP</span><input class="student-pap-filter" id="studentPapFilter" type="checkbox" aria-label="Afficher uniquement les élèves avec un PAP"></div></th>
-            <th scope="col" data-student-header="sousGroupe"><div class="student-header-control"><span class="student-header-label">Sous-groupe</span><button class="student-header-menu-button" type="button" data-column-menu="sousGroupe" aria-label="Actions pour la colonne Sous-groupe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></div></th>
-            <th scope="col" data-student-header="sujet"><div class="student-header-control"><span class="student-header-label">Sujet</span><button class="student-header-menu-button" type="button" data-column-menu="sujet" aria-label="Actions pour la colonne Sujet" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></div></th>
-            <th scope="col" data-student-header="remarque"><div class="student-header-control"><span class="student-header-label">Remarque</span><button class="student-header-menu-button" type="button" data-column-menu="remarque" aria-label="Actions pour la colonne Remarque" aria-haspopup="true" aria-expanded="false"><span class="menu-icon" style="--icon:url('icones/expand_circle_down.svg')" aria-hidden="true"></span></button></div></th>
+            <th scope="col" data-student-header="sousGroupe"><div class="student-header-control"><span class="student-header-label">Sous-groupe</span><button class="student-header-menu-button" type="button" data-column-menu="sousGroupe" aria-label="Actions pour la colonne Sous-groupe" aria-haspopup="true" aria-expanded="false"><span class="menu-icon icone-expand_circle_down" aria-hidden="true"></span></button></div></th>
+            <th scope="col" data-student-header="sujet"><div class="student-header-control"><span class="student-header-label">Sujet</span><button class="student-header-menu-button" type="button" data-column-menu="sujet" aria-label="Actions pour la colonne Sujet" aria-haspopup="true" aria-expanded="false"><span class="menu-icon icone-expand_circle_down" aria-hidden="true"></span></button></div></th>
+            <th scope="col" data-student-header="remarque"><div class="student-header-control"><span class="student-header-label">Remarque</span><button class="student-header-menu-button" type="button" data-column-menu="remarque" aria-label="Actions pour la colonne Remarque" aria-haspopup="true" aria-expanded="false"><span class="menu-icon icone-expand_circle_down" aria-hidden="true"></span></button></div></th>
           </tr></thead>
           <tbody id="studentTableBody"></tbody>
         </table>
@@ -287,19 +287,19 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <p class="catalog-description">Catalogue officiel</p>
   <p id="gridCatalogStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
   <div id="gridModalCatalog" class="grid-modal-catalog">Chargement du catalogue…</div>
-  <button id="loadLocalGridBtn" type="button"><span class="menu-icon" style="--icon:url('icones/file_open.svg')" aria-hidden="true"></span> Choisir une grille sur cet appareil</button>
+  <button id="loadLocalGridBtn" type="button"><span class="menu-icon icone-file_open" aria-hidden="true"></span> Choisir une grille sur cet appareil</button>
   <input id="localGridInput" class="sr-only" type="file" accept=".json,application/json" aria-label="Choisir une grille JSON">
   <div class="dialog-actions"><button id="cancelGridCatalog" class="secondary" type="button">Annuler</button></div>
 </dialog>
 <dialog id="gridEditorDialog" class="grid-editor" aria-labelledby="gridEditorHeading">
   <div class="grid-editor-layout">
     <nav class="grid-editor-toolbar" aria-label="Actions de la grille">
-      <button id="gridEditorAddPart" type="button" title="Ajouter une partie" aria-label="Ajouter une partie"><span class="menu-icon" style="--icon:url('icones/add.svg')" aria-hidden="true"></span></button>
-      <button id="gridEditorMetadata" type="button" title="Informations de la grille" aria-label="Informations de la grille"><span class="menu-icon" style="--icon:url('icones/info.svg')" aria-hidden="true"></span></button>
-      <button id="gridEditorImport" type="button" title="Modifier une grille JSON" aria-label="Modifier une grille JSON"><span class="menu-icon" style="--icon:url('icones/file_open.svg')" aria-hidden="true"></span></button>
+      <button id="gridEditorAddPart" type="button" title="Ajouter une partie" aria-label="Ajouter une partie"><span class="menu-icon icone-add" aria-hidden="true"></span></button>
+      <button id="gridEditorMetadata" type="button" title="Informations de la grille" aria-label="Informations de la grille"><span class="menu-icon icone-info" aria-hidden="true"></span></button>
+      <button id="gridEditorImport" type="button" title="Modifier une grille JSON" aria-label="Modifier une grille JSON"><span class="menu-icon icone-file_open" aria-hidden="true"></span></button>
       <input id="gridEditorImportInput" class="sr-only" type="file" accept=".json,application/json" aria-label="Choisir une grille à modifier">
-      <button id="gridEditorExport" type="button" title="Exporter la grille JSON" aria-label="Exporter la grille JSON"><span class="menu-icon" style="--icon:url('icones/download.svg')" aria-hidden="true"></span></button>
-      <button id="gridEditorClose" type="button" title="Fermer l'éditeur" aria-label="Fermer l'éditeur"><span class="menu-icon" style="--icon:url('icones/close.svg')" aria-hidden="true"></span></button>
+      <button id="gridEditorExport" type="button" title="Exporter la grille JSON" aria-label="Exporter la grille JSON"><span class="menu-icon icone-download" aria-hidden="true"></span></button>
+      <button id="gridEditorClose" type="button" title="Fermer l'éditeur" aria-label="Fermer l'éditeur"><span class="menu-icon icone-close" aria-hidden="true"></span></button>
     </nav>
     <div class="grid-editor-content">
       <header class="grid-editor-heading"><div><h2 id="gridEditorHeading">Créer une grille de correction</h2><p id="gridEditorTitle"></p></div></header>
@@ -310,7 +310,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 </dialog>
 <dialog id="gridEditorFormDialog" class="grid-editor-form-dialog" aria-labelledby="gridEditorFormHeading">
   <form id="gridEditorForm">
-    <div class="dialog-heading"><h2 id="gridEditorFormHeading"></h2><button id="gridEditorFormCancel" class="icon-button" type="button" title="Fermer" aria-label="Fermer"><span class="menu-icon" style="--icon:url('icones/close.svg')" aria-hidden="true"></span></button></div>
+    <div class="dialog-heading"><h2 id="gridEditorFormHeading"></h2><button id="gridEditorFormCancel" class="icon-button" type="button" title="Fermer" aria-label="Fermer"><span class="menu-icon icone-close" aria-hidden="true"></span></button></div>
     <div id="gridEditorFormFields" class="grid-editor-form-fields"></div>
     <p id="gridEditorFormStatus" class="catalog-status" role="status" aria-live="polite" hidden></p>
     <div class="dialog-actions"><button id="gridEditorFormSave" type="submit">Enregistrer</button></div>
@@ -325,9 +325,9 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <div class="app" hidden>
 <section id="correctionTrombiView" class="correction-trombi-view" hidden aria-labelledby="correctionTrombiHeading">
   <div class="correction-trombi-toolbar">
-    <div class="correction-trombi-title"><h1 id="correctionTrombiHeading"></h1><div class="correction-trombi-count"><p id="correctionTrombiSummary" class="correction-trombi-summary"></p><details class="correction-trombi-sort" id="correctionTrombiSort"><summary class="icon-button" title="Trier les élèves" aria-label="Trier les élèves"><span class="menu-icon" style="--icon:url('icones/sort.svg')" aria-hidden="true"></span></summary><div class="correction-trombi-sort-menu" aria-label="Tri des élèves"><button type="button" data-trombi-sort="name-asc" aria-pressed="true">Ordre alphabétique</button><button type="button" data-trombi-sort="note" aria-pressed="false">Note</button><button type="button" data-trombi-sort="sousGroupe" aria-pressed="false">Sous-groupe</button><button type="button" data-trombi-sort="classe" aria-pressed="false">Classe</button></div></details></div></div>
+    <div class="correction-trombi-title"><h1 id="correctionTrombiHeading"></h1><div class="correction-trombi-count"><p id="correctionTrombiSummary" class="correction-trombi-summary"></p><details class="correction-trombi-sort" id="correctionTrombiSort"><summary class="icon-button" title="Trier les élèves" aria-label="Trier les élèves"><span class="menu-icon icone-sort" aria-hidden="true"></span></summary><div class="correction-trombi-sort-menu" aria-label="Tri des élèves"><button type="button" data-trombi-sort="name-asc" aria-pressed="true">Ordre alphabétique</button><button type="button" data-trombi-sort="note" aria-pressed="false">Note</button><button type="button" data-trombi-sort="sousGroupe" aria-pressed="false">Sous-groupe</button><button type="button" data-trombi-sort="classe" aria-pressed="false">Classe</button></div></details></div></div>
     <div class="correction-trombi-actions">
-      <button id="toggleCorrectionTrombiLayout" class="icon-button correction-trombi-layout-toggle" type="button" title="Afficher en rang" aria-label="Passer à l’affichage en rang" aria-pressed="true"><span class="menu-icon" style="--icon:url('icones/view_list.svg')" aria-hidden="true"></span></button>
+      <button id="toggleCorrectionTrombiLayout" class="icon-button correction-trombi-layout-toggle" type="button" title="Afficher en rang" aria-label="Passer à l’affichage en rang" aria-pressed="true"><span class="menu-icon icone-view_list" aria-hidden="true"></span></button>
     </div>
   </div>
   <div id="correctionTrombiEmpty" class="correction-trombi-empty" hidden>
@@ -346,14 +346,14 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <header class="correction-header" aria-label="En-tête">
   <span id="pageTitle" hidden></span>
   <div class="correction-header-start no-print">
-    <button id="showCorrectionStudentInfo" class="icon-button correction-student-photo" type="button" title="Fiche élève" aria-label="Fiche élève" aria-haspopup="dialog" disabled><span class="menu-icon" style="--icon:url('icones/portrait.svg')" aria-hidden="true"></span></button>
-    <button id="resetBtn" class="icon-button" type="button" title="Effacer la correction de cette grille" aria-label="Effacer la correction de cette grille"><span class="menu-icon" style="--icon:url('icones/delete.svg')" aria-hidden="true"></span></button>
+    <button id="showCorrectionStudentInfo" class="icon-button correction-student-photo" type="button" title="Fiche élève" aria-label="Fiche élève" aria-haspopup="dialog" disabled><span class="menu-icon icone-portrait" aria-hidden="true"></span></button>
+    <button id="resetBtn" class="icon-button" type="button" title="Effacer la correction de cette grille" aria-label="Effacer la correction de cette grille"><span class="menu-icon icone-delete" aria-hidden="true"></span></button>
   </div>
   <div class="correction-student-summary"><strong id="studentName" class="correction-student-name"></strong><div class="correction-grade"><input id="finalGrade" class="student-name final-grade" type="text" placeholder="Note" aria-label="Note finale"><div class="header-score" aria-label="Proposition de note finale avec bonus"><output id="finalScore">—/20</output></div></div></div>
   <div class="correction-header-actions no-print" aria-label="Actions">
-    <button id="previousCorrectionStudent" class="icon-button" type="button" title="Élève précédent" aria-label="Élève précédent" disabled><span class="menu-icon" style="--icon:url('icones/keyboard_arrow_left.svg')" aria-hidden="true"></span></button>
-    <button id="showCorrectionTrombi" class="icon-button correction-trombi-layout-toggle" type="button" title="Revenir au trombinoscope en pleine page" aria-label="Revenir au trombinoscope en pleine page"><span class="menu-icon" style="--icon:url('icones/grid_view.svg')" aria-hidden="true"></span></button>
-    <button id="nextCorrectionStudent" class="icon-button" type="button" title="Élève suivant" aria-label="Élève suivant" disabled><span class="menu-icon" style="--icon:url('icones/keyboard_arrow_right.svg')" aria-hidden="true"></span></button>
+    <button id="previousCorrectionStudent" class="icon-button" type="button" title="Élève précédent" aria-label="Élève précédent" disabled><span class="menu-icon icone-keyboard_arrow_left" aria-hidden="true"></span></button>
+    <button id="showCorrectionTrombi" class="icon-button correction-trombi-layout-toggle" type="button" title="Revenir au trombinoscope en pleine page" aria-label="Revenir au trombinoscope en pleine page"><span class="menu-icon icone-grid_view" aria-hidden="true"></span></button>
+    <button id="nextCorrectionStudent" class="icon-button" type="button" title="Élève suivant" aria-label="Élève suivant" disabled><span class="menu-icon icone-keyboard_arrow_right" aria-hidden="true"></span></button>
   </div>
 </header>
 <div id="status" class="sr-only" role="status" aria-live="polite"></div>
@@ -362,7 +362,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <div class="correction-popup-layout">
     <aside class="correction-popup-student" id="correctionPopupStudent"></aside>
     <div class="correction-popup-main">
-      <div class="correction-popup-heading"><h2 id="correctionPopupName"></h2><button id="closeCorrectionPopup" class="icon-button" type="button" title="Fermer la correction" aria-label="Fermer la correction"><span class="menu-icon" style="--icon:url('icones/close.svg')" aria-hidden="true"></span></button></div>
+      <div class="correction-popup-heading"><h2 id="correctionPopupName"></h2><button id="closeCorrectionPopup" class="icon-button" type="button" title="Fermer la correction" aria-label="Fermer la correction"><span class="menu-icon icone-close" aria-hidden="true"></span></button></div>
       <div class="correction-popup-categories" id="correctionPopupCategories"></div>
       <label class="correction-popup-remark">Remarque<textarea id="correctionPopupRemark" rows="2"></textarea></label>
     </div>
@@ -373,7 +373,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <p>Les niveaux, ajustements, bonus et la note de cet élève seront effacés. Cette action est irréversible.</p>
   <div class="dialog-actions"><button id="cancelResetCorrection" class="secondary" type="button">Annuler</button><button id="confirmResetCorrection" type="button">Effacer</button></div>
 </dialog>
-<dialog id="settingsDialog"><div class="dialog-heading"><h2>Préférences</h2><button id="closeSettings" class="icon-button" type="button" aria-label="Fermer les préférences"><span class="menu-icon" style="--icon:url('icones/close.svg')" aria-hidden="true"></span></button></div><label class="settings-option"><input id="showMetrics" type="checkbox">Métriques de calcul</label></dialog>
+<dialog id="settingsDialog"><div class="dialog-heading"><h2>Préférences</h2><button id="closeSettings" class="icon-button" type="button" aria-label="Fermer les préférences"><span class="menu-icon icone-close" aria-hidden="true"></span></button></div><label class="settings-option"><input id="showMetrics" type="checkbox">Métriques de calcul</label></dialog>
 <div id="initialState" class="initial-state">Choisissez une grille de correction...</div>
 <main id="content"></main>
 <div id="printReport" aria-hidden="true"></div>
