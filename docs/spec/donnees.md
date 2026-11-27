@@ -40,7 +40,7 @@ Une **correction** (`studentCorrections[idÉlève]` et `currentCorrection`) cont
 1. **Ne jamais perdre** une correction enregistrée : tout nouveau champ doit être **facultatif** avec une valeur par défaut explicite quand il est absent (ex. `manualSeconds` absent ⇒ position retrouvée par la courbe).
 2. Renommer ou changer le sens d'un champ ⇒ **migration** : copie de l'ancien état conservée, vérification avant activation, jamais d'écrasement en cas d'échec (voir spec des méthodes).
 3. Tout champ ajouté à `methodStates` est copié tel quel dans la sauvegarde ⇒ **le documenter ici** dans la même PR.
-4. La sauvegarde locale n'est ni une synchronisation ni un export : l'export du devoir sur fichier reste à concevoir (voir `STATUS.md`).
+4. La sauvegarde locale n'est ni une synchronisation ni un export : l'export du devoir sur fichier est décrit dans `spec/sauvegarde-devoir.md` (T-03).
 
 ## Fichiers échangés
 - **Groupe d'élèves (CSV)** : colonnes `Nom`, `Prénom`, `Classe`, `PAP` uniquement ; le nom du groupe vient du nom du fichier ; aucune photo ni donnée de devoir.

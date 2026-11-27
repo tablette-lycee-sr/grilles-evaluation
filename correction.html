@@ -165,8 +165,9 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <nav class="app-subnavigation no-print" aria-label="Actions de la vue">
   <div class="submenu" data-submenu="devoir">
     <button type="button" id="createAssignmentBtn" title="Créer un nouveau devoir" aria-label="Créer un nouveau devoir"><span class="menu-icon" style="--icon:url('icones/add.svg')" aria-hidden="true"></span></button>
-    <span class="submenu-action" title="Ouvrir un devoir (à venir)"><button type="button" disabled aria-label="Ouvrir un devoir"><span class="menu-icon" style="--icon:url('icones/upload.svg')" aria-hidden="true"></span></button></span>
-    <span class="submenu-action" title="Sauvegarder le devoir (à venir)"><button type="button" disabled aria-label="Sauvegarder le devoir"><span class="menu-icon" style="--icon:url('icones/save.svg')" aria-hidden="true"></span></button></span>
+    <span class="submenu-action" title="Ouvrir un devoir"><button type="button" id="openDevoirBtn" aria-label="Ouvrir un devoir"><span class="menu-icon" style="--icon:url('icones/upload.svg')" aria-hidden="true"></span></button></span>
+    <span class="submenu-action" title="Enregistrer le devoir"><button type="button" id="saveDevoirBtn" aria-label="Enregistrer le devoir"><span class="menu-icon" style="--icon:url('icones/save.svg')" aria-hidden="true"></span></button></span>
+    <input id="devoirFileInput" class="sr-only" type="file" accept=".json,application/json" aria-label="Choisir un fichier de devoir">
     <span class="submenu-spacer" aria-hidden="true"></span>
     <button type="button" id="resetAssignmentBtn" title="Effacer le devoir en cours" aria-label="Effacer le devoir en cours"><span class="menu-icon" style="--icon:url('icones/replay.svg')" aria-hidden="true"></span></button>
     <span class="submenu-spacer" aria-hidden="true"></span>
@@ -265,6 +266,11 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
   <div class="dialog-heading"><h2 id="loadStudentGroupHeading">Remplacer le groupe actif ?</h2></div>
   <p id="loadStudentGroupMessage"></p>
   <div class="dialog-actions"><button id="cancelLoadStudentGroup" class="secondary" type="button">Annuler</button><button id="confirmLoadStudentGroup" type="button">Remplacer</button></div>
+</dialog>
+<dialog id="openDevoirDialog" aria-labelledby="openDevoirHeading">
+  <div class="dialog-heading"><h2 id="openDevoirHeading">Ouvrir ce devoir ?</h2></div>
+  <p id="openDevoirMessage"></p>
+  <div class="dialog-actions"><button id="cancelOpenDevoir" class="secondary" type="button">Annuler</button><button id="confirmOpenDevoir" type="button">Ouvrir</button></div>
 </dialog>
 <dialog id="deleteSelectedStudentsDialog">
   <div class="dialog-heading"><h2>Supprimer les élèves sélectionnés ?</h2></div>
@@ -385,6 +391,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}.dialog-heading{display:flex;justify
 <script src="src/js/fenetre-correction.js"></script>
 <script src="src/js/import-grilles.js"></script>
 <script src="src/js/stockage.js"></script>
+<script src="src/js/devoir-fichier.js"></script>
 <script src="src/js/corrections-en-cours.js"></script>
 <script src="src/js/devoir-eleves.js"></script>
 <script src="src/js/chargement-grilles.js"></script>
@@ -955,6 +962,11 @@ function applyLoadedStudentGroup(group){
   saveWorkspace();
 }
 document.getElementById("loadStudentGroupBtn").addEventListener("click",()=>document.getElementById("studentGroupCsvInput").click());
+document.getElementById("saveDevoirBtn").addEventListener("click",enregistrerDevoir);
+document.getElementById("openDevoirBtn").addEventListener("click",()=>document.getElementById("devoirFileInput").click());
+document.getElementById("devoirFileInput").addEventListener("change",async event=>{const fichier=event.target.files?.[0];event.target.value="";if(fichier)await ouvrirDevoir(fichier)});
+document.getElementById("cancelOpenDevoir").addEventListener("click",()=>{pendingDevoirImport=null;document.getElementById("openDevoirDialog").close()});
+document.getElementById("confirmOpenDevoir").addEventListener("click",()=>{const snapshot=pendingDevoirImport;pendingDevoirImport=null;document.getElementById("openDevoirDialog").close();if(snapshot)restaurerDevoir(snapshot)});
 document.getElementById("studentGroupCsvInput").addEventListener("change",async event=>{
   const file=event.target.files?.[0];event.target.value="";if(!file)return;
   const status=document.getElementById("studentGroupFileStatus"),previousGroup=activeStudentGroup;status.hidden=true;status.textContent="";
