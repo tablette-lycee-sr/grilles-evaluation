@@ -56,12 +56,13 @@ test("barème : un point de couleur à gauche de chaque critère suit le niveau 
   const points = async () => page.locator(`${carte} .method-criterion .critere-niveau`).count();
   assert.equal(await points(), 2, "un point par critère");
   assert.equal(await couleur(), "rgb(133, 133, 133)", "rien n'est saisi : point gris");
-  await page.fill(`${carte} .method-criterion input >> nth=0`, "6");
+  // Le champ de points écoute « change » (émis au flou, comme au doigt) : saisir puis quitter le champ.
+  const saisir = async (index, valeur) => { await page.fill(`${carte} .method-criterion input >> nth=${index}`, valeur); await page.keyboard.press("Tab"); };
+  await saisir(0, "6");
   assert.equal(await couleur(), "rgb(23, 161, 63)", "6/6 sur le premier critère = 100 % : niveau A (vert)");
-  await page.fill(`${carte} .method-criterion input >> nth=1`, "0");
+  await saisir(1, "0");
   assert.equal(await couleur(), "rgb(255, 215, 55)", "6+0 sur 10 = 60 % : niveau ECA (jaune)");
-  await page.fill(`${carte} .method-criterion input >> nth=0`, "0");
-  await page.fill(`${carte} .method-criterion input >> nth=1`, "0");
+  await saisir(0, "0");
   assert.equal(await couleur(), "rgb(255, 49, 49)", "0 point : niveau NA (rouge)");
 }));
 
