@@ -8,8 +8,12 @@ Enregistrer le devoir complet (grille, coefficients, devoir, élèves, correctio
 
 ## Format du fichier
 
-- Un fichier **JSON**, encodage UTF-8, extension proposée **`.devoir.json`** (reconnaissable au premier coup d'œil, reste un JSON standard).
-- Nom proposé à l'enregistrement : `devoir-<titre du devoir allégé>-<date AAAA-MM-JJ>.devoir.json`, modifiable par l'enseignant dans la boîte de téléchargement.
+- Un fichier **JSON**, encodage UTF-8, extension **`.devoir.json`** (reconnaissable au premier coup d'œil, reste un JSON standard). *Validé par l'utilisateur.*
+- Nom proposé à l'enregistrement : **`DEVOIR_<Date>_<Groupe>_<Titre>.devoir.json`** (format validé par l'utilisateur), modifiable dans la boîte de téléchargement :
+  - `<Date>` : `AAAA-MM-JJ` du jour de l'enregistrement ;
+  - `<Groupe>` : nom du groupe d'élèves actif ;
+  - `<Titre>` : nom du devoir (`assignment.name`), à défaut titre de la grille ;
+  - accents retirés, espaces et caractères non alphanumériques remplacés par des tirets (ex. `DEVOIR_2026-11-27_2de-3_Etude-critique-Napoleon.devoir.json`) ; remplaçants `sans-groupe` / `sans-titre` si l'information manque.
 - Structure : le fichier **est** l'enregistrement existant (`workspaceSnapshot`, cf. `docs/spec/donnees.md`), avec deux champs d'enveloppe ajoutés :
 
 ```json
@@ -71,7 +75,7 @@ Enregistrer puis recharger la grille d'exemple avec un devoir en cours doit rest
 
 ## Questions à trancher avant le code
 
-1. Extension `.devoir.json` — d'accord ?
-2. Emplacement des deux commandes (sous-navigation de la vue Devoir) — d'accord ?
-3. Confirmation avant remplacement de l'espace actif — d'accord ?
-4. Nom de fichier proposé automatiquement avec la date — d'accord ?
+1. Extension `.devoir.json` — **validé** (2026-11-27).
+2. Emplacement des deux commandes (sous-navigation de la vue Devoir) — **validé**.
+3. Confirmation avant remplacement de l'espace actif — **validé**.
+4. Nommage automatique — **validé**, au format `DEVOIR_<Date>_<Groupe>_<Titre>`.
