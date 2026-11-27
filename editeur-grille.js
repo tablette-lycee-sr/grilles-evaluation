@@ -87,7 +87,7 @@
   function announce(message) {status.hidden=!message;status.textContent=message}
   function iconButton(icon,label,action) {
     const button=document.createElement("button");button.type="button";button.className="grid-editor-icon";button.title=label;button.setAttribute("aria-label",label);
-    const symbol=document.createElement("span");symbol.className="menu-icon";symbol.style.setProperty("--icon",`url('icones/${icon}.svg')`);symbol.setAttribute("aria-hidden","true");button.appendChild(symbol);
+    const symbol=document.createElement("span");symbol.className=`menu-icon icone-${icon}`;symbol.setAttribute("aria-hidden","true");button.appendChild(symbol);
     button.addEventListener("click",action);return button;
   }
   function removeEntry(entry) {

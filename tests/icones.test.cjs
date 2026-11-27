@@ -11,10 +11,10 @@ const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "correction.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "correction.css"), "utf8");
 const jsDir = path.join(root, "src", "js");
-const jsSources = fs.readdirSync(jsDir).filter(n => n.endsWith(".js")).map(n => fs.readFileSync(path.join(jsDir, n), "utf8")).join("\n");
+const jsSources = [fs.readFileSync(path.join(root, "editeur-grille.js"), "utf8"), ...fs.readdirSync(jsDir).filter(n => n.endsWith(".js")).map(n => fs.readFileSync(path.join(jsDir, n), "utf8"))].join("\n");
 
 // Icônes posées dynamiquement par le JavaScript (noms littéraux des sites d'appel).
-const ICONES_DYNAMIQUES = ["target", "rule", "leaderboard", "add_circle", "hourglass_empty", "star", "info", "timer_pause", "timer_play", "restart_alt", "close", "sort", "school", "check", "portrait", "view_list", "grid_view"];
+const ICONES_DYNAMIQUES = ["target", "rule", "leaderboard", "add_circle", "hourglass_empty", "star", "info", "timer_pause", "timer_play", "restart_alt", "close", "sort", "school", "check", "portrait", "view_list", "grid_view", "dehaze", "edit", "stacks"];
 
 const regles = new Map(); // nom -> data-URI
 for (const [, nom, uri] of css.matchAll(/\.icone-([a-z_]+)\{--icon:url\("([^"]+)"\)\}/g)) regles.set(nom, uri);
