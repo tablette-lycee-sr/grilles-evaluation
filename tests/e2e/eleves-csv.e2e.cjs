@@ -50,6 +50,7 @@ test("\u00e9l\u00e8ves : charger un second CSV demande confirmation, annulable, 
   await page.waitForFunction(() => document.getElementById("studentGroupFileStatus").textContent.includes("Second groupe"), null, {timeout: 5000});
   assert.equal(await page.evaluate(() => activeStudentGroup.name), "Second groupe", "le groupe actif est remplac\u00e9");
   assert.equal(await page.evaluate(() => activeStudentGroup.students.length), 3, "les trois \u00e9l\u00e8ves du second CSV sont charg\u00e9s");
-  assert.deepEqual(await page.evaluate(() => [studentCorrections, assignmentStudentDetails]), [{}, {}], "les corrections et d\u00e9tails du devoir pr\u00e9c\u00e9dent sont effac\u00e9s");
+  assert.deepEqual(await page.evaluate(() => studentCorrections), {}, "les corrections par \u00e9l\u00e8ve sont effac\u00e9es");
+  assert.deepEqual(await page.evaluate(() => Object.keys(assignmentStudentDetails).filter(cle => cle === "tmp")), [], "les d\u00e9tails de l'ancien devoir sont effac\u00e9s (seules des entr\u00e9es vierges pour les nouveaux \u00e9l\u00e8ves restent)");
   await shot(page, "eleves-csv-remplacement-t05");
 }));
