@@ -7,7 +7,7 @@ const METHOD_SEGMENT={NA:"var(--jauge-rouge)","ECA-":"var(--jauge-orange)",ECA:"
 const METHOD_COUNT_COLOR={NA:"rouge","ECA-":"orange",ECA:"jaune","ECA+":"jaune",A:"vert"};
 function methodEl(tag,className,text){const element=document.createElement(tag);if(className)element.className=className;if(text!==undefined)element.textContent=text;return element}
 function methodBt(className,action,title,text){const button=methodEl("button",`bt ${className}`,text);button.type="button";button.title=title;button.setAttribute("aria-label",title);button.addEventListener("click",action);return button}
-function methodIcon(name,className=""){const symbol=methodEl("span",`menu-icon ${className}`.trim());symbol.style.setProperty("--icon",`url('icones/${name}.svg')`);symbol.setAttribute("aria-hidden","true");return symbol}
+function methodIcon(name,className=""){const symbol=methodEl("span",`icone-${name} menu-icon ${className}`.trim());symbol.setAttribute("aria-hidden","true");return symbol}
 function methodChamp(select){const wrap=methodEl("div","champ"),arrow=methodEl("span","deroulant");arrow.setAttribute("aria-hidden","true");arrow.appendChild(methodEl("i","fleche-bas"));wrap.append(select,arrow);return wrap}
 function methodCommentField({options,selectedId,custom,text,label,onSelect,onText}){
   const wrap=methodEl("div","champ"),area=methodEl("textarea","champ-texte");

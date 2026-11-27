@@ -177,7 +177,7 @@ function openStudentColumnMenu(button){
   const heading=document.createElement("p");heading.className="student-column-menu-heading";heading.textContent=label;menu.append(heading);
   const addAction=(icon,title,callback)=>{
     const action=document.createElement("button");action.type="button";action.className="student-column-action";
-    const image=document.createElement("span");image.className="menu-icon";image.style.setProperty("--icon",`url('icones/${icon}.svg')`);image.setAttribute("aria-hidden","true");
+    const image=document.createElement("span");image.className=`menu-icon icone-${icon}`;image.setAttribute("aria-hidden","true");
     const copy=document.createElement("span");copy.className="student-column-action-copy";
     const strong=document.createElement("span");strong.textContent=title;copy.append(strong);action.append(image,copy);
     action.addEventListener("click",callback);menu.append(action);return action;

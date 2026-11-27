@@ -193,10 +193,10 @@ function updateCorrectionTrombiToggle(){
   const button=document.getElementById("toggleCorrectionTrombiLayout"),icon=button.querySelector(".menu-icon"),isFullPage=correctionTrombiMode==="full";
   const targetMode=isFullPage?"en rang":"en pleine page";
   button.title=`Afficher ${targetMode}`;button.setAttribute("aria-label",`Passer à l’affichage ${targetMode}`);button.setAttribute("aria-pressed",String(isFullPage));
-  icon.style.setProperty("--icon",`url('icones/${isFullPage?"view_list.svg":"grid_view.svg"}')`);
+  icon.classList.toggle("icone-view-list",isFullPage);icon.classList.toggle("icone-grid-view",!isFullPage);
   const returnButton=document.getElementById("showCorrectionTrombi"),returnMode=isFullPage?"en pleine page":"en rang";
   returnButton.title=`Revenir au trombinoscope ${returnMode}`;returnButton.setAttribute("aria-label",returnButton.title);
-  returnButton.querySelector(".menu-icon").style.setProperty("--icon",`url('icones/${isFullPage?"grid_view.svg":"view_list.svg"}')`);
+  const retourIcon=returnButton.querySelector(".menu-icon");retourIcon.classList.toggle("icone-grid-view",isFullPage);retourIcon.classList.toggle("icone-view-list",!isFullPage);
 }
 function closeStudentColumnMenu(){
   document.getElementById("studentColumnMenu").hidden=true;

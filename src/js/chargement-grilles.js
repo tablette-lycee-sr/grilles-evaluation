@@ -34,7 +34,7 @@ async function loadGridCatalog(){
       const title=document.createElement("span");title.textContent=entry.titre;
       const detail=document.createElement("small");detail.textContent=entry.fichier.toLowerCase().endsWith(".json")?"Grille à méthodes multiples":"Grille CSV";
       const copy=document.createElement("span");copy.append(title,detail);button.append(copy);
-      const icon=document.createElement("span");icon.className="menu-icon";icon.style.setProperty("--icon","url('icones/check.svg')");icon.setAttribute("aria-hidden","true");button.append(icon);
+      const icon=document.createElement("span");icon.className="menu-icon icone-check";icon.setAttribute("aria-hidden","true");button.append(icon);
       button.addEventListener("click",()=>loadRepositoryGrid(entry,button));return button;
     });
     catalogEl.replaceChildren(...buttons);
