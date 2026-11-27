@@ -46,6 +46,7 @@ test("bonus : 0 dans le gris, mini-bonus fixe dans le bleu foncé (D-016), puis 
   await cliquer(50); assert.equal(await bonus(), 0.5, "tout le bleu foncé vaut le même palier");
   await cliquer(83); assert.equal(await bonus(), 1.25, "échelle linéaire dans le bleu clair");
   await cliquer(99.5); assert.equal(await bonus(), 2);
+  await shot(page, "bonus-palier-t06");
 }));
 
 test("barème : un point de couleur à gauche de chaque critère suit le niveau courant de la catégorie (D-017)", () => avec(async page => {
@@ -64,6 +65,7 @@ test("barème : un point de couleur à gauche de chaque critère suit le niveau 
   assert.equal(await couleur(), "rgb(255, 215, 55)", "6+0 sur 10 = 60 % : niveau ECA (jaune)");
   await saisir(0, "0");
   assert.equal(await couleur(), "rgb(255, 49, 49)", "0 point : niveau NA (rouge)");
+  await shot(page, "bareme-point-niveau-t06");
 }));
 
 test("minuteur : la poignée suit le fer à cheval (piste haute, virage, piste basse)", () => avec(async page => {
