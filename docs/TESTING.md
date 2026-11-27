@@ -18,6 +18,12 @@ Les captures d'écran des tests e2e sont écrites dans `test-results/screens/` (
 | `tests/editeur-grille.test.cjs` | Arbre de l'éditeur : création, déplacement, changement de niveaux. |
 | `tests/e2e/rendu.e2e.cjs` | Fenêtre à 90 %, six cartes, largeur et axe central identiques, bandeau fixe en portrait, bouton de fermeture ≥ 48 px. |
 | `tests/e2e/methodes.e2e.cjs` | Couleurs des niveaux, Distribution et Compteur, échelle du Bonus, poignée du Minuteur sur le fer à cheval, NN, commentaires éditables, fenêtre d'information. |
+| `tests/e2e/impression.e2e.cjs` | Fiche imprimable : en-tête élève, NN sans note, 2(+), NE réduit, textes libres, Bonus NN, durée retenue du Minuteur, motifs Attention/Dépassé (D-015). |
+| `tests/e2e/devoir.e2e.cjs` | Enregistrement puis restauration du devoir sur fichier (format `DEVOIR_<Date>_<Groupe>_<Titre>`), refus d'un fichier étranger, invitation si aucun devoir. |
+| `tests/e2e/eleves-csv.e2e.cjs` | Import CSV d'élèves : premier groupe chargé sans confirmation (nom repris du fichier, PAP) ; second groupe soumis à confirmation — annulation ou remplacement avec effacement des données du devoir. |
+| `tests/e2e/catalogue.e2e.cjs` | Création du devoir depuis le catalogue : grille du dépôt (après confirmation de remplacement) et fichier JSON local ; vue Devoir initialisée. |
+| `tests/e2e/editeur.e2e.cjs` | Éditeur de grille : import d'un JSON, déplacement d'une partie au clavier (Alt+Flèche bas), export JSON valide, rechargement de la grille exportée à l'identique. |
+| `tests/icones.test.cjs` | Garde : plus aucune référence `icones/*.svg` dans l'interface ; chaque icône utilisée possède sa règle data-URI, fidèle au fichier source. |
 
 ## Conventions
 - Runner natif `node:test` + bibliothèque `playwright` ; pas de framework supplémentaire.
@@ -33,5 +39,5 @@ Les captures d'écran des tests e2e sont écrites dans `test-results/screens/` (
 4. Imprimer ou exporter la fiche d'un élève avec : NN, texte libre, Attention, Dépassé, Minuteur manuel.
 5. Ouvrir la fenêtre d'information de chaque méthode.
 
-## Scénarios à ajouter (voir T-05)
-Import CSV d'élèves · création d'un devoir depuis le catalogue · éditeur de grille (export puis rechargement) · fiche imprimable.
+## Scénarios ajoutés (T-05 · #8)
+Import CSV d'élèves (`eleves-csv`) · création d'un devoir depuis le catalogue (`catalogue`) · éditeur de grille, export puis rechargement (`editeur`). La fiche imprimable est couverte depuis T-02.
